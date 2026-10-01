@@ -27,3 +27,9 @@ Screen actuators: 24 VDC circuits drop at the nose to a junction box per run, th
 
 ## Bill of materials
 The page's **Bill of materials** tab lists ~70 off-the-shelf products (everything except the duckweed run trays), grouped by system: trailer & climate, rack & screen mechanics, conveyors, lighting, water loop, harvest & dewatering, electrical & controls. Models are representative; confirm sizing, ratings, wet-location suitability and lead times before ordering.
+
+## Photoreal mode
+Default render mode: sky-dome lighting, ambient occlusion (GTAO), LED area lights over every run, procedural surface detail (brushed stainless, powder coat, duckweed fronds with normal maps, rippling water, tire tread, concrete yard), DOT conspicuity tape and marker lights, and a filmic grade. Switch to Engineering mode in the Layers panel for the original drawing look.
+
+![Photoreal iso](photoreal-iso.png)
+![Photoreal processing bay](photoreal-processing.png)
