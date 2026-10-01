@@ -1,0 +1,724 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Duckweed Treatment Pod</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+/* Site-level rendering of the DW-200 pod. Same dark CAD language as index.html (trailer interior model). */
+:root{
+  color-scheme: dark;
+  --bg:#101418; --panel:#141a1f; --line:#2a333c; --fg:#e6ecf0; --muted:#93a3b0;
+  --dim:#ffc65c; --accent:#7fd4c1; --warn:#ff9d6b;
+  --s1:#a07a46; --s2:#a77df0; --s3:#3fd0b0; --s4:#4fa8ff; --bio:#7ccf45; --pwr:#ff9a3c; --prod:#ffc65c;
+  --f-ui:"Barlow Semi Condensed","Arial Narrow",Arial,sans-serif;
+  --f-data:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box;margin:0}
+html,body{height:100%}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-ui);overflow:hidden}
+#app{height:100%;display:grid;grid-template-rows:auto minmax(0,1fr)}
+.top{display:flex;flex-wrap:wrap;gap:10px 20px;align-items:center;justify-content:space-between;padding:10px 16px;border-bottom:1px solid var(--line);background:var(--panel)}
+.tb{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 16px;min-width:0}
+.tb .name{font-size:20px;font-weight:700}
+.tb .v{font-family:var(--f-data);font-size:11.5px;color:var(--muted)}
+.views{display:flex;flex-wrap:wrap;gap:4px}
+.views button{font:600 12px/1 var(--f-ui);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);background:transparent;border:1px solid var(--line);padding:7px 9px;cursor:pointer}
+.views button:hover{color:var(--fg)}
+.views button[aria-pressed="true"]{color:var(--bg);background:var(--accent);border-color:var(--accent)}
+button:focus-visible,input:focus-visible{outline:2px solid var(--dim);outline-offset:2px}
+.main{display:grid;grid-template-columns:minmax(0,1fr) 360px;min-height:0}
+#viewport{position:relative;min-width:0;min-height:0;overflow:hidden}
+#gl,#labels{position:absolute;inset:0}
+#labels{pointer-events:none}
+.side{border-left:1px solid var(--line);background:var(--panel);overflow:auto;min-height:0}
+.h{font-weight:700;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);padding:14px 14px 6px}
+.layers{padding:0 14px 6px;display:grid;gap:7px;font-size:14px}
+.layers label{display:flex;align-items:center;gap:8px;cursor:pointer}
+.layers input{accent-color:var(--accent);width:15px;height:15px}
+table{border-collapse:collapse;width:100%;font-size:13px}
+td{padding:5px 14px;border-top:1px solid var(--line);vertical-align:top}
+.kv td:first-child{color:var(--muted)}
+.kv td:last-child{font-family:var(--f-data);font-size:11.5px;text-align:right;font-variant-numeric:tabular-nums}
+.legend td:first-child{width:1%;white-space:nowrap}
+.sw{display:inline-block;width:22px;height:4px;border-radius:2px;background:var(--c);vertical-align:middle}
+.sw.dash{background:repeating-linear-gradient(90deg,var(--c) 0 5px,transparent 5px 8px)}
+.legend td:nth-child(2){font-family:var(--f-data);font-size:11px;color:var(--muted);white-space:nowrap}
+.note{padding:10px 14px;font-size:12.5px;line-height:1.45;color:var(--muted)}
+.note b{color:var(--warn);font-weight:600}
+.note a{color:var(--accent)}
+/* labels */
+.pin{position:relative;transform:translateY(calc(-1 * var(--h,40px)))}
+.pin::after{content:"";position:absolute;left:0;top:100%;width:1px;height:var(--h,40px);background:var(--accent);opacity:.8}
+.pin::before{content:"";position:absolute;left:-3px;top:calc(100% + var(--h,40px) - 3px);width:7px;height:7px;border-radius:50%;background:var(--accent)}
+.co{font:600 11.5px/1.15 var(--f-ui);letter-spacing:.05em;text-transform:uppercase;color:var(--fg);background:rgba(12,15,18,.9);border-left:2px solid var(--accent);padding:4px 7px;white-space:nowrap;transform:translateX(-1px)}
+.co i{font-style:normal;color:var(--dim);margin-right:5px;font-family:var(--f-data);font-weight:600}
+.co small{display:block;font:400 10.5px/1.25 var(--f-data);letter-spacing:0;text-transform:none;color:var(--muted);margin-top:2px}
+.tag{font:600 10.5px/1 var(--f-data);color:#0c0f12;background:var(--c);padding:3px 5px;border-radius:2px;white-space:nowrap}
+#loading{position:absolute;inset:0;display:grid;place-items:center;color:var(--muted);font:500 12px var(--f-data);letter-spacing:.1em}
+#shotTitle{display:none;position:absolute;left:18px;top:16px;background:rgba(12,15,18,.88);border:1px solid var(--line);padding:10px 14px;max-width:470px}
+#shotTitle b{display:block;font-size:22px}
+#shotTitle span{font:400 12px/1.4 var(--f-data);color:var(--muted)}
+#shotLegend{display:none;position:absolute;right:16px;bottom:16px;background:rgba(12,15,18,.88);border:1px solid var(--line);padding:6px 0;width:300px}
+#shotLegend td{border:0;padding:3px 12px;font-size:12.5px}
+body.shot .top,body.shot .side{display:none}
+body.shot .main{grid-template-columns:1fr}
+body.shot #app{grid-template-rows:minmax(0,1fr)}
+body.shot #shotTitle,body.shot #shotLegend{display:block}
+@media (max-width:900px){
+  body{overflow:auto} #app{height:auto;display:block}
+  .main{display:flex;flex-direction:column}
+  #viewport{height:62vh}
+  .side{border-left:0;border-top:1px solid var(--line);overflow:visible}
+  .co small{display:none}
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <header class="top">
+    <div class="tb">
+      <span class="name">DW-200 Duckweed Treatment Pod</span>
+      <span class="v">Rev C · 2 grow trailers (lead → polish) + process module · Wisconsin, year-round · ft · NTS</span>
+    </div>
+    <nav class="views" aria-label="Camera views">
+      <button type="button" data-view="iso" aria-pressed="true">Site iso</button>
+      <button type="button" data-view="plan">Plan</button>
+      <button type="button" data-view="trailer">Trailer cutaway</button>
+      <button type="button" data-view="pm">Process module</button>
+      <button type="button" data-view="harvest">Harvest route</button>
+    </nav>
+  </header>
+  <div class="main">
+    <div id="viewport">
+      <div id="loading">LOADING MODEL…</div>
+      <div id="gl"></div>
+      <div id="labels"></div>
+      <div id="shotTitle"><b>DW-200 Duckweed Treatment Pod · Rev C</b><span>2 × 53' LED grow trailers in series (lead → polish) + 40' process module · 1.25 m³/d dairy wash water, TN 120 → 10 mg/L · 1.0–1.2 t/yr dry 5-2-3 product</span></div>
+      <table id="shotLegend" class="legend"></table>
+    </div>
+    <aside class="side" aria-label="Layers, key data and legend">
+      <div class="h">Layers</div>
+      <div class="layers">
+        <label><input type="checkbox" id="tCut" checked> Cutaways (GT-1, PM-1)</label>
+        <label><input type="checkbox" id="tFlows" checked> Process flows</label>
+        <label><input type="checkbox" id="tPower" checked> Power</label>
+        <label><input type="checkbox" id="tFuture" checked> Future pads &amp; seasonal raceways</label>
+        <label><input type="checkbox" id="tLabels" checked> Callouts</label>
+        <label><input type="checkbox" id="tAnim" checked> Animate</label>
+      </div>
+      <div class="h">Flows</div>
+      <table class="legend" id="legend"></table>
+      <div class="h">Pod at design</div>
+      <table class="kv">
+        <tr><td>Treated flow</td><td>1.25 m³/d · 331 gal/d</td></tr>
+        <tr><td>Total N</td><td>120 → 65 → 10 mg/L</td></tr>
+        <tr><td>N / P in biomass</td><td>48–61 / 8–10 kg/yr</td></tr>
+        <tr><td>Growing area</td><td>2 × 1,920 ft² (357 m²)</td></tr>
+        <tr><td>Light</td><td>130 µmol/m²/s · 20 h · DLI 9.4</td></tr>
+        <tr><td>Yield</td><td>7.0–8.9 g DW/m²/d</td></tr>
+        <tr><td>Drained biomass</td><td>≈ 46 kg/d at 5.5% DS</td></tr>
+        <tr><td>Dry product</td><td>1.0–1.2 t/yr · ≈ 5-2-3</td></tr>
+        <tr><td>Electricity</td><td>≈ 500 kWh/d · 46 kW peak</td></tr>
+        <tr><td>Service</td><td>200 A · 208Y/120 V 3φ</td></tr>
+        <tr><td>Pad</td><td>≈ 95' × 75' crushed stone</td></tr>
+      </table>
+      <div class="note"><b>Light-limited.</b> Each trailer removes about 70–90 g N/day whatever the wastewater strength, so stronger water means less flow, not more treatment. Full sizing, materials, logistics and economics: <a href="SYSTEM_DESIGN.md">SYSTEM_DESIGN.md</a>. Trailer interior detail: <a href="index.html">index.html</a>.</div>
+      <div class="note">Drag to orbit · scroll to zoom · right-drag to pan</div>
+    </aside>
+  </div>
+</div>
+
+<script type="importmap">
+{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
+
+/* units: feet. X east (trailer nose at 0 → rear doors at 53), Y up, Z south. GT-1 (lead, cutaway) z=+10, GT-2 (polish) z=−10, PM-1 x 69–77. */
+const V = (x, y, z) => new THREE.Vector3(x, y, z);
+const params = new URLSearchParams(location.search);
+const SHOT = params.has('shot');
+if (SHOT) document.body.classList.add('shot');
+const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+const FLOWS = [
+  ['s1', '#a07a46', 'S1', 'Raw wastewater in', false],
+  ['s2', '#a77df0', 'S2', 'Pretreated feed, dosed', false],
+  ['s3', '#3fd0b0', 'S3', 'Lead bleed → polish', false],
+  ['s4', '#4fa8ff', 'S4', 'Treated effluent', false],
+  ['s8', '#6d5536', 'S8', 'Settled sludge return', false],
+  ['bio', '#7ccf45', 'S6', 'Drained biomass (cart)', true],
+  ['prod', '#ffc65c', 'S7', 'Dry product out', true],
+  ['pwr', '#ff9a3c', 'E', 'Power feeders', false],
+];
+const legendHTML = FLOWS.map(([, c, s, t, d]) => `<tr><td><span class="sw${d ? ' dash' : ''}" style="--c:${c}"></span></td><td>${s}</td><td>${t}</td></tr>`).join('');
+document.getElementById('legend').innerHTML = legendHTML;
+document.getElementById('shotLegend').innerHTML = legendHTML;
+
+/* ---------- renderer / scene ---------- */
+const host = document.getElementById('gl');
+const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.05;
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+host.appendChild(renderer.domElement);
+const labelRenderer = new CSS2DRenderer({ element: document.getElementById('labels') });
+
+const scene = new THREE.Scene();
+const BG = new THREE.Color('#1a222a');
+scene.background = BG;
+scene.fog = new THREE.Fog(BG, 320, 700);
+const pmrem = new THREE.PMREMGenerator(renderer);
+scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+scene.environmentIntensity = 0.55;
+
+scene.add(new THREE.HemisphereLight('#c9dcff', '#3a3326', 0.9));
+const sun = new THREE.DirectionalLight('#fff1dc', 2.2);
+sun.position.set(-90, 160, 120);
+sun.target.position.set(45, 0, 0);
+sun.castShadow = true;
+sun.shadow.mapSize.set(4096, 4096);
+Object.assign(sun.shadow.camera, { left: -110, right: 110, top: 90, bottom: -90, near: 10, far: 450 });
+sun.shadow.bias = -0.0004;
+sun.shadow.normalBias = 0.04;
+scene.add(sun, sun.target);
+
+const camera = new THREE.PerspectiveCamera(34, 1, 0.5, 2000);
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.maxPolarAngle = Math.PI * 0.49;
+controls.minDistance = 8;
+controls.maxDistance = 600;
+
+/* ---------- procedural textures ---------- */
+function tex(w, h, draw, rep = [1, 1]) {
+  const c = document.createElement('canvas'); c.width = w; c.height = h;
+  draw(c.getContext('2d'), w, h);
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  t.wrapS = t.wrapT = THREE.RepeatWrapping;
+  t.repeat.set(...rep);
+  t.anisotropy = 8;
+  return t;
+}
+const rnd = (() => { let s = 7; return () => (s = (s * 16807) % 2147483647) / 2147483647; })();
+function speckle(base, cols, n, rmax) {
+  return (g, w, h) => {
+    g.fillStyle = base; g.fillRect(0, 0, w, h);
+    for (let i = 0; i < n; i++) {
+      g.fillStyle = cols[(rnd() * cols.length) | 0];
+      g.beginPath(); g.arc(rnd() * w, rnd() * h, 0.5 + rnd() * rmax, 0, 7); g.fill();
+    }
+  };
+}
+const texGrass = tex(512, 512, speckle('#2d3a24', ['#35462a', '#26321f', '#3c4d2c', '#2a3322'], 9000, 2.2), [40, 40]);
+const texGravel = tex(512, 512, speckle('#5d5f5e', ['#6d6f6c', '#4f5150', '#7a7b77', '#565350', '#666059'], 14000, 1.6), [14, 10]);
+const texDuck = tex(512, 512, (g, w, h) => {
+  g.fillStyle = '#244a22'; g.fillRect(0, 0, w, h);
+  for (let i = 0; i < 5200; i++) {
+    const x = rnd() * w, y = rnd() * h, r = 2.2 + rnd() * 3.2, a = rnd() * 6.3;
+    g.fillStyle = ['#5fae2e', '#70bd36', '#4f9a27', '#86c94a', '#3f8a22'][(rnd() * 5) | 0];
+    g.beginPath(); g.ellipse(x, y, r, r * 0.68, a, 0, 7); g.fill();
+  }
+}, [8, 1]);
+const texLagoon = tex(512, 512, (g, w, h) => {
+  g.fillStyle = '#3a3b25'; g.fillRect(0, 0, w, h);
+  for (let i = 0; i < 300; i++) { g.strokeStyle = `rgba(160,170,120,${0.05 + rnd() * 0.08})`; g.lineWidth = 1 + rnd() * 2; g.beginPath(); const y = rnd() * h; g.moveTo(0, y); g.bezierCurveTo(w * .3, y + rnd() * 20 - 10, w * .6, y + rnd() * 20 - 10, w, y); g.stroke(); }
+}, [3, 3]);
+const texCorr = tex(256, 64, (g, w, h) => {
+  for (let x = 0; x < w; x++) { const v = 0.5 + 0.5 * Math.sin(x / w * Math.PI * 2 * 8); g.fillStyle = `rgb(${46 + v * 22},${92 + v * 26},${98 + v * 26})`; g.fillRect(x, 0, 1, h); }
+}, [5, 1]);
+function trailerSide(label, sub) {
+  return tex(2048, 384, (g, w, h) => {
+    g.fillStyle = '#eef1f2'; g.fillRect(0, 0, w, h);
+    g.strokeStyle = 'rgba(0,0,0,.08)'; g.lineWidth = 2;
+    for (let x = 0; x < w; x += w / 26) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x, h); g.stroke(); }
+    g.fillStyle = '#2f7d3a'; g.fillRect(0, h * 0.70, w, h * 0.07);
+    g.fillStyle = '#7ccf45'; g.fillRect(0, h * 0.775, w, h * 0.02);
+    g.fillStyle = '#1d2b23'; g.font = '700 108px "Barlow Semi Condensed", Arial Narrow, sans-serif'; g.fillText(label, 80, h * 0.48);
+    g.fillStyle = '#4b5a52'; g.font = '500 44px "IBM Plex Mono", monospace'; g.fillText(sub, 84, h * 0.62);
+  });
+}
+
+/* ---------- materials ---------- */
+const MAT = {};
+const M = (n, o, cast = true) => (MAT[n] = Object.assign(new THREE.MeshStandardMaterial(o), { userData: { cast } }));
+M('grass', { map: texGrass, roughness: 1 }, false);
+M('gravel', { map: texGravel, roughness: 0.98 }, false);
+M('concrete', { color: '#8d8f8c', roughness: 0.9 });
+M('white', { color: '#e9eced', roughness: 0.5 });
+M('whiteIn', { color: '#cfd5d8', roughness: 0.6, side: THREE.DoubleSide });
+M('chassis', { color: '#24282c', metalness: 0.4, roughness: 0.6 });
+M('tire', { color: '#151617', roughness: 0.92 });
+M('rim', { color: '#b9bec4', metalness: 1, roughness: 0.3 });
+M('frame', { color: '#4a525a', metalness: 0.5, roughness: 0.45 });
+M('tray', { color: '#d9dedb', roughness: 0.55 });
+M('duck', { map: texDuck, roughness: 0.7, emissive: '#1f4a12', emissiveIntensity: 0.25 }, false);
+M('led', { color: '#fff', emissive: '#ffcfe6', emissiveIntensity: 3.2 }, false);
+M('ledH', { color: '#1c1f23', metalness: 0.6, roughness: 0.4 });
+M('ss', { color: '#c4c9cd', metalness: 0.9, roughness: 0.32 });
+M('corr', { map: texCorr, roughness: 0.6, metalness: 0.35 });
+M('corrIn', { color: '#e3dfcf', roughness: 0.9, side: THREE.DoubleSide });
+M('floorPM', { color: '#5f6b72', roughness: 0.6 });
+M('tankPoly', { color: '#e6ece9', roughness: 0.4, transparent: true, opacity: 0.78 });
+M('tankBlk', { color: '#2c3136', roughness: 0.55 });
+M('steel', { color: '#5c656d', metalness: 0.6, roughness: 0.45 });
+M('cab', { color: '#c9cdd0', roughness: 0.45, metalness: 0.2 });
+M('blue', { color: '#2a5ea8', metalness: 0.3, roughness: 0.4 });
+M('pv', { color: '#1d2c4a', metalness: 0.5, roughness: 0.25, emissive: '#0b1630', emissiveIntensity: 0.4 });
+M('pvFrame', { color: '#aab2b9', metalness: 0.9, roughness: 0.3 });
+M('lagoon', { map: texLagoon, roughness: 0.15, metalness: 0.1 }, false);
+M('berm', { color: '#3f4a2c', roughness: 1 });
+M('pallet', { color: '#8a6a45', roughness: 0.9 });
+M('bag', { color: '#c8ab7a', roughness: 0.85 });
+M('bin', { color: '#dfe3e5', roughness: 0.5 });
+M('biomass', { color: '#4f9a27', roughness: 0.7, emissive: '#1d3d0c', emissiveIntensity: 0.4 });
+M('yellow', { color: '#e0b21a', roughness: 0.5 });
+M('wood', { color: '#6b5236', roughness: 0.9 });
+M('glass', { color: '#b8d3e6', roughness: 0.05, transparent: true, opacity: 0.18, depthWrite: false }, false);
+M('raceway', { color: '#3a6a2b', roughness: 0.6, transparent: true, opacity: 0.55 }, false);
+M('lampA', { color: '#fa0', emissive: '#ffaa22', emissiveIntensity: 3 }, false);
+M('lampG', { color: '#0f2', emissive: '#22ff66', emissiveIntensity: 3 }, false);
+
+/* ---------- geometry helpers ---------- */
+const UNIT_BOX = new THREE.BoxGeometry(1, 1, 1);
+const UNIT_CYL = new THREE.CylinderGeometry(1, 1, 1, 24);
+const groups = {};
+function G(name) { const g = new THREE.Group(); g.name = name; scene.add(g); groups[name] = g; return g; }
+function add(g, mesh) {
+  const cast = mesh.material.userData?.cast !== false;
+  mesh.castShadow = cast; mesh.receiveShadow = true; g.add(mesh); return mesh;
+}
+function box(g, m, x0, x1, y0, y1, z0, z1) {
+  const o = new THREE.Mesh(UNIT_BOX, MAT[m] || m);
+  o.scale.set(Math.abs(x1 - x0), Math.abs(y1 - y0), Math.abs(z1 - z0));
+  o.position.set((x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2);
+  return add(g, o);
+}
+function cylY(g, m, x, z, y0, y1, r, seg) {
+  const o = new THREE.Mesh(seg ? new THREE.CylinderGeometry(r, r, 1, seg) : UNIT_CYL, MAT[m] || m);
+  if (!seg) o.scale.set(r, y1 - y0, r); else o.scale.set(1, y1 - y0, 1);
+  o.position.set(x, (y0 + y1) / 2, z); return add(g, o);
+}
+function cylAB(g, m, a, b, r) {
+  const d = b.clone().sub(a), o = new THREE.Mesh(UNIT_CYL, MAT[m] || m);
+  o.scale.set(r, d.length(), r); o.position.copy(a).addScaledVector(d, 0.5);
+  o.quaternion.setFromUnitVectors(V(0, 1, 0), d.normalize()); return add(g, o);
+}
+function wheel(g, x, z) {
+  const t = new THREE.Mesh(new THREE.CylinderGeometry(1.65, 1.65, 0.95, 28), MAT.tire);
+  t.rotation.x = Math.PI / 2; t.position.set(x, 1.65, z); add(g, t);
+  const r = new THREE.Mesh(new THREE.CylinderGeometry(0.95, 0.95, 0.98, 20), MAT.rim);
+  r.rotation.x = Math.PI / 2; r.position.set(x, 1.65, z); add(g, r);
+}
+
+/* ---------- labels ---------- */
+const labels = [];
+function callout(group, n, title, sub, p, h = 40, prio = 5) {
+  const key = String(n);
+  const el = document.createElement('div');
+  el.className = 'pin'; el.style.setProperty('--h', h + 'px');
+  el.innerHTML = `<div class="co"><i>${n}</i>${title}${sub ? `<small>${sub}</small>` : ''}</div>`;
+  const o = new CSS2DObject(el); o.position.copy(p); o.center.set(0, 1);
+  group.add(o); labels.push({ o, el, prio, key }); return o;
+}
+function tag(group, text, color, p) {
+  const el = document.createElement('div'); el.className = 'tag'; el.style.setProperty('--c', color); el.textContent = text;
+  const o = new CSS2DObject(el); o.position.copy(p); group.add(o); labels.push({ o, el, prio: 9, key: text }); return o;
+}
+
+/* ---------- ground & pad ---------- */
+const gSite = G('site');
+const ground = new THREE.Mesh(new THREE.PlaneGeometry(1400, 1400), MAT.grass);
+ground.rotation.x = -Math.PI / 2; ground.position.set(45, -0.02, 0); ground.receiveShadow = true; gSite.add(ground);
+const pad = new THREE.Mesh(new THREE.PlaneGeometry(112, 80), MAT.gravel);
+pad.rotation.x = -Math.PI / 2; pad.position.set(41, 0, 0); pad.receiveShadow = true; gSite.add(pad);
+
+/* ---------- grow trailer ---------- */
+const TL = 53, TW = 8.5, DECK = 4.0, TOP = 13.5;
+function trailer(zc, name, cut) {
+  const g = G(name);
+  const z0 = zc - TW / 2, z1 = zc + TW / 2;
+  // chassis
+  box(g, 'chassis', 2, TL - 0.5, 3.1, DECK, zc - 2, zc - 1.5);
+  box(g, 'chassis', 2, TL - 0.5, 3.1, DECK, zc + 1.5, zc + 2);
+  box(g, 'chassis', 40, 50, 2.6, 3.2, zc - 3.2, zc + 3.2);
+  for (const x of [43, 47.5]) for (const s of [-1, 1]) { wheel(g, x, zc + s * 3.05); wheel(g, x, zc + s * 2.05); }
+  for (const s of [-1, 1]) { box(g, 'steel', 11.6, 12.2, 0.4, DECK, zc + s * 2.6 - 0.3, zc + s * 2.6 + 0.3); box(g, 'concrete', 11, 12.8, 0, 0.4, zc + s * 2.6 - 0.9, zc + s * 2.6 + 0.9); }
+  for (const s of [-1, 1]) { box(g, 'yellow', 51.2, 51.8, 0, 3.1, zc + s * 3 - 0.3, zc + s * 3 + 0.3); } // rear jack stands
+  box(g, 'chassis', 51.5, 53, 2.2, 3.1, z0 + 0.6, z1 - 0.6); // bumper
+  // body: floor, roof, walls (near south wall omitted for cutaway trailer)
+  box(g, 'white', 0, TL, DECK, DECK + 0.35, z0, z1);
+  const roof = box(g, cut ? 'glass' : 'white', 0, TL, TOP - 0.3, TOP, z0, z1); roof.userData.cutSwap = cut ? ['glass', 'white'] : null;
+  box(g, 'white', -0.05, 0.25, DECK, TOP, z0, z1); // nose
+  const sideTex = trailerSide(name === 'GT-1' ? 'GT-1  LEAD' : 'GT-2  POLISH', 'DW-200 duckweed treatment pod · 16 runs × 8 tiers · 1,920 ft²');
+  const sideMat = new THREE.MeshStandardMaterial({ map: sideTex, roughness: 0.5 });
+  sideMat.userData = { cast: true };
+  const farWall = box(g, sideMat, 0, TL, DECK, TOP, z0, z0 + 0.25);
+  const nearWall = box(g, sideMat, 0, TL, DECK, TOP, z1 - 0.25, z1);
+  farWall.material = sideMat.clone(); farWall.material.map = sideTex.clone(); farWall.material.map.repeat.set(-1, 1); farWall.material.map.needsUpdate = true;
+  if (cut) nearWall.userData.cutHide = true;
+  if (cut) box(g, 'whiteIn', 0.3, TL, DECK + 0.35, TOP - 0.3, z0 + 0.25, z0 + 0.3); // inner liner (hides mirrored livery)
+  if (cut) { // cut edges so the section reads
+    box(g, 'whiteIn', 0, TL, DECK, DECK + 0.6, z1 - 0.25, z1); box(g, 'whiteIn', 0, TL, TOP - 0.6, TOP, z1 - 0.25, z1);
+  }
+  // rear doors swung open
+  for (const hz of [z0 + 0.1, z1 - 0.1]) { // doors open 90° (left off the cutaway trailer so the harvest bay and cart read)
+    const d = box(g, 'white', TL, TL + TW / 2 - 0.1, DECK + 0.1, TOP - 0.2, hz - 0.08, hz + 0.08);
+    if (cut) d.userData.cutHide = true;
+  }
+  // nose HVAC: cold-climate heat pump on stand + HRV hood
+  box(g, 'steel', -4.6, -1.6, 0, 1.2, zc - 1.6, zc + 1.6);
+  box(g, 'white', -4.4, -1.8, 1.2, 4.6, zc - 1.5, zc + 1.5);
+  const fan = cylAB(g, 'tankBlk', V(-4.42, 2.9, zc), V(-4.5, 2.9, zc), 1.2);
+  cylAB(g, 'steel', V(-2, 3.4, zc + 1.2), V(0, 9.5, zc + 1.2), 0.12);
+  box(g, 'cab', -1.4, 0, 10.2, 12.4, zc - 3, zc - 0.6); // HRV hood
+  box(g, 'tankBlk', -1.45, -1.35, 10.4, 11.4, zc - 2.8, zc - 0.8);
+  box(g, 'cab', -0.6, 0, 6.5, 9.2, zc + 2.2, zc + 3.6); // shore inlet / disconnect
+  return g;
+}
+const gT1 = trailer(10, 'GT-1', true);
+const gT2 = trailer(-10, 'GT-2', false);
+
+/* GT-1 interior: 2 columns × 8 tiers of runs, LED bars, rear processing bay */
+const gIn = G('interior');
+{
+  const zc = 10, PITCH = 11.75 / 12, BASE = DECK + 0.35 + 8 / 12;
+  const cols = [[zc + 0.9, zc + 3.9], [zc - 3.9, zc - 0.9]];
+  for (const [za, zb] of cols) {
+    for (const x of [0.6, 10.6, 20.6, 30.6, 40.6]) box(gIn, 'frame', x, x + 0.14, DECK + 0.35, BASE + 7 * PITCH + 0.9, za - 0.06, za + 0.06), box(gIn, 'frame', x, x + 0.14, DECK + 0.35, BASE + 7 * PITCH + 0.9, zb - 0.06, zb + 0.06);
+    for (let t = 0; t < 8; t++) {
+      const y = BASE + t * PITCH;
+      box(gIn, 'tray', 0.6, 40.6, y - 0.08, y, za, zb);
+      box(gIn, 'tray', 0.6, 40.6, y, y + 5 / 12, za, za + 0.06);
+      box(gIn, 'tray', 0.6, 40.6, y, y + 5 / 12, zb - 0.06, zb);
+      const w = new THREE.Mesh(new THREE.PlaneGeometry(40, zb - za - 0.12), MAT.duck);
+      w.rotation.x = -Math.PI / 2; w.position.set(20.6, y + 0.25, (za + zb) / 2); gIn.add(w);
+      box(gIn, 'ledH', 0.8, 40.4, y + 0.74, y + 0.8, za + 0.3, zb - 0.3);
+      for (const dz of [0.25, 0.5, 0.75]) box(gIn, 'led', 0.9, 40.3, y + 0.72, y + 0.74, za + (zb - za) * dz - 0.12, za + (zb - za) * dz + 0.12);
+    }
+    // harvest conveyor incline + chute at rear of each column
+    cylAB(gIn, 'ss', V(40.6, BASE, (za + zb) / 2), V(43.2, BASE + 7 * PITCH + 0.6, (za + zb) / 2), 0.08);
+    box(gIn, 'glass', 41, 43.8, DECK + 1, BASE + 7 * PITCH + 0.8, za + 0.3, zb - 0.3);
+  }
+  // rear processing bay
+  box(gIn, 'ss', 44, 47, DECK + 0.35, DECK + 2.6, zc - 2.5, zc + 2.5);       // receiving bin
+  box(gIn, 'cab', 47.3, 50.3, DECK + 2.2, DECK + 3.2, zc - 1.2, zc + 1.2);  // vibratory screen deck
+  for (const s of [-1, 1]) cylAB(gIn, 'steel', V(47.6, DECK + 0.35, zc + s), V(47.6, DECK + 2.2, zc + s), 0.08), cylAB(gIn, 'steel', V(50, DECK + 0.35, zc + s), V(50, DECK + 2.2, zc + s), 0.08);
+  cylAB(gIn, 'steel', V(45.5, DECK + 1.6, zc), V(48.5, DECK + 3.4, zc), 0.25); // auger
+  box(gIn, 'tankPoly', 44, 48, DECK + 0.35, DECK + 3, zc + 2.6, zc + 4); // return tank
+  for (const dz of [-0.9, 0.9]) { cylY(gIn, 'bin', 51.3, zc + dz, DECK + 0.35, DECK + 2.1, 0.7); cylY(gIn, 'biomass', 51.3, zc + dz, DECK + 2.0, DECK + 2.12, 0.62); }
+  box(gIn, 'cab', 44, 47, DECK + 3.2, DECK + 6.5, zc - 4, zc - 3.6); // control panel
+  box(gIn, 'cab', 48, 52.2, DECK + 0.35, DECK + 6.2, zc - 4, zc - 3.3); // dehumidifier / HVAC indoor
+}
+
+/* ---------- process module PM-1 (40' HC container), long axis along Z ---------- */
+const gPM = G('PM-1');
+const PX0 = 69, PX1 = 77, PZ0 = -20, PZ1 = 20, PY0 = 0.6, PY1 = 10.1;
+{
+  for (const x of [PX0 + 0.5, PX1 - 0.5]) for (const z of [PZ0 + 0.5, PZ1 - 0.5]) box(gPM, 'concrete', x - 0.9, x + 0.9, 0, PY0, z - 0.9, z + 0.9);
+  box(gPM, 'floorPM', PX0, PX1, PY0, PY0 + 0.4, PZ0, PZ1);
+  const east = box(gPM, 'corr', PX1 - 0.2, PX1, PY0, PY1, PZ0, PZ1); east.material = MAT.corr.clone(); east.material.map = texCorr.clone(); east.material.map.repeat.set(20, 1); east.material.map.needsUpdate = true;
+  const west = box(gPM, east.material, PX0, PX0 + 0.2, PY0, PY1, PZ0, PZ1); west.userData.cutHide = true;
+  for (const z of [PZ0, PZ1 - 0.2]) box(gPM, 'corr', PX0, PX1, PY0, PY1, z, z + 0.2);
+  box(gPM, 'corrIn', PX1 - 0.4, PX1 - 0.2, PY0 + 0.4, PY1 - 0.3, PZ0 + 0.2, PZ1 - 0.2); // insulated liner
+  // roof: framing always; east half carries the PV array; west half is a cut
+  for (const z of [PZ0, PZ1 - 0.3]) box(gPM, 'steel', PX0, PX1, PY1 - 0.3, PY1, z, z + 0.3);
+  box(gPM, 'steel', PX0, PX0 + 0.3, PY1 - 0.3, PY1, PZ0, PZ1);
+  const roofW = box(gPM, 'corr', PX0, PX0 + 4, PY1 - 0.15, PY1, PZ0, PZ1); roofW.userData.cutHide = true;
+  box(gPM, 'corr', PX0 + 4, PX1, PY1 - 0.15, PY1, PZ0, PZ1);
+  for (let i = 0; i < 7; i++) for (const k of [0, 1]) {
+    const z = PZ0 + 1.2 + i * 5.4, x0 = PX0 + 4.3 + k * 0.0;
+    const p = new THREE.Mesh(UNIT_BOX, MAT.pv); p.scale.set(3.3, 0.12, 5.2);
+    p.position.set(PX1 - 1.85, PY1 + 0.6, z + 2.6); p.rotation.z = 0.18; if (k === 0) add(gPM, p);
+  }
+  // bay walls
+  for (const z of [8, 0]) { // glazed bay partitions on steel studs, so all three bays read in the cutaway
+    box(gPM, 'glass', PX0 + 0.2, PX1 - 0.4, PY0 + 0.4, PY1 - 0.3, z - 0.05, z + 0.05);
+    for (const x of [PX0 + 0.3, (PX0 + PX1) / 2, PX1 - 0.5]) box(gPM, 'steel', x - 0.08, x + 0.08, PY0 + 0.4, PY1 - 0.3, z - 0.08, z + 0.08);
+    box(gPM, 'steel', PX0 + 0.2, PX1 - 0.4, PY0 + 7, PY0 + 7.15, z - 0.08, z + 0.08);
+  }
+  const F = PY0 + 0.4;
+  // Bay A (z 8..20): sieve, 2 cone-bottom tanks, feed tank, blower, dosing pumps
+  function coneTank(x, z, r, h) {
+    cylY(gPM, 'tankPoly', x, z, F + 2.1, F + 2.1 + h, r);
+    const c = new THREE.Mesh(new THREE.ConeGeometry(r, 1.6, 24), MAT.tankPoly); c.rotation.x = Math.PI; c.position.set(x, F + 2.1 - 0.8, z); add(gPM, c);
+    for (const a of [0, 2.1, 4.2]) cylAB(gPM, 'steel', V(x + Math.cos(a) * r, F, z + Math.sin(a) * r), V(x + Math.cos(a) * r, F + 2.3, z + Math.sin(a) * r), 0.07);
+  }
+  coneTank(73, 17.6, 2.0, 4.6); coneTank(73, 12.9, 2.0, 4.6);
+  for (let i = 0; i < 10; i++) cylY(gPM, 'blue', 73 + Math.cos(i) * 1.1, 12.9 + Math.sin(i * 1.7) * 1.1, F + 3 + (i % 4) * 0.8, F + 3.12 + (i % 4) * 0.8, 0.12); // media hint
+  box(gPM, 'ss', 69.6, 71.4, F + 4.5, F + 6.6, 15.8, 19.3);   // wedge-wire sieve
+  for (const z of [16, 19.1]) box(gPM, 'steel', 69.7, 69.9, F, F + 4.5, z, z + 0.15), box(gPM, 'steel', 71.1, 71.3, F, F + 4.5, z, z + 0.15);
+  cylY(gPM, 'tankBlk', 75.3, 9.8, F, F + 4.2, 1.35);           // feed tank TK-103
+  box(gPM, 'cab', 76.1, 76.6, F + 3.5, F + 5.2, 11.2, 14.4);   // dosing pumps panel
+  for (const z of [11.8, 12.9, 14.0]) box(gPM, 'blue', 75.8, 76.1, F + 4, F + 4.6, z - 0.3, z + 0.3);
+  box(gPM, 'blue', 75.2, 76.4, F, F + 0.9, 18, 19.4);          // blower
+  // Bay B (z 0..8): switchboard, PLC, lab bench
+  box(gPM, 'cab', 75.4, 76.6, F, F + 7, 0.6, 3.6);
+  box(gPM, 'cab', 75.8, 76.6, F + 3, F + 6, 4.2, 6.2);
+  box(gPM, 'lampG', 75.75, 75.8, F + 5.4, F + 5.6, 4.6, 4.8); box(gPM, 'lampA', 75.75, 75.8, F + 5.4, F + 5.6, 5.0, 5.2);
+  box(gPM, 'wood', 69.4, 71.6, F + 2.9, F + 3.1, 1, 7.4); box(gPM, 'steel', 69.5, 71.5, F, F + 2.9, 1.1, 1.3); box(gPM, 'steel', 69.5, 71.5, F, F + 2.9, 7.1, 7.3);
+  box(gPM, 'ss', 69.6, 71.2, F + 3.1, F + 3.4, 5.6, 7.0);
+  // Bay C (z −20..0): heat-pump dryer, hammer mill, pellet mill, bagging, pallet rack
+  box(gPM, 'ss', 74.2, 76.6, F, F + 6.4, -4.2, -0.6);           // dryer cabinet
+  box(gPM, 'blue', 74.4, 76.4, F + 6.4, F + 7.8, -3.9, -0.9);   // heat-pump head
+  box(gPM, 'tankBlk', 74.15, 74.2, F + 0.6, F + 6.0, -4.0, -0.8);
+  box(gPM, 'steel', 74.6, 76.4, F, F + 2.4, -8.2, -5.8);        // hammer mill
+  const hop = new THREE.Mesh(new THREE.CylinderGeometry(0.9, 0.3, 1.4, 4), MAT.ss); hop.position.set(75.5, F + 3.1, -7); add(gPM, hop);
+  box(gPM, 'blue', 74.6, 76.4, F, F + 2.0, -12.4, -9.4);        // pellet mill motor/base
+  cylY(gPM, 'steel', 75.5, -10.9, F + 2, F + 3.2, 0.8);
+  const hop2 = new THREE.Mesh(new THREE.CylinderGeometry(1.1, 0.4, 1.5, 20), MAT.ss); hop2.position.set(75.5, F + 4, -10.9); add(gPM, hop2);
+  box(gPM, 'ss', 70.0, 72.6, F + 2.8, F + 3.0, -12, -6);       // work table + scale
+  for (const z of [-11.8, -6.2]) box(gPM, 'steel', 70.1, 72.5, F, F + 2.8, z, z + 0.2);
+  box(gPM, 'cab', 70.6, 71.8, F + 3.0, F + 3.3, -9.4, -8.2);
+  // pallet rack + bagged product
+  for (const z of [-19.4, -14.6]) box(gPM, 'steel', 74.2, 76.6, F, F + 7, z, z + 0.2);
+  for (const y of [F + 0.2, F + 3.6]) {
+    box(gPM, 'pallet', 74.3, 76.5, y, y + 0.45, -19.2, -14.8);
+    for (let i = 0; i < 6; i++) box(gPM, 'bag', 74.4 + (i % 2) * 1.05, 75.35 + (i % 2) * 1.05, y + 0.45 + ((i / 2) | 0) * 0.55, y + 0.95 + ((i / 2) | 0) * 0.55, -19.0, -15.0);
+  }
+  // window / door frames on far east wall for orientation
+  box(gPM, 'glass', PX1 - 0.25, PX1 + 0.02, F + 3.5, F + 6, 2.5, 6.5);
+  // product double doors at north end, open
+  box(gPM, 'corr', PX0 - 3.6, PX0, PY0, PY1 - 0.4, PZ0 - 0.2, PZ0);
+  box(gPM, 'corr', PX1, PX1 + 3.6, PY0, PY1 - 0.4, PZ0 - 0.2, PZ0);
+  // steps + personnel door landing on west side, Bay C and Bay A
+  for (const z of [-6, 10.5]) { box(gPM, 'steel', PX0 - 3, PX0, 0, 0.3, z - 1.6, z + 1.6); box(gPM, 'steel', PX0 - 1.5, PX0, 0.3, 0.6, z - 1.6, z + 1.6); }
+  // exterior lights
+  for (const z of [-19, 19]) box(gPM, 'lampA', PX0 - 0.25, PX0, PY1 - 1.0, PY1 - 0.85, z - 0.25, z + 0.25);
+}
+
+/* ---------- effluent tank, lagoon, utility, product pallet, cart ---------- */
+const gYard = G('yard');
+{
+  // TK-301 effluent tank 3,000 gal (≈ 8 ft dia × 9 ft), insulated jacket
+  box(gYard, 'concrete', 57, 67, 0, 0.5, -33, -23);
+  cylY(gYard, 'tankBlk', 62, -28, 0.5, 10.5, 4.2);
+  const dome = new THREE.Mesh(new THREE.SphereGeometry(4.2, 28, 10, 0, Math.PI * 2, 0, Math.PI / 2), MAT.tankBlk); dome.scale.y = 0.25; dome.position.set(62, 10.5, -28); add(gYard, dome);
+  box(gYard, 'blue', 65.5, 67.5, 0.5, 2, -25.5, -24);  // transfer pump
+  // lagoon / source
+  const shape = new THREE.Shape();
+  const pts = [[96, 4], [128, -2], [150, 10], [148, 44], [118, 52], [96, 40]];
+  shape.moveTo(pts[0][0], -pts[0][1]); for (const [x, z] of pts.slice(1)) shape.lineTo(x, -z); shape.closePath();
+  const lag = new THREE.Mesh(new THREE.ShapeGeometry(shape), MAT.lagoon); lag.rotation.x = -Math.PI / 2; lag.position.y = 0.15; gYard.add(lag);
+  const berm = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts.map(([x, z]) => V(x, 0.3, z)), true), 80, 1.6, 8, true), MAT.berm); berm.scale.y = 0.6; add(gYard, berm);
+  box(gYard, 'wood', 96, 102, 0.9, 1.2, 19, 22);  // pump access dock
+  cylY(gYard, 'blue', 101, 20.5, 0.2, 1.5, 0.45);
+  // utility pole + pad-mount transformer + meter on PM east wall
+  cylY(gYard, 'wood', 88, 2, 0, 28, 0.45, 12);
+  box(gYard, 'wood', 87.6, 88.4, 25.5, 26, -2.5, 6.5);
+  box(gYard, 'concrete', 83, 87, 0, 0.4, -4, 0);
+  box(gYard, 'steel', 83.4, 86.6, 0.4, 4.4, -3.6, -0.4);
+  box(gYard, 'cab', 77, 77.6, 3, 5.5, -1.6, 0);
+  // product pallet staged outside north doors
+  box(gYard, 'pallet', 71, 75, 0, 0.45, -27, -23);
+  for (let i = 0; i < 8; i++) box(gYard, 'bag', 71.2 + (i % 2) * 1.9, 72.9 + (i % 2) * 1.9, 0.45 + ((i / 4) | 0) * 0.55, 0.95 + ((i / 4) | 0) * 0.55, -26.8 + ((i >> 1) % 2) * 1.9, -25.1 + ((i >> 1) % 2) * 1.9);
+  // biomass cart with 2 lidded bins
+  box(gYard, 'steel', 59.5, 63.5, 1, 1.15, -1.2, 1.2);
+  for (const [x, z] of [[59.9, -0.8], [63.1, -0.8], [59.9, 0.8], [63.1, 0.8]]) cylAB(gYard, 'tire', V(x, 0.4, z - 0.15), V(x, 0.4, z + 0.15), 0.4);
+  for (const x of [60.6, 62.4]) { cylY(gYard, 'bin', x, 0, 1.15, 3.2, 0.8); cylY(gYard, 'biomass', x, 0, 3.2, 3.35, 0.82); }
+  cylAB(gYard, 'steel', V(59.5, 1.15, -1), V(58.6, 3.6, -1), 0.06); cylAB(gYard, 'steel', V(59.5, 1.15, 1), V(58.6, 3.6, 1), 0.06); cylAB(gYard, 'steel', V(58.6, 3.6, -1), V(58.6, 3.6, 1), 0.06);
+  // bollards
+  for (const [x, z] of [[-6, 4], [-6, -4], [-6, 16], [-6, -16], [68, -21], [68, 21], [78, -21], [78, 21]]) cylY(gYard, 'yellow', x, z, 0, 3.5, 0.3);
+}
+
+/* ---------- future pads + seasonal raceways ---------- */
+const gFut = G('future');
+{
+  const dash = (pts, color) => {
+    const geo = new THREE.BufferGeometry().setFromPoints(pts);
+    const l = new THREE.Line(geo, new THREE.LineDashedMaterial({ color, dashSize: 2, gapSize: 1.4 })); l.computeLineDistances(); gFut.add(l); return l;
+  };
+  const rect = (x0, x1, z0, z1, y, c) => dash([V(x0, y, z0), V(x1, y, z0), V(x1, y, z1), V(x0, y, z1), V(x0, y, z0)], c);
+  rect(0, 53, 25.75, 34.25, 0.08, '#93a3b0'); rect(0, 53, -34.25, -25.75, 0.08, '#93a3b0');
+  // seasonal daylight raceways (optional, May–Sep), north of the pad
+  for (let i = 0; i < 4; i++) {
+    const z0 = -46 - i * 7;
+    rect(-6, 56, z0 - 5.5, z0, 0.1, '#7ccf45');
+    const r = new THREE.Mesh(new THREE.PlaneGeometry(61, 5), MAT.raceway); r.rotation.x = -Math.PI / 2; r.position.set(25, 0.06, z0 - 2.75); gFut.add(r);
+  }
+}
+
+/* ---------- flows (pipes, cart route, product, power) ---------- */
+const gFlow = G('flows'), gPwr = G('power');
+const flowMats = Object.fromEntries(FLOWS.map(([k, c]) => [k, new THREE.MeshStandardMaterial({ color: c, roughness: 0.45, emissive: c, emissiveIntensity: 0.25 })]));
+const particles = [];
+function route(g, kind, pts, r = 0.22, dashed = false, n = 0) {
+  const P = pts.map(p => V(...p));
+  if (dashed) {
+    for (let i = 0; i < P.length - 1; i++) {
+      const a = P[i], b = P[i + 1], len = a.distanceTo(b), steps = Math.floor(len / 2.2);
+      for (let s = 0; s < steps; s++) {
+        const t0 = s / steps, t1 = (s + 0.55) / steps;
+        const m = new THREE.Mesh(UNIT_BOX, flowMats[kind]);
+        const pa = a.clone().lerp(b, t0), pb = a.clone().lerp(b, t1);
+        m.position.copy(pa).lerp(pb, 0.5); m.scale.set(0.5, 0.08, pa.distanceTo(pb));
+        m.lookAt(pb); g.add(m);
+      }
+    }
+  } else {
+    for (let i = 0; i < P.length - 1; i++) {
+      const m = cylAB(g, flowMats[kind], P[i], P[i + 1], r); m.castShadow = false;
+      if (i > 0) { const j = new THREE.Mesh(new THREE.SphereGeometry(r, 12, 8), flowMats[kind]); j.position.copy(P[i]); g.add(j); }
+    }
+  }
+  if (n) {
+    const segs = []; let L = 0;
+    for (let i = 0; i < P.length - 1; i++) { const l = P[i].distanceTo(P[i + 1]); segs.push([P[i], P[i + 1], L, l]); L += l; }
+    const geo = new THREE.SphereGeometry(dashed ? 0.45 : r * 1.9, 12, 8);
+    const mat = new THREE.MeshBasicMaterial({ color: FLOWS.find(f => f[0] === kind)[1] });
+    for (let i = 0; i < n; i++) { const s = new THREE.Mesh(geo, mat); g.add(s); particles.push({ s, segs, L, off: i / n, speed: dashed ? 0.05 : 0.08 }); }
+  }
+}
+const Y = 0.35; // pipe runs sit on sleepers just above grade
+// S1 raw wastewater: lagoon intake pump → PM-1 Bay A sieve
+route(gFlow, 's1', [[101, 1.5, 20.5], [96, Y, 20.5], [82, Y, 20.5], [82, Y, 17.5], [77.3, Y, 17.5], [77.3, 7.6, 17.5], [71.4, 7.6, 17.5]], 0.25, false, 6);
+// S8 settled sludge: TK-101 → back to lagoon
+route(gFlow, 's8', [[73, 1.2, 19.3], [73, 1.2, 21.2], [90, Y, 23.5], [99, 0.5, 26]], 0.18, false, 3);
+// S2 dosed feed: TK-103 → under container → GT-1 return tank (rear, z≈12.6)
+route(gFlow, 's2', [[75.3, 1.4, 8.4], [70.5, 1.4, 8.4], [69, Y, 8.4], [56, Y, 8.4], [56, Y, 12.6], [53.6, Y, 12.6], [53.6, 3.6, 12.6], [46, 4.6, 12.6]], 0.2, false, 5);
+// S3 lead bleed → polish: GT-1 rear weir → GT-2 return tank
+route(gFlow, 's3', [[46, 4.6, 7], [53.4, 3.4, 7], [54.4, Y, 7], [54.4, Y, -7], [53.4, 3.4, -7], [46, 4.6, -7]], 0.2, false, 5);
+// S4 treated effluent: GT-2 rear → TK-301 → irrigation / host storage
+route(gFlow, 's4', [[46, 4.6, -12.6], [53.6, 3.6, -12.6], [53.6, Y, -12.6], [58, Y, -12.6], [58, Y, -23.6], [58.2, 1.2, -24.6]], 0.2, false, 4);
+route(gFlow, 's4', [[66.8, 1.2, -24.6], [69, Y, -32], [69, Y, -60]], 0.2, false, 3);
+// S6 drained biomass: GT-1 & GT-2 rear bays → cart → PM-1 Bay C door
+route(gFlow, 'bio', [[51.5, 0.15, 10], [56, 0.15, 3], [61, 0.15, 0], [66.4, 0.15, -6]], 0, true, 3);
+route(gFlow, 'bio', [[51.5, 0.15, -10], [56, 0.15, -3], [61, 0.15, 0]], 0, true, 2);
+// S7 product: PM-1 north doors → staged pallet → off site
+route(gFlow, 'prod', [[73, 0.15, -20.5], [73, 0.15, -23], [73, 0.15, -29], [80, 0.15, -44], [80, 0.15, -64]], 0, true, 3);
+// Power: utility → transformer → PM-1 switchboard; PM-1 feeders → trailer noses in cable protectors
+route(gPwr, 'pwr', [[88, 25.5, 2], [86, 4.4, -2], [77.6, 4, -0.8]], 0.12);
+route(gPwr, 'pwr', [[69, 0.25, 2.5], [-3, 0.25, 2.5], [-3, 0.25, 12.9], [-0.6, 0.25, 12.9], [-0.6, 7, 12.9]], 0.16, false, 4);
+route(gPwr, 'pwr', [[-3, 0.25, 2.5], [-3, 0.25, -7.1], [-0.6, 0.25, -7.1], [-0.6, 7, -7.1]], 0.16, false, 2);
+function updateParticles(t) {
+  for (const p of particles) {
+    let d = ((t * p.speed + p.off) % 1) * p.L;
+    for (const [a, b, s0, l] of p.segs) if (d <= s0 + l) { p.s.position.copy(a).lerp(b, (d - s0) / l); break; }
+  }
+}
+
+/* ---------- callouts ---------- */
+const gLab = G('labels');
+callout(gLab, 1, 'GT-1 Lead grow trailer', '53\' insulated reefer · 16 runs × 8 tiers · NH₄-N ≤ 25 mg/L', V(18, TOP, 10), 92, 1);
+callout(gLab, 2, 'GT-2 Polish grow trailer', 'releases effluent only at TN < 10 mg/L', V(22, TOP, -10), 70, 1);
+callout(gLab, 3, 'LED tiers, cutaway', '130 µmol/m²/s · 20 h · 8.6 kW per trailer', V(8, 9.5, 13.9), 34, 2);
+callout(gLab, 4, 'Rear harvest bay', 'conveyor → chute → vibratory screen → bins, 5.5% DS', V(48, 8.6, 13.9), 48, 2);
+callout(gLab, 5, 'Heat pump + HRV', '3-ton cold-climate HP replaces the diesel reefer', V(-3, 4.6, 10), 64, 3);
+callout(gLab, 6, 'PM-1 · Bay A pretreatment', '0.5 mm sieve · settler · aerated EQ · NH₄-controlled dosing', V(72, PY1, 16), 112, 1);
+callout(gLab, 7, 'PM-1 · Bay B power, PLC, lab', '200 A 208Y/120 V 3φ · SCADA · test bench', V(72, PY1, 4), 66, 2);
+callout(gLab, 8, 'PM-1 · Bay C product line', 'heat-pump dryer 55 °C · mill · pellet mill · bagging', V(72, PY1, -9), 90, 1);
+callout(gLab, 9, 'Wastewater source', 'lagoon / parlor sump · ⅓ hp intake pump', V(122, 0.5, 26), 40, 3);
+callout(gLab, 10, 'TK-301 treated effluent', '3,000 gal insulated → irrigation / NMP land application', V(62, 10.9, -28), 40, 2);
+callout(gLab, 11, 'Biomass cart', '≈ 46 kg/d drained mat · one trip daily', V(61, 3.4, 0), 54, 3);
+callout(gLab, 12, 'Utility service', 'pole + pad-mount transformer → PM-1', V(88, 28, 2), 30, 4);
+callout(gLab, 13, 'Future GT-3 / GT-4 pads', 'one PM-1 serves up to 4 trailers', V(30, 0.1, -30), 30, 4);
+callout(gLab, 14, 'Dry product out', '≈ 20 kg/wk now · 25 lb bags · ≈ 5-2-3', V(73, 1.5, -25), 44, 3);
+callout(gLab, 15, 'Optional seasonal raceways', 'May–Sep daylight expansion · ¼ acre ≈ +1.2 t DW', V(10, 0.1, -60), 30, 4);
+tag(gLab, 'S1', '#a07a46', V(88, 1.2, 20.5));
+tag(gLab, 'S2', '#a77df0', V(62, 1.2, 8.4));
+tag(gLab, 'S3', '#3fd0b0', V(54.4, 1.2, -1.5));
+tag(gLab, 'S4', '#4fa8ff', V(69, 1.2, -45));
+tag(gLab, 'S7', '#ffc65c', V(80, 1.2, -52));
+tag(gLab, 'S8', '#6d5536', V(90, 1.2, 23.5));
+const futureLabels = labels.filter(l => /GT-3|seasonal/.test(l.el.textContent));
+
+/* ---------- interaction ---------- */
+const VIEWS = {
+  iso:     { p: [-26, 58, 92], t: [50, 1, -2] },
+  plan:    { p: [60, 215, -4.99], t: [60, 0, -5], show: '1 2 6 8 9 10 11 13 15 S1 S2 S3 S4 S7 S8' },
+  trailer: { p: [-16, 25, 46], t: [24, 6, 8], show: '1 3 4 5' },
+  pm:      { p: [47, 30, -38], t: [73, 3, 2], show: '6 7 8 9 11 14 S1 S2 S8' },
+  harvest: { p: [36, 38, 52], t: [62, 2, 0], show: '4 6 7 8 10 11 14 S2 S3 S4' },
+};
+let tween = null, labelSet = null;
+controls.addEventListener('start', () => { labelSet = null; });
+function setView(name, instant) {
+  const v = VIEWS[name]; if (!v) return;
+  labelSet = v.show ? v.show.split(' ') : null;
+  document.querySelectorAll('.views button').forEach(b => b.setAttribute('aria-pressed', b.dataset.view === name));
+  const to = { p: V(...v.p), t: V(...v.t) };
+  if (instant || reduceMotion) { camera.position.copy(to.p); controls.target.copy(to.t); controls.update(); tween = null; return; }
+  tween = { from: { p: camera.position.clone(), t: controls.target.clone() }, to, t0: performance.now() };
+}
+document.querySelectorAll('.views button').forEach(b => b.addEventListener('click', () => setView(b.dataset.view)));
+
+function applyCut(on) {
+  scene.traverse(o => {
+    if (o.userData.cutHide) o.visible = !on;
+    if (o.userData.cutSwap) o.material = MAT[o.userData.cutSwap[on ? 0 : 1]];
+  });
+  groups.interior.visible = true;
+}
+const $ = id => document.getElementById(id);
+$('tCut').addEventListener('change', e => applyCut(e.target.checked));
+$('tFlows').addEventListener('change', e => { groups.flows.visible = e.target.checked; });
+$('tPower').addEventListener('change', e => { groups.power.visible = e.target.checked; });
+$('tFuture').addEventListener('change', e => { groups.future.visible = e.target.checked; futureLabels.forEach(l => l.o.visible = e.target.checked); });
+$('tLabels').addEventListener('change', e => { groups.labels.visible = e.target.checked; });
+let animate = !reduceMotion;
+$('tAnim').checked = animate;
+$('tAnim').addEventListener('change', e => { animate = e.target.checked; });
+applyCut(true);
+
+/* ---------- label declutter: hide lower-priority labels that overlap a placed one ---------- */
+function declutter() {
+  const placed = [];
+  const sorted = labels.filter(l => {
+    const on = l.o.visible && l.o.parent.visible && (!labelSet || labelSet.includes(l.key));
+    if (!on) l.el.style.visibility = 'hidden';
+    return on;
+  }).sort((a, b) => a.prio - b.prio);
+  const vr = host.getBoundingClientRect();
+  for (const l of sorted) {
+    const box = l.el.firstElementChild?.getBoundingClientRect?.() || l.el.getBoundingClientRect();
+    const r = { x0: box.left, x1: box.right, y0: box.top, y1: box.bottom };
+    const off = r.x0 < vr.left || r.x1 > vr.right || r.y0 < vr.top || r.y1 > vr.bottom;
+    const hit = placed.some(p => r.x0 < p.x1 + 4 && r.x1 > p.x0 - 4 && r.y0 < p.y1 + 3 && r.y1 > p.y0 - 3);
+    l.el.style.visibility = hit || off ? 'hidden' : 'visible';
+    if (!hit && !off) placed.push(r);
+  }
+}
+
+/* ---------- loop ---------- */
+function resize() {
+  const r = host.getBoundingClientRect();
+  renderer.setSize(r.width, r.height, false);
+  renderer.domElement.style.width = '100%'; renderer.domElement.style.height = '100%';
+  labelRenderer.setSize(r.width, r.height);
+  camera.aspect = r.width / Math.max(r.height, 1); camera.updateProjectionMatrix();
+}
+new ResizeObserver(resize).observe(host);
+resize();
+setView(params.get('view') || 'iso', true);
+document.getElementById('loading').remove();
+
+let frameN = 0;
+function frame(now) {
+  if (tween) {
+    const k = Math.min((now - tween.t0) / 900, 1), e = k < .5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2;
+    camera.position.lerpVectors(tween.from.p, tween.to.p, e); controls.target.lerpVectors(tween.from.t, tween.to.t, e);
+    if (k === 1) tween = null;
+  }
+  controls.update();
+  updateParticles(animate ? now / 1000 : 2.0);
+  renderer.render(scene, camera);
+  labelRenderer.render(scene, camera);
+  if (frameN++ % 6 === 0) declutter();
+  if (frameN === 12) document.body.dataset.ready = '1';
+  if (SHOT && frameN > 14) return; // still renders: stop the loop so the capture is cheap
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

@@ -1,0 +1,204 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1800 1060" width="1800" height="1060" font-family="Barlow Semi Condensed, Arial Narrow, Arial, sans-serif">
+<rect width="1800" height="1060" fill="#101418"/>
+<defs><marker id="a-bg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#101418"/></marker><marker id="a-panel" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#141a1f"/></marker><marker id="a-line" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#2a333c"/></marker><marker id="a-fg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#e6ecf0"/></marker><marker id="a-muted" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#93a3b0"/></marker><marker id="a-dim" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#ffc65c"/></marker><marker id="a-s1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#a07a46"/></marker><marker id="a-s2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#a77df0"/></marker><marker id="a-s3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#3fd0b0"/></marker><marker id="a-s4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#4fa8ff"/></marker><marker id="a-s8" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#8a6a46"/></marker><marker id="a-bio" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#7ccf45"/></marker><marker id="a-prod" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#ffc65c"/></marker><marker id="a-ret" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#6fa3a0"/></marker></defs>
+<text x="40" y="52" fill="#e6ecf0" font-size="30" font-weight="700">DW-200 Duckweed Treatment Pod · Process Flow Diagram · Rev C</text>
+<text x="40" y="80" fill="#93a3b0" font-size="15" font-family="IBM Plex Mono, monospace">Design case: screened dairy parlor wash water, 2 grow trailers in series (lead → polish), design yield 7.0 g DW/m²/d. Numbers from model/mass_balance.py</text>
+<rect x="30" y="110" width="300" height="400" fill="none" stroke="#2a333c" stroke-dasharray="6 5" rx="6"/>
+<text x="42" y="132" fill="#93a3b0" font-size="13" font-weight="700" letter-spacing="1.5">SOURCE (HOST SITE)</text>
+<rect x="350" y="110" width="640" height="400" fill="none" stroke="#2a333c" stroke-dasharray="6 5" rx="6"/>
+<text x="362" y="132" fill="#93a3b0" font-size="13" font-weight="700" letter-spacing="1.5">PM-1 · BAY A · PRETREATMENT &amp; DOSING</text>
+<rect x="1010" y="110" width="760" height="400" fill="none" stroke="#2a333c" stroke-dasharray="6 5" rx="6"/>
+<text x="1022" y="132" fill="#93a3b0" font-size="13" font-weight="700" letter-spacing="1.5">GROW TRAILERS · LEAD → POLISH IN SERIES</text>
+<rect x="350" y="540" width="1420" height="215" fill="none" stroke="#2a333c" stroke-dasharray="6 5" rx="6"/>
+<text x="362" y="745" fill="#93a3b0" font-size="13" font-weight="700" letter-spacing="1.5">HARVEST, CONCENTRATION &amp; PRODUCT (TRAILER REAR BAY → PM-1 BAY C)</text>
+<rect x="60" y="170" width="240" height="100" fill="#141a1f" stroke="#a07a46" stroke-width="1.6" rx="4"/>
+<text x="180.0" y="192" text-anchor="middle" fill="#ffc65c" font-size="12.5" font-family="IBM Plex Mono, monospace" font-weight="600">SRC</text>
+<text x="180.0" y="213" text-anchor="middle" fill="#e6ecf0" font-size="16" font-weight="600">Wastewater source</text>
+<text x="180.0" y="232" text-anchor="middle" fill="#93a3b0" font-size="12.5" font-family="IBM Plex Mono, monospace">lagoon / parlor sump</text>
+<text x="180.0" y="248" text-anchor="middle" fill="#93a3b0" font-size="12.5" font-family="IBM Plex Mono, monospace">TN 120 · TP 25 mg/L</text>
+<rect x="60" y="330" width="240" height="100" fill="#141a1f" stroke="#e6ecf0" stroke-width="1.6" rx="4"/>
+<text x="180.0" y="352" text-anchor="middle" fill="#ffc65c" font-size="12.5" font-family="IBM Plex Mono, monospace" font-weight="600">P-001</text>
+<text x="180.0" y="373" text-anchor="middle" fill="#e6ecf0" font-size="16" font-weight="600">Intake pump + float</text>
+<text x="180.0" y="392" text-anchor="middle" fill="#93a3b0" font-size="12.5" font-family="IBM Plex Mono, monospace">⅓ hp · heat-traced 1½&quot; line</text>
+<rect x="380" y="170" width="170" height="110" fill="#141a1f" stroke="#e6ecf0" stroke-width="1.6" rx="4"/>
+<text x="465.0" y="192" text-anchor="middle" fill="#ffc65c" font-size="12.5" font-family="IBM Plex Mono, monospace" font-weight="600">SC-101</text>
+<text x="465.0" y="213" text-anchor="middle" fill="#e6ecf0" font-size="16" font-weight="600">Wedge-wire sieve</text>
+<text x="465.0" y="232" text-anchor="middle" fill="#93a3b0" font-size="12.5" font-family="IBM Plex Mono, monospace">0.5 mm</text>
+<rect x="580" y="170" width="170" height="110" fill="#141a1f" stroke="#e6ecf0" stroke-width="1.6" rx="4"/>
+<text x="665.0" y="192" text-anchor="middle" fill="#ffc65c" font-size="12.5" font-family="IBM Plex Mono, monospace" font-weight="600">TK-101</text>
+<text x="665.0" y="213" text-anchor="middle" fill="#e6ecf0" font-size="16" font-weight="600">Settler 550 gal</text>
+<text x="665.0" y="232" text-anchor="middle" fill="#93a3b0" font-size="12.5" font-family="IBM Plex Mono, monospace">cone bottom</text>
+<text x="665.0" y="248" text-anchor="middle" fill="#93a3b0" font-size="12.5" font-family="IBM Plex Mono, monospace">weekly sludge draw</text>
+<rect x="780" y="170" width="180" height="110" fill="#141a1f" stroke="#e6ecf0" stroke-width="1.6" rx="4"/>
+<text x="870.0" y="192" text-anchor="middle" fill="#ffc65c" font-size="12.5" font-family="IBM Plex Mono, monospace" font-weight="600">TK-102</text>
+<text x="870.0" y="213" text-anchor="middle" fill="#e6ecf0" font-size="16" font-weight="600">Aerated EQ 550 gal</text>
+<text x="870.0" y="232" text-anchor="middle" fill="#93a3b0" font-size="12.5" font-family="IBM Plex Mono, monospace">MBBR media · 80 L/min</text>
+<text x="870.0" y="248" text-anchor="middle" fill="#93a3b0" font-size="12.5" font-family="IBM Plex Mono, monospace">BOD −70–85%</text>
+<rect x="780" y="340" width="180" height="110" fill="#141a1f" stroke="#e6ecf0" stroke-width="1.6" rx="4"/>
+<text x="870.0" y="362" text-anchor="middle" fill="#ffc65c" font-size="12.5" font-family="IBM Plex Mono, monospace" font-weight="600">TK-103</text>
+<text x="870.0" y="383" text-anchor="middle" fill="#e6ecf0" font-size="16" font-weight="600">Feed tank 300 gal</text>
+<text x="870.0" y="402" text-anchor="middle" fill="#93a3b0" font-size="12.5" font-family="IBM Plex Mono, monospace">NH₄/NO₃ ISE · pH</text>
+<rect x="560" y="340" width="190" height="110" fill="#141a1f" stroke="#e6ecf0" stroke-width="1.6" rx="4"/>
+<text x="655.0" y="362" text-anchor="middle" fill="#ffc65c" font-size="12.5" font-family="IBM Plex Mono, monospace" font-weight="600">P-201/202</text>
+<text x="655.0" y="383" text-anchor="middle" fill="#e6ecf0" font-size="16" font-weight="600">Dosing pumps</text>
+<text x="655.0" y="402" text-anchor="middle" fill="#93a3b0" font-size="12.5" font-family="IBM Plex Mono, monospace">peristaltic 0–2 L/min</text>
+<text x="655.0" y="418" text-anchor="middle" fill="#93a3b0" font-size="12.5" font-family="IBM Plex Mono, monospace">on NH₄-N demand</text>
+<rect x="1050" y="170" width="300" height="150" fill="#141a1f" stroke="#3fd0b0" stroke-width="1.6" rx="4"/>
+<text x="1200.0" y="192" text-anchor="middle" fill="#ffc65c" font-size="12.5" font-family="IBM Plex Mono, monospace" font-weight="600">GT-1 · LEAD</text>
+<text x="1200.0" y="213" text-anchor="middle" fill="#e6ecf0" font-size="16" font-weight="600">16 runs × 8 tiers · 178 m²</text>
+<text x="1200.0" y="232" text-anchor="middle" fill="#93a3b0" font-size="12.5" font-family="IBM Plex Mono, monospace">NH₄-N held 15–25 mg/L</text>
+<text x="1200.0" y="248" text-anchor="middle" fill="#93a3b0" font-size="12.5" font-family="IBM Plex Mono, monospace">130 µmol/m²/s · 20 h</text>
+<text x="1200.0" y="264" text-anchor="middle" fill="#93a3b0" font-size="12.5" font-family="IBM Plex Mono, monospace">uptake ≈ 69 g N/d</text>
+<rect x="1430" y="170" width="300" height="150" fill="#141a1f" stroke="#4fa8ff" stroke-width="1.6" rx="4"/>
+<text x="1580.0" y="192" text-anchor="middle" fill="#ffc65c" font-size="12.5" font-family="IBM Plex Mono, monospace" font-weight="600">GT-2 · POLISH</text>
+<text x="1580.0" y="213" text-anchor="middle" fill="#e6ecf0" font-size="16" font-weight="600">16 runs × 8 tiers · 178 m²</text>
+<text x="1580.0" y="232" text-anchor="middle" fill="#93a3b0" font-size="12.5" font-family="IBM Plex Mono, monospace">releases at TN &lt; 10 mg/L</text>
+<text x="1580.0" y="248" text-anchor="middle" fill="#93a3b0" font-size="12.5" font-family="IBM Plex Mono, monospace">uptake ≈ 69 g N/d</text>
+<rect x="1430" y="380" width="300" height="100" fill="#141a1f" stroke="#4fa8ff" stroke-width="1.6" rx="4"/>
+<text x="1580.0" y="402" text-anchor="middle" fill="#ffc65c" font-size="12.5" font-family="IBM Plex Mono, monospace" font-weight="600">TK-301</text>
+<text x="1580.0" y="423" text-anchor="middle" fill="#e6ecf0" font-size="16" font-weight="600">Treated effluent 3,000 gal</text>
+<text x="1580.0" y="442" text-anchor="middle" fill="#93a3b0" font-size="12.5" font-family="IBM Plex Mono, monospace">insulated · heat-traced</text>
+<text x="1580.0" y="458" text-anchor="middle" fill="#93a3b0" font-size="12.5" font-family="IBM Plex Mono, monospace">→ irrigation / NMP</text>
+<rect x="1050" y="380" width="300" height="100" fill="#141a1f" stroke="#e6ecf0" stroke-width="1.6" rx="4"/>
+<text x="1200.0" y="402" text-anchor="middle" fill="#ffc65c" font-size="12.5" font-family="IBM Plex Mono, monospace" font-weight="600">HVAC</text>
+<text x="1200.0" y="423" text-anchor="middle" fill="#e6ecf0" font-size="16" font-weight="600">Heat pump + HRV + dehum.</text>
+<text x="1200.0" y="442" text-anchor="middle" fill="#93a3b0" font-size="12.5" font-family="IBM Plex Mono, monospace">condensate 223 L/d → return tank</text>
+<rect x="380" y="580" width="170" height="130" fill="#141a1f" stroke="#e6ecf0" stroke-width="1.6" rx="4"/>
+<text x="465.0" y="602" text-anchor="middle" fill="#ffc65c" font-size="12.5" font-family="IBM Plex Mono, monospace" font-weight="600">CV-1…16</text>
+<text x="465.0" y="623" text-anchor="middle" fill="#e6ecf0" font-size="16" font-weight="600">Flush-grid conveyors</text>
+<text x="465.0" y="642" text-anchor="middle" fill="#93a3b0" font-size="12.5" font-family="IBM Plex Mono, monospace">harvest ⅔ of run</text>
+<text x="465.0" y="658" text-anchor="middle" fill="#93a3b0" font-size="12.5" font-family="IBM Plex Mono, monospace">3–4 runs/day/trailer</text>
+<rect x="590" y="580" width="170" height="130" fill="#141a1f" stroke="#e6ecf0" stroke-width="1.6" rx="4"/>
+<text x="675.0" y="602" text-anchor="middle" fill="#ffc65c" font-size="12.5" font-family="IBM Plex Mono, monospace" font-weight="600">VS-1</text>
+<text x="675.0" y="623" text-anchor="middle" fill="#e6ecf0" font-size="16" font-weight="600">Vibratory screen</text>
+<text x="675.0" y="642" text-anchor="middle" fill="#93a3b0" font-size="12.5" font-family="IBM Plex Mono, monospace">60 mesh · 5.5% DS</text>
+<text x="675.0" y="658" text-anchor="middle" fill="#93a3b0" font-size="12.5" font-family="IBM Plex Mono, monospace">underflow → return</text>
+<rect x="800" y="580" width="170" height="130" fill="#141a1f" stroke="#e6ecf0" stroke-width="1.6" rx="4"/>
+<text x="885.0" y="602" text-anchor="middle" fill="#ffc65c" font-size="12.5" font-family="IBM Plex Mono, monospace" font-weight="600">BIN</text>
+<text x="885.0" y="623" text-anchor="middle" fill="#e6ecf0" font-size="16" font-weight="600">Lidded bins + cart</text>
+<text x="885.0" y="642" text-anchor="middle" fill="#93a3b0" font-size="12.5" font-family="IBM Plex Mono, monospace">≈ 46 kg/d</text>
+<text x="885.0" y="658" text-anchor="middle" fill="#93a3b0" font-size="12.5" font-family="IBM Plex Mono, monospace">one trip daily</text>
+<rect x="1010" y="580" width="170" height="130" fill="#141a1f" stroke="#e6ecf0" stroke-width="1.6" rx="4"/>
+<text x="1095.0" y="602" text-anchor="middle" fill="#ffc65c" font-size="12.5" font-family="IBM Plex Mono, monospace" font-weight="600">DR-301</text>
+<text x="1095.0" y="623" text-anchor="middle" fill="#e6ecf0" font-size="16" font-weight="600">Heat-pump dryer</text>
+<text x="1095.0" y="642" text-anchor="middle" fill="#93a3b0" font-size="12.5" font-family="IBM Plex Mono, monospace">50–55 °C · SMER 2.5</text>
+<text x="1095.0" y="658" text-anchor="middle" fill="#93a3b0" font-size="12.5" font-family="IBM Plex Mono, monospace">≈ 19 kWh/d (pod)</text>
+<rect x="1220" y="580" width="160" height="130" fill="#141a1f" stroke="#e6ecf0" stroke-width="1.6" rx="4"/>
+<text x="1300.0" y="602" text-anchor="middle" fill="#ffc65c" font-size="12.5" font-family="IBM Plex Mono, monospace" font-weight="600">HM / PM</text>
+<text x="1300.0" y="623" text-anchor="middle" fill="#e6ecf0" font-size="16" font-weight="600">Mill · pellet mill</text>
+<text x="1300.0" y="642" text-anchor="middle" fill="#93a3b0" font-size="12.5" font-family="IBM Plex Mono, monospace">3 mm · 6 mm die</text>
+<text x="1300.0" y="658" text-anchor="middle" fill="#93a3b0" font-size="12.5" font-family="IBM Plex Mono, monospace">weekly batch</text>
+<rect x="1420" y="580" width="160" height="130" fill="#141a1f" stroke="#e6ecf0" stroke-width="1.6" rx="4"/>
+<text x="1500.0" y="602" text-anchor="middle" fill="#ffc65c" font-size="12.5" font-family="IBM Plex Mono, monospace" font-weight="600">BAG</text>
+<text x="1500.0" y="623" text-anchor="middle" fill="#e6ecf0" font-size="16" font-weight="600">Bag &amp; label</text>
+<text x="1500.0" y="642" text-anchor="middle" fill="#93a3b0" font-size="12.5" font-family="IBM Plex Mono, monospace">25 lb · lot-coded</text>
+<text x="1500.0" y="658" text-anchor="middle" fill="#93a3b0" font-size="12.5" font-family="IBM Plex Mono, monospace">QA per lot</text>
+<rect x="1610" y="580" width="140" height="130" fill="#141a1f" stroke="#ffc65c" stroke-width="1.6" rx="4"/>
+<text x="1680.0" y="602" text-anchor="middle" fill="#ffc65c" font-size="12.5" font-family="IBM Plex Mono, monospace" font-weight="600">PRODUCT</text>
+<text x="1680.0" y="623" text-anchor="middle" fill="#e6ecf0" font-size="16" font-weight="600">Dry 5-2-3 meal</text>
+<text x="1680.0" y="642" text-anchor="middle" fill="#93a3b0" font-size="12.5" font-family="IBM Plex Mono, monospace">2.8 kg/d</text>
+<text x="1680.0" y="658" text-anchor="middle" fill="#93a3b0" font-size="12.5" font-family="IBM Plex Mono, monospace">1.0–1.2 t/yr</text>
+<path d="M180,270 L180,330" fill="none" stroke="#a07a46" stroke-width="3"  marker-end="url(#a-s1)"/>
+<path d="M300,380 L340,380 L340,225 L380,225" fill="none" stroke="#a07a46" stroke-width="3"  marker-end="url(#a-s1)"/>
+<rect x="326.8" y="289" width="26.4" height="20" rx="3" fill="#a07a46"/>
+<text x="340" y="304" text-anchor="middle" fill="#0c0f12" font-size="12.5" font-weight="700" font-family="IBM Plex Mono, monospace">S1</text>
+<path d="M550,225 L580,225" fill="none" stroke="#a07a46" stroke-width="3"  marker-end="url(#a-s1)"/>
+<path d="M750,225 L780,225" fill="none" stroke="#a07a46" stroke-width="3"  marker-end="url(#a-s1)"/>
+<path d="M870,280 L870,340" fill="none" stroke="#a77df0" stroke-width="3"  marker-end="url(#a-s2)"/>
+<path d="M780,395 L750,395" fill="none" stroke="#a77df0" stroke-width="3"  marker-end="url(#a-s2)"/>
+<path d="M655,340 L655,310 L1000,310 L1000,245 L1050,245" fill="none" stroke="#a77df0" stroke-width="3"  marker-end="url(#a-s2)"/>
+<rect x="669.8" y="299" width="190.39999999999998" height="20" rx="3" fill="#a77df0"/>
+<text x="765" y="314" text-anchor="middle" fill="#0c0f12" font-size="12.5" font-weight="700" font-family="IBM Plex Mono, monospace">S2  1.25 m³/d · TN 120</text>
+<path d="M1350,245 L1430,245" fill="none" stroke="#3fd0b0" stroke-width="3"  marker-end="url(#a-s3)"/>
+<rect x="1344.0" y="211" width="92.0" height="20" rx="3" fill="#3fd0b0"/>
+<text x="1390" y="226" text-anchor="middle" fill="#0c0f12" font-size="12.5" font-weight="700" font-family="IBM Plex Mono, monospace">S3 · TN 65</text>
+<path d="M1520,320 L1520,380" fill="none" stroke="#4fa8ff" stroke-width="3"  marker-end="url(#a-s4)"/>
+<rect x="1532.0" y="341" width="92.0" height="20" rx="3" fill="#4fa8ff"/>
+<text x="1578" y="356" text-anchor="middle" fill="#0c0f12" font-size="12.5" font-weight="700" font-family="IBM Plex Mono, monospace">S4 · TN 10</text>
+<path d="M1580,480 L1580,512" fill="none" stroke="#4fa8ff" stroke-width="3"  marker-end="url(#a-s4)"/>
+<text x="1592" y="508" text-anchor="start" fill="#4fa8ff" font-size="12.5" font-family="IBM Plex Mono, monospace">to land application</text>
+<path d="M665,280 L665,300 L520,300 L520,480 L230,480 L230,440" fill="none" stroke="#8a6a46" stroke-width="3"  marker-end="url(#a-s8)"/>
+<rect x="388.1" y="469" width="83.8" height="20" rx="3" fill="#8a6a46"/>
+<text x="430" y="484" text-anchor="middle" fill="#0c0f12" font-size="12.5" font-weight="700" font-family="IBM Plex Mono, monospace">S8 sludge</text>
+<path d="M1200,380 L1200,320" fill="none" stroke="#6fa3a0" stroke-width="3"  marker-end="url(#a-ret)"/>
+<rect x="1211.8" y="341" width="26.4" height="20" rx="3" fill="#6fa3a0"/>
+<text x="1225" y="356" text-anchor="middle" fill="#0c0f12" font-size="12.5" font-weight="700" font-family="IBM Plex Mono, monospace">S5</text>
+<path d="M1070,320 L1070,350 L1010,350 L1010,525 L465,525 L465,580" fill="none" stroke="#7ccf45" stroke-width="3" stroke-dasharray="9 6" marker-end="url(#a-bio)"/>
+<path d="M1640,320 L1640,350 L1745,350 L1745,525 L1010,525" fill="none" stroke="#7ccf45" stroke-width="3" stroke-dasharray="9 6" marker-end="url(#a-bio)"/>
+<path d="M550,645 L590,645" fill="none" stroke="#7ccf45" stroke-width="3" stroke-dasharray="9 6" marker-end="url(#a-bio)"/>
+<path d="M760,645 L800,645" fill="none" stroke="#7ccf45" stroke-width="3" stroke-dasharray="9 6" marker-end="url(#a-bio)"/>
+<rect x="766.8" y="611" width="26.4" height="20" rx="3" fill="#7ccf45"/>
+<text x="780" y="626" text-anchor="middle" fill="#0c0f12" font-size="12.5" font-weight="700" font-family="IBM Plex Mono, monospace">S6</text>
+<path d="M970,645 L1010,645" fill="none" stroke="#7ccf45" stroke-width="3" stroke-dasharray="9 6" marker-end="url(#a-bio)"/>
+<path d="M1180,645 L1220,645" fill="none" stroke="#ffc65c" stroke-width="3" stroke-dasharray="9 6" marker-end="url(#a-prod)"/>
+<path d="M1380,645 L1420,645" fill="none" stroke="#ffc65c" stroke-width="3" stroke-dasharray="9 6" marker-end="url(#a-prod)"/>
+<path d="M1580,645 L1610,645" fill="none" stroke="#ffc65c" stroke-width="3" stroke-dasharray="9 6" marker-end="url(#a-prod)"/>
+<rect x="1581.8" y="611" width="26.4" height="20" rx="3" fill="#ffc65c"/>
+<text x="1595" y="626" text-anchor="middle" fill="#0c0f12" font-size="12.5" font-weight="700" font-family="IBM Plex Mono, monospace">S7</text>
+<path d="M675,710 L675,721 L990,721 L990,465 L1050,465" fill="none" stroke="#6fa3a0" stroke-width="3"  marker-end="url(#a-ret)"/>
+<rect x="702.0" y="710" width="255.99999999999997" height="20" rx="3" fill="#6fa3a0"/>
+<text x="830" y="725" text-anchor="middle" fill="#0c0f12" font-size="12.5" font-weight="700" font-family="IBM Plex Mono, monospace">screen underflow → return tank</text>
+<rect x="30" y="770" width="1740" height="270" fill="#141a1f" stroke="#2a333c" rx="6"/>
+<text x="50" y="800" fill="#93a3b0" font-size="12.5" font-weight="700" letter-spacing="1.2">#</text>
+<text x="110" y="800" fill="#93a3b0" font-size="12.5" font-weight="700" letter-spacing="1.2">DESCRIPTION</text>
+<text x="560" y="800" fill="#93a3b0" font-size="12.5" font-weight="700" letter-spacing="1.2">FLOW</text>
+<text x="820" y="800" fill="#93a3b0" font-size="12.5" font-weight="700" letter-spacing="1.2">TN</text>
+<text x="960" y="800" fill="#93a3b0" font-size="12.5" font-weight="700" letter-spacing="1.2">TP</text>
+<text x="1100" y="800" fill="#93a3b0" font-size="12.5" font-weight="700" letter-spacing="1.2">NOTES</text>
+<line x1="40" x2="1760" y1="810" y2="810" stroke="#2a333c"/>
+<rect x="50" y="815" width="40" height="18" rx="3" fill="#a07a46"/><text x="70" y="829" text-anchor="middle" fill="#0c0f12" font-size="12" font-weight="700" font-family="IBM Plex Mono, monospace">S1</text>
+<text x="110" y="829" fill="#e6ecf0" font-size="13.5" font-family="Barlow Semi Condensed, Arial Narrow, Arial, sans-serif">Raw wastewater to sieve</text>
+<text x="560" y="829" fill="#e6ecf0" font-size="13.5" font-family="IBM Plex Mono, monospace">1.29 m³/d</text>
+<text x="820" y="829" fill="#e6ecf0" font-size="13.5" font-family="IBM Plex Mono, monospace">120 mg/L</text>
+<text x="960" y="829" fill="#e6ecf0" font-size="13.5" font-family="IBM Plex Mono, monospace">25 mg/L</text>
+<text x="1100" y="829" fill="#93a3b0" font-size="13.5" font-family="Barlow Semi Condensed, Arial Narrow, Arial, sans-serif">includes ~3% sludge purge</text>
+<line x1="40" x2="1760" y1="836" y2="836" stroke="#2a333c"/>
+<rect x="50" y="841" width="40" height="18" rx="3" fill="#a77df0"/><text x="70" y="855" text-anchor="middle" fill="#0c0f12" font-size="12" font-weight="700" font-family="IBM Plex Mono, monospace">S2</text>
+<text x="110" y="855" fill="#e6ecf0" font-size="13.5" font-family="Barlow Semi Condensed, Arial Narrow, Arial, sans-serif">Pretreated feed, dosed to GT-1</text>
+<text x="560" y="855" fill="#e6ecf0" font-size="13.5" font-family="IBM Plex Mono, monospace">1.25 m³/d · 331 gal/d</text>
+<text x="820" y="855" fill="#e6ecf0" font-size="13.5" font-family="IBM Plex Mono, monospace">120 mg/L</text>
+<text x="960" y="855" fill="#e6ecf0" font-size="13.5" font-family="IBM Plex Mono, monospace">25 mg/L</text>
+<text x="1100" y="855" fill="#93a3b0" font-size="13.5" font-family="Barlow Semi Condensed, Arial Narrow, Arial, sans-serif">BOD cut 70–85% in aerated EQ; partial nitrification</text>
+<line x1="40" x2="1760" y1="862" y2="862" stroke="#2a333c"/>
+<rect x="50" y="867" width="40" height="18" rx="3" fill="#3fd0b0"/><text x="70" y="881" text-anchor="middle" fill="#0c0f12" font-size="12" font-weight="700" font-family="IBM Plex Mono, monospace">S3</text>
+<text x="110" y="881" fill="#e6ecf0" font-size="13.5" font-family="Barlow Semi Condensed, Arial Narrow, Arial, sans-serif">GT-1 rear-weir bleed → GT-2</text>
+<text x="560" y="881" fill="#e6ecf0" font-size="13.5" font-family="IBM Plex Mono, monospace">1.25 m³/d</text>
+<text x="820" y="881" fill="#e6ecf0" font-size="13.5" font-family="IBM Plex Mono, monospace">65 mg/L</text>
+<text x="960" y="881" fill="#e6ecf0" font-size="13.5" font-family="IBM Plex Mono, monospace">16 mg/L</text>
+<text x="1100" y="881" fill="#93a3b0" font-size="13.5" font-family="Barlow Semi Condensed, Arial Narrow, Arial, sans-serif">drawn only while GT-1 doses</text>
+<line x1="40" x2="1760" y1="888" y2="888" stroke="#2a333c"/>
+<rect x="50" y="893" width="40" height="18" rx="3" fill="#4fa8ff"/><text x="70" y="907" text-anchor="middle" fill="#0c0f12" font-size="12" font-weight="700" font-family="IBM Plex Mono, monospace">S4</text>
+<text x="110" y="907" fill="#e6ecf0" font-size="13.5" font-family="Barlow Semi Condensed, Arial Narrow, Arial, sans-serif">Treated effluent</text>
+<text x="560" y="907" fill="#e6ecf0" font-size="13.5" font-family="IBM Plex Mono, monospace">1.25 m³/d</text>
+<text x="820" y="907" fill="#e6ecf0" font-size="13.5" font-family="IBM Plex Mono, monospace">10 mg/L</text>
+<text x="960" y="907" fill="#e6ecf0" font-size="13.5" font-family="IBM Plex Mono, monospace">7 mg/L</text>
+<text x="1100" y="907" fill="#93a3b0" font-size="13.5" font-family="Barlow Semi Condensed, Arial Narrow, Arial, sans-serif">P in excess of uptake: optional iron-media polish</text>
+<line x1="40" x2="1760" y1="914" y2="914" stroke="#2a333c"/>
+<rect x="50" y="919" width="40" height="18" rx="3" fill="#6fa3a0"/><text x="70" y="933" text-anchor="middle" fill="#0c0f12" font-size="12" font-weight="700" font-family="IBM Plex Mono, monospace">S5</text>
+<text x="110" y="933" fill="#e6ecf0" font-size="13.5" font-family="Barlow Semi Condensed, Arial Narrow, Arial, sans-serif">Condensate, each trailer</text>
+<text x="560" y="933" fill="#e6ecf0" font-size="13.5" font-family="IBM Plex Mono, monospace">223 L/d</text>
+<text x="820" y="933" fill="#e6ecf0" font-size="13.5" font-family="IBM Plex Mono, monospace">~0</text>
+<text x="960" y="933" fill="#e6ecf0" font-size="13.5" font-family="IBM Plex Mono, monospace">~0</text>
+<text x="1100" y="933" fill="#93a3b0" font-size="13.5" font-family="Barlow Semi Condensed, Arial Narrow, Arial, sans-serif">returned to own return tank (internal)</text>
+<line x1="40" x2="1760" y1="940" y2="940" stroke="#2a333c"/>
+<rect x="50" y="945" width="40" height="18" rx="3" fill="#7ccf45"/><text x="70" y="959" text-anchor="middle" fill="#0c0f12" font-size="12" font-weight="700" font-family="IBM Plex Mono, monospace">S6</text>
+<text x="110" y="959" fill="#e6ecf0" font-size="13.5" font-family="Barlow Semi Condensed, Arial Narrow, Arial, sans-serif">Drained biomass → dryer</text>
+<text x="560" y="959" fill="#e6ecf0" font-size="13.5" font-family="IBM Plex Mono, monospace">46 kg/d</text>
+<text x="820" y="959" fill="#e6ecf0" font-size="13.5" font-family="IBM Plex Mono, monospace">5.5% DS</text>
+<text x="960" y="959" fill="#e6ecf0" font-size="13.5" font-family="IBM Plex Mono, monospace"></text>
+<text x="1100" y="959" fill="#93a3b0" font-size="13.5" font-family="Barlow Semi Condensed, Arial Narrow, Arial, sans-serif">no press: all captured N/P stays in product</text>
+<line x1="40" x2="1760" y1="966" y2="966" stroke="#2a333c"/>
+<rect x="50" y="971" width="40" height="18" rx="3" fill="#ffc65c"/><text x="70" y="985" text-anchor="middle" fill="#0c0f12" font-size="12" font-weight="700" font-family="IBM Plex Mono, monospace">S7</text>
+<text x="110" y="985" fill="#e6ecf0" font-size="13.5" font-family="Barlow Semi Condensed, Arial Narrow, Arial, sans-serif">Dry product</text>
+<text x="560" y="985" fill="#e6ecf0" font-size="13.5" font-family="IBM Plex Mono, monospace">2.8 kg/d · 1.0–1.2 t/yr</text>
+<text x="820" y="985" fill="#e6ecf0" font-size="13.5" font-family="IBM Plex Mono, monospace">5.0% N</text>
+<text x="960" y="985" fill="#e6ecf0" font-size="13.5" font-family="IBM Plex Mono, monospace">0.81% P</text>
+<text x="1100" y="985" fill="#93a3b0" font-size="13.5" font-family="Barlow Semi Condensed, Arial Narrow, Arial, sans-serif">≈ 5-2-3 · 90% DS</text>
+<line x1="40" x2="1760" y1="992" y2="992" stroke="#2a333c"/>
+<rect x="50" y="997" width="40" height="18" rx="3" fill="#8a6a46"/><text x="70" y="1011" text-anchor="middle" fill="#0c0f12" font-size="12" font-weight="700" font-family="IBM Plex Mono, monospace">S8</text>
+<text x="110" y="1011" fill="#e6ecf0" font-size="13.5" font-family="Barlow Semi Condensed, Arial Narrow, Arial, sans-serif">Settled sludge → source</text>
+<text x="560" y="1011" fill="#e6ecf0" font-size="13.5" font-family="IBM Plex Mono, monospace">≈ 40 L/d</text>
+<text x="820" y="1011" fill="#e6ecf0" font-size="13.5" font-family="IBM Plex Mono, monospace"></text>
+<text x="960" y="1011" fill="#e6ecf0" font-size="13.5" font-family="IBM Plex Mono, monospace"></text>
+<text x="1100" y="1011" fill="#93a3b0" font-size="13.5" font-family="Barlow Semi Condensed, Arial Narrow, Arial, sans-serif">weekly draw from TK-101 cone</text>
+</svg>
