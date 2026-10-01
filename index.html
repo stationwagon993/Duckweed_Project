@@ -3,59 +3,59 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
 <style>
-/* Layout: full-bleed CAD viewport; drawing title block top-left, view tabs top-right, layer controls bottom-left, design data bottom-right. Single dark viewport look. */
+/* Layout: header strip (title block + view tabs), then three columns: layers | 3D viewport | design data & BOM. Labels are clipped to the viewport, so they never sit on a panel. Single dark CAD look. */
 :root{
   color-scheme: dark;
-  --bg:#101418;
-  --panel:rgba(17,22,27,.88);
-  --line:#2a333c;
-  --fg:#e6ecf0;
-  --muted:#93a3b0;
-  --dim:#ffc65c;
-  --lead:#7fd4c1;
-  --accent:#7fd4c1;
-  --warn:#ff9d6b;
+  --bg:#101418; --panel:#141a1f; --line:#2a333c; --fg:#e6ecf0; --muted:#93a3b0;
+  --dim:#ffc65c; --lead:#7fd4c1; --accent:#7fd4c1; --warn:#ff9d6b;
   --f-ui:"Barlow Semi Condensed","Arial Narrow",Arial,sans-serif;
   --f-data:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
 }
 html,body{height:100%}
 body{background:var(--bg);color:var(--fg);font-family:var(--f-ui);overflow:hidden}
-#app{position:relative;height:100%;width:100%;overflow:hidden}
-#gl,#labels{position:absolute;inset:0}
-#labels{pointer-events:none}
-.ov{position:absolute;z-index:5;background:var(--panel);border:1px solid var(--line);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
-.tb{top:calc(16px + env(safe-area-inset-top,0px));left:16px;max-width:min(380px,calc(100% - 32px));display:grid;grid-template-columns:auto 1fr;font-size:12px}
-.tb>div{padding:6px 10px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);min-width:0}
-.tb .name{grid-column:1/-1;font-size:20px;font-weight:700;letter-spacing:.01em;line-height:1.1;text-wrap:balance;padding:9px 10px 7px}
-.tb .k{color:var(--muted);text-transform:uppercase;letter-spacing:.09em;font-size:10.5px;font-weight:600}
-.tb .v{font-family:var(--f-data);font-size:11.5px;font-variant-numeric:tabular-nums}
-.views{top:calc(16px + env(safe-area-inset-top,0px));right:16px;display:flex;flex-wrap:wrap;justify-content:flex-end;max-width:min(560px,calc(100% - 32px));padding:4px;gap:4px}
-.views button{font:600 12px/1 var(--f-ui);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);background:transparent;border:1px solid transparent;padding:8px 10px;cursor:pointer}
-.views button:hover{color:var(--fg);border-color:var(--line)}
-.views button[aria-pressed="true"]{color:var(--bg);background:var(--accent)}
-button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid var(--dim);outline-offset:2px}
-details.ov>summary{list-style:none;cursor:pointer;padding:8px 12px;font-weight:700;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);display:flex;justify-content:space-between;gap:12px}
-details.ov>summary::-webkit-details-marker{display:none}
-details.ov>summary::after{content:"+";font-family:var(--f-data)}
-details.ov[open]>summary::after{content:"–"}
-.layers{left:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));width:min(250px,calc(100% - 32px))}
-.layers .body{padding:2px 12px 12px;display:grid;gap:7px;font-size:14px}
+#app{height:100%;display:grid;grid-template-rows:auto minmax(0,1fr)}
+.top{display:flex;flex-wrap:wrap;gap:10px 20px;align-items:center;justify-content:space-between;padding-block:10px;padding-inline:16px;border-bottom:1px solid var(--line);background:var(--panel)}
+.tb{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 16px;min-width:0}
+.tb .name{font-size:20px;font-weight:700;letter-spacing:.01em}
+.tb .v{font-family:var(--f-data);font-size:11.5px;color:var(--muted)}
+.views{display:flex;flex-wrap:wrap;gap:4px}
+.views button,.tabs button{font:600 12px/1 var(--f-ui);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);background:transparent;border:1px solid var(--line);padding:7px 9px;cursor:pointer}
+.views button:hover,.tabs button:hover{color:var(--fg)}
+.views button[aria-pressed="true"],.tabs button[aria-selected="true"]{color:var(--bg);background:var(--accent);border-color:var(--accent)}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--dim);outline-offset:2px}
+.main{display:grid;grid-template-columns:250px minmax(0,1fr) 380px;min-height:0}
+.side{min-height:0;overflow:auto;background:var(--panel)}
+.left{border-right:1px solid var(--line)}
+.right{border-left:1px solid var(--line);display:flex;flex-direction:column}
+.h{font-weight:700;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);padding:12px 14px 6px}
+.layers{padding:0 14px 14px;display:grid;gap:7px;font-size:14px}
 .layers label{display:flex;align-items:center;gap:8px;cursor:pointer}
 .layers input[type=checkbox]{accent-color:var(--accent);width:15px;height:15px}
 .sw{display:inline-block;width:10px;height:10px;border-radius:2px;background:var(--c);margin-left:2px}
-#scrMode{font:500 13px var(--f-ui);background:var(--bg);color:var(--fg);border:1px solid var(--line);padding:4px}
 .range{display:grid;gap:4px;margin-top:4px;padding-top:9px;border-top:1px solid var(--line)}
 .range .row{display:flex;justify-content:space-between;font-size:13px}
 .range output{font-family:var(--f-data);color:var(--dim)}
 .range input{width:100%;accent-color:var(--accent)}
+#scrMode{font:500 13px var(--f-ui);background:var(--bg);color:var(--fg);border:1px solid var(--line);padding:4px}
 .hint{color:var(--muted);font-size:12px;margin-top:2px}
-.specs{right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));width:min(330px,calc(100% - 32px));max-height:calc(100% - 200px);overflow:auto}
-.specs table{border-collapse:collapse;width:100%;font-size:13px}
-.specs td{padding:4px 12px;border-top:1px solid var(--line);vertical-align:top}
-.specs td:first-child{color:var(--muted);white-space:nowrap}
-.specs td:last-child{font-family:var(--f-data);font-size:11.5px;font-variant-numeric:tabular-nums;text-align:right}
-.specs .note{padding:8px 12px 12px;font-size:12.5px;line-height:1.4;color:var(--muted);border-top:1px solid var(--line)}
-.specs .note b{color:var(--warn);font-weight:600}
+#viewport{position:relative;min-width:0;min-height:0;overflow:hidden}
+#gl,#labels{position:absolute;inset:0}
+#labels{pointer-events:none}
+#leaders{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+#leaders line{stroke:var(--lead);stroke-width:1;opacity:.85}
+.tabs{display:flex;gap:4px;padding:10px 14px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--panel);z-index:2}
+.pane{padding:0 0 14px}
+.pane table{border-collapse:collapse;width:100%;font-size:13px}
+.pane td,.pane th{padding:5px 12px;border-top:1px solid var(--line);vertical-align:top;text-align:left}
+#data td:first-child{color:var(--muted);white-space:nowrap}
+#data td:last-child{font-family:var(--f-data);font-size:11.5px;font-variant-numeric:tabular-nums;text-align:right}
+.note{padding:10px 14px;font-size:12.5px;line-height:1.4;color:var(--muted)}
+.note b{color:var(--warn);font-weight:600}
+#bom th{font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);font-weight:600}
+#bom tr.grp td{background:#1a2128;color:var(--lead);font-weight:700;letter-spacing:.08em;text-transform:uppercase;font-size:11px}
+#bom td.n{font-family:var(--f-data);color:var(--muted);font-size:11px;width:1%}
+#bom td.q{font-family:var(--f-data);font-size:11px;white-space:nowrap;text-align:right}
+#bom td small{display:block;color:var(--muted);font-size:11.5px;line-height:1.3;margin-top:2px}
 /* annotations */
 .dim{font:500 11px/1 var(--f-data);color:var(--dim);background:rgba(12,15,18,.86);border:1px solid rgba(255,198,92,.5);padding:3px 5px;white-space:nowrap;font-variant-numeric:tabular-nums}
 .dim.sm{font-size:10px;padding:2px 4px}
@@ -64,91 +64,164 @@ details.ov[open]>summary::after{content:"–"}
 .dot{width:6px;height:6px;border-radius:50%;background:var(--lead);box-shadow:0 0 0 2px rgba(12,15,18,.8)}
 .sect{font:700 13px/1 var(--f-ui);letter-spacing:.14em;color:var(--dim);text-transform:uppercase;white-space:nowrap;background:rgba(12,15,18,.7);padding:4px 8px}
 #loading{position:absolute;inset:0;display:grid;place-items:center;color:var(--muted);font:500 12px var(--f-data);letter-spacing:.1em;z-index:1}
-@media (max-width:720px){
-  .tb{max-width:calc(100% - 32px)}
-  .tb .name{font-size:17px}
-  .tb .hide-sm{display:none}
-  .views{top:auto;bottom:calc(16px + env(safe-area-inset-bottom,0px));left:16px;right:16px;max-width:none;justify-content:flex-start;flex-wrap:nowrap;overflow-x:auto}
-  .views button{flex:0 0 auto}
-  .layers{bottom:calc(72px + env(safe-area-inset-bottom,0px))}
-  .specs{bottom:auto;top:calc(150px + env(safe-area-inset-top,0px));max-height:calc(100% - 300px)}
+@media (max-width:1100px){ .main{grid-template-columns:220px minmax(0,1fr) 320px} }
+@media (max-width:900px){
+  body{overflow:auto} #app{height:auto;display:block}
+  .main{display:flex;flex-direction:column}
+  #viewport{height:62vh;order:-1}
+  .side{overflow:visible} .left,.right{border:0;border-top:1px solid var(--line)}
   .co{font-size:10px}.co small{display:none}
 }
-@media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 
 <div id="app">
-  <div id="loading">LOADING MODEL…</div>
-  <div id="gl"></div>
-  <div id="labels"></div>
-
-  <header class="ov tb" aria-label="Drawing title block">
-    <div class="name">Duckweed Cultivation Trailer</div>
-    <div class="k">Dwg</div><div class="v">DW-100 · Rev A · Prototype arrangement</div>
-    <div class="k">Trailer</div><div class="v">53' reefer · 51'-6" × 8'-1½" × 8'-7" int.</div>
-    <div class="k hide-sm">Cultivation</div><div class="v hide-sm">16 runs · 40'-0" × 3'-0" · 2 across × 8 tiers</div>
-    <div class="k hide-sm">Units</div><div class="v hide-sm">ft-in · scale NTS · 2026-10-01</div>
-  </header>
-
-  <nav class="ov views" aria-label="Camera views">
-    <button type="button" data-view="iso" aria-pressed="true">Iso</button>
-    <button type="button" data-view="side">Side elev.</button>
-    <button type="button" data-view="plan">Plan</button>
-    <button type="button" data-view="section">Section A–A</button>
-    <button type="button" data-view="harvest">Harvest end</button>
-    <button type="button" data-view="process">Processing</button>
-    <button type="button" data-view="screen">Repop. screen</button>
-    <button type="button" data-view="water">Water loop</button>
-    <button type="button" data-view="elec">Electrical</button>
-    <button type="button" data-view="nose">Nose</button>
-  </nav>
-
-  <details class="ov layers" id="layersPanel" open>
-    <summary>Layers</summary>
-    <div class="body">
-      <label><input type="checkbox" id="tShell" checked> Trailer body &amp; chassis</label>
-      <label><input type="checkbox" id="tRoof" checked> Roof (transparent)</label>
-      <label><input type="checkbox" id="tLed" checked> LED grow lights on</label>
-      <label><input type="checkbox" id="tDims" checked> Dimensions</label>
-      <label><input type="checkbox" id="tCallouts" checked> Callouts</label>
-      <label><input type="checkbox" id="tAnim" checked> Animate flows</label>
-      <label><input type="checkbox" id="tWater"> Water flow overlay <span class="sw" style="--c:#4fc3ff"></span><span class="sw" style="--c:#8fe3d0"></span></label>
-      <div class="range">
-        <div class="row"><label for="scrMode">Repop. screen</label><output id="scrOut">down · holding</output></div>
-        <select id="scrMode"><option value="auto">Auto cycle</option><option value="down">Down (hold mat)</option><option value="up">Up (release mat)</option></select>
-      </div>
-      <label><input type="checkbox" id="tElec"> Electrical overlay <span class="sw" style="--c:#ff9a3c"></span><span class="sw" style="--c:#ff6fa0"></span></label>
-      <div class="range">
-        <div class="row"><label for="tiers">Tiers shown</label><output id="tiersOut" for="tiers">1–8</output></div>
-        <input type="range" id="tiers" min="1" max="8" step="1" value="8">
-      </div>
-      <div class="hint">Drag to orbit · scroll to zoom · right-drag to pan</div>
+  <header class="top">
+    <div class="tb">
+      <span class="name">Duckweed Cultivation Trailer</span>
+      <span class="v">DW-100 · Rev B · 53' reefer · 51'-6" × 8'-1½" × 8'-7" int. · 16 runs, 2 across × 8 tiers · ft-in · NTS</span>
     </div>
-  </details>
-
-  <details class="ov specs" id="specsPanel">
-    <summary>Design data</summary>
-    <table>
-      <tr><td>Runs</td><td>16 = 2 across × 8 tiers</td></tr>
-      <tr><td>Run size</td><td>40'-0" L × 3'-0" W</td></tr>
-      <tr><td>Wall / water</td><td>5" wall · 3" depth</td></tr>
-      <tr><td>Tier pitch</td><td>11¾" (floor to floor)</td></tr>
-      <tr><td>LED plane</td><td>9" above run floor · 6" over water</td></tr>
-      <tr><td>Width split</td><td>1'-0" repop. | 2'-0" harvest</td></tr>
-      <tr><td>Repop. screen</td><td>8 × 58" SS mesh gates / run · 2.4" stroke · 24 VDC actuators</td></tr>
-      <tr><td>Supports</td><td>9 frames per run @ 5'-0" o.c.</td></tr>
-      <tr><td>Aisle</td><td>21½" between trays · 18½" clear</td></tr>
-      <tr><td>Growing area</td><td>1,920 ft²</td></tr>
-      <tr><td>Harvest / repop.</td><td>1,280 ft² / 640 ft²</td></tr>
-      <tr><td>LED fixtures</td><td>384 × 56" bars (3 per bay)</td></tr>
-      <tr><td>Water loop</td><td>nose risers → inlet spreaders → runs → rear weirs → debris screen → tank → pump/filter → back to supply, or out via EC/nitrate divert valve when spent</td></tr>
-      <tr><td>Electrical</td><td>shore power → main disc. → panel → wall-side trays → LED drivers · motors</td></tr>
-      <tr><td>Water in runs</td><td>480 ft³ ≈ 3,590 gal</td></tr>
-      <tr><td>Water weight</td><td>≈ 29,950 lb</td></tr>
-      <tr><td>Processing bay</td><td>11'-6" × 8'-1½"</td></tr>
-    </table>
-    <div class="note">Sixteen 3'-0" runs cannot sit side by side in an 8'-1½" trailer, so they are stacked 2 across × 8 high. The 9" LED height sets the tier pitch. <b>Water alone is about 30,000 lb.</b> Check axle loads and the reefer floor rating (lb/ft) before you size the frame.</div>
-  </details>
+    <nav class="views" aria-label="Camera views">
+      <button type="button" data-view="iso" aria-pressed="true">Iso</button>
+      <button type="button" data-view="side">Side elev.</button>
+      <button type="button" data-view="plan">Plan</button>
+      <button type="button" data-view="section">Section A–A</button>
+      <button type="button" data-view="harvest">Harvest end</button>
+      <button type="button" data-view="process">Processing</button>
+      <button type="button" data-view="screen">Repop. screen</button>
+      <button type="button" data-view="water">Water loop</button>
+      <button type="button" data-view="elec">Electrical</button>
+      <button type="button" data-view="nose">Nose</button>
+    </nav>
+  </header>
+  <div class="main">
+    <aside class="side left" aria-label="Layers">
+      <div class="h">Layers</div>
+      <div class="layers">
+        <label><input type="checkbox" id="tShell" checked> Trailer body &amp; chassis</label>
+        <label><input type="checkbox" id="tRoof" checked> Roof (transparent)</label>
+        <label><input type="checkbox" id="tLed" checked> LED grow lights on</label>
+        <label><input type="checkbox" id="tDims" checked> Dimensions</label>
+        <label><input type="checkbox" id="tCallouts" checked> Callouts</label>
+        <label><input type="checkbox" id="tAnim" checked> Animate flows</label>
+        <label><input type="checkbox" id="tWater"> Water overlay <span class="sw" style="--c:#4fc3ff"></span><span class="sw" style="--c:#8fe3d0"></span><span class="sw" style="--c:#a77df0"></span><span class="sw" style="--c:#d9a441"></span></label>
+        <label><input type="checkbox" id="tElec"> Electrical overlay <span class="sw" style="--c:#ff9a3c"></span><span class="sw" style="--c:#ff6fa0"></span><span class="sw" style="--c:#c4e45a"></span></label>
+        <div class="range">
+          <div class="row"><label for="scrMode">Repop. screen</label><output id="scrOut">down · holding</output></div>
+          <select id="scrMode"><option value="auto">Auto cycle</option><option value="down">Down (hold mat)</option><option value="up">Up (release mat)</option></select>
+        </div>
+        <div class="range">
+          <div class="row"><label for="tiers">Tiers shown</label><output id="tiersOut" for="tiers">1–8</output></div>
+          <input type="range" id="tiers" min="1" max="8" step="1" value="8">
+        </div>
+        <div class="hint">Water: blue supply · teal in-run/return · violet feed-water in · amber spent water out.<br>Electrical: orange AC · pink LED DC · lime 24 VDC actuators.</div>
+        <div class="hint">Drag to orbit · scroll to zoom · right-drag to pan</div>
+      </div>
+    </aside>
+    <div id="viewport">
+      <div id="loading">LOADING MODEL…</div>
+      <div id="gl"></div>
+      <svg id="leaders" aria-hidden="true"></svg>
+      <div id="labels"></div>
+    </div>
+    <aside class="side right" aria-label="Design data and bill of materials">
+      <div class="tabs" role="tablist">
+        <button type="button" role="tab" id="tabData" aria-selected="true" aria-controls="data">Design data</button>
+        <button type="button" role="tab" id="tabBom" aria-selected="false" aria-controls="bom">Bill of materials</button>
+      </div>
+      <div class="pane" id="data" role="tabpanel">
+        <table>
+          <tr><td>Runs</td><td>16 = 2 across × 8 tiers</td></tr>
+          <tr><td>Run size</td><td>40'-0" L × 3'-0" W</td></tr>
+          <tr><td>Wall / water</td><td>5" wall · 3" depth</td></tr>
+          <tr><td>Tier pitch</td><td>11¾" (floor to floor)</td></tr>
+          <tr><td>LED plane</td><td>9" above run floor · 6" over water</td></tr>
+          <tr><td>Width split</td><td>1'-0" repop. | 2'-0" harvest</td></tr>
+          <tr><td>Repop. screen</td><td>8 SS mesh gates / run · 2.4" travel</td></tr>
+          <tr><td>Supports</td><td>9 frames per run @ 5'-0" o.c.</td></tr>
+          <tr><td>Aisle</td><td>21½" between trays · 18½" clear</td></tr>
+          <tr><td>Growing area</td><td>1,920 ft²</td></tr>
+          <tr><td>Harvest / repop.</td><td>1,280 ft² / 640 ft²</td></tr>
+          <tr><td>LED fixtures</td><td>384 × 56" bars (3 per bay)</td></tr>
+          <tr><td>Water in runs</td><td>480 ft³ ≈ 3,590 gal</td></tr>
+          <tr><td>Water weight</td><td>≈ 29,950 lb</td></tr>
+          <tr><td>Nutrients</td><td>from waste-water feed · monitored, not dosed</td></tr>
+          <tr><td>Processing bay</td><td>11'-6" × 8'-1½"</td></tr>
+        </table>
+        <div class="note"><b>Water loop.</b> Feed water (a waste-water stream carrying the nutrients) enters by cam-lock at the rear, through a backflow preventer, strainer, flow meter and float-controlled solenoid into the return tank. The pump sends water through a filter to the supply main, forward to the nose risers, and into an inlet spreader in each run. Water flows front to rear under the mat, spills over the rear weirs, passes the debris screen and returns to the tank. Nitrate, EC, pH, DO and temperature are monitored only; when nutrients run low the 3-way valve sends water out the rear discharge.</div>
+        <div class="note">Sixteen 3'-0" runs cannot sit side by side in an 8'-1½" trailer, so they are stacked 2 across × 8 high. <b>Water alone is about 30,000 lb.</b> Check axle loads and the reefer floor rating before you size the frame.</div>
+      </div>
+      <div class="pane" id="bom" role="tabpanel" hidden>
+        <div class="note">Off-the-shelf products that fit each role, everything except the duckweed run trays. Models are representative: confirm size, rating, wet-location suitability and lead time with the supplier before ordering.</div>
+        <table>
+          <tr><th>#</th><th>Item / product</th><th style="text-align:right">Qty</th></tr>
+<tr class="grp"><td colspan="3">Trailer & climate</td></tr>
+<tr><td class="n">1</td><td>Refrigerated trailer, 53' (51'-6" int.)<small>Utility 3000R or Great Dane Everest, used · Check floor rating ≥ 16,000 lb/axle-pair and spec plate</small></td><td class="q">1</td></tr>
+<tr><td class="n">2</td><td>Reefer unit<small>Carrier Transicold Vector 8500 or Thermo King Precedent S-600 · Usually comes with the trailer; runs dehumidify/cool</small></td><td class="q">1</td></tr>
+<tr><td class="n">3</td><td>Fabric air chute<small>FabricAir (custom, Ø14") · Spreads reefer air down the aisle</small></td><td class="q">1</td></tr>
+<tr class="grp"><td colspan="3">Rack & screen mechanics</td></tr>
+<tr><td class="n">4</td><td>Rack frame extrusion<small>80/20 Inc. 1515 series 1.5" T-slot + gussets · Verify deflection with full trays (≈1,900 lb/run)</small></td><td class="q">≈2,300 ft</td></tr>
+<tr><td class="n">5</td><td>Leveling feet<small>80/20 Inc. 15-series leveling mount · One per post</small></td><td class="q">36</td></tr>
+<tr><td class="n">6</td><td>Submerged support grid<small>316 SS flat bar + rod, laser-cut by SendCutSend or local fab · Ribs every 5'-0"</small></td><td class="q">16 sets</td></tr>
+<tr><td class="n">7</td><td>Screen rail (2×2 tube)<small>McMaster-Carr 316 SS rectangular tube · Carries screens, actuators, harness</small></td><td class="q">16 × 40'</td></tr>
+<tr><td class="n">8</td><td>Screen guide channels<small>McMaster-Carr 304 SS U-channel, 1" × ½" · At each 5'-0" frame</small></td><td class="q">144</td></tr>
+<tr><td class="n">9</td><td>Repop. screen mesh<small>McMaster-Carr 316 SS woven wire cloth, 1/16" opening · 58" × 3" framed panels</small></td><td class="q">128 panels</td></tr>
+<tr><td class="n">10</td><td>Screen actuators<small>Progressive Automations PA-14, 24 VDC, 3" stroke · Set to 2.4" travel; or gang 8 panels per run on one rod to cut count to 16</small></td><td class="q">128</td></tr>
+<tr class="grp"><td colspan="3">Conveyors</td></tr>
+<tr><td class="n">11</td><td>Modular belt, 22" wide<small>Intralox Series 900 Flush Grid, acetal · Open area drains water back</small></td><td class="q">16 × ≈95 ft</td></tr>
+<tr><td class="n">12</td><td>Sprockets & shafts<small>Intralox S900 sprockets on 1" 316 SS shaft · Head + tail per run</small></td><td class="q">32 shafts</td></tr>
+<tr><td class="n">13</td><td>Wet-duty bearings<small>McMaster-Carr thermoplastic flange bearings, SS insert</small></td><td class="q">64</td></tr>
+<tr><td class="n">14</td><td>Gearmotors<small>Oriental Motor BLE2 brushless gearmotor, 60 W, with driver · Speed set by PLC</small></td><td class="q">16</td></tr>
+<tr><td class="n">15</td><td>Cleats & side guides<small>Intralox S900 flights; 304 SS formed skirts · Cleated incline at rear</small></td><td class="q">16 sets</td></tr>
+<tr><td class="n">16</td><td>Discharge flaps<small>304 SS sheet + McMaster SS piano hinge · Fixed lowered position</small></td><td class="q">16</td></tr>
+<tr class="grp"><td colspan="3">Lighting</td></tr>
+<tr><td class="n">17</td><td>LED top-lights, ~56"<small>Fluence RAPTR (multi-tier) or equivalent linear bar · 9" above run floor</small></td><td class="q">384</td></tr>
+<tr><td class="n">18</td><td>LED drivers<small>Mean Well XLG-240 series · Two per run, nose end</small></td><td class="q">32</td></tr>
+<tr class="grp"><td colspan="3">Water loop (fresh / waste-water fed)</td></tr>
+<tr><td class="n">19</td><td>Feed-water inlet coupling<small>PT Coupling or Banjo 1½" cam-lock, type A · Waste-water nutrient stream in</small></td><td class="q">1</td></tr>
+<tr><td class="n">20</td><td>Backflow preventer<small>Watts 007 double check · Keeps waste water off potable lines</small></td><td class="q">1</td></tr>
+<tr><td class="n">21</td><td>Feed Y-strainer<small>Hayward YS series PVC Y-strainer, 1"</small></td><td class="q">1</td></tr>
+<tr><td class="n">22</td><td>Feed flow meter<small>GF Signet 2536 paddlewheel + 9900 transmitter · Feed line + supply main</small></td><td class="q">2</td></tr>
+<tr><td class="n">23</td><td>Feed solenoid valve<small>ASCO 8210 series, 1", NC, 24 VDC · Opened by tank low-level float</small></td><td class="q">1</td></tr>
+<tr><td class="n">24</td><td>Tank level floats<small>Madison M8000 float switches · Low / refill / high</small></td><td class="q">3</td></tr>
+<tr><td class="n">25</td><td>Return tank ≈165 gal<small>Chem-Tainer or Ace Roto-Mold rectangular poly tank</small></td><td class="q">1</td></tr>
+<tr><td class="n">26</td><td>Organic debris screen<small>Parkson Hycor HydroSieve, smallest model, or McMaster wedge-wire panel in fab box · Removes coarse organic matter</small></td><td class="q">1</td></tr>
+<tr><td class="n">27</td><td>Supply pump<small>Grundfos CM5 horizontal multistage, 1 hp · 10–20 gpm</small></td><td class="q">1 (+1 spare)</td></tr>
+<tr><td class="n">28</td><td>Pump suction strainer<small>Hayward YS series, 1½"</small></td><td class="q">1</td></tr>
+<tr><td class="n">29</td><td>Check valve<small>Hayward SwingCheck, 1½"</small></td><td class="q">1</td></tr>
+<tr><td class="n">30</td><td>Pressure gauges<small>WIKA 213.53, 2½" liquid-filled, 0–60 psi · Pump discharge, after filter</small></td><td class="q">2</td></tr>
+<tr><td class="n">31</td><td>Cartridge filter<small>Pentair Pentek Big Blue 20" housing, 50 µm cartridge</small></td><td class="q">1</td></tr>
+<tr><td class="n">32</td><td>Nutrient monitoring (no dosing)<small>Hach Nitratax sc + SC200; Atlas Scientific EZO EC, pH, DO, temperature kits · Monitor only; waste water supplies nutrients</small></td><td class="q">1 set</td></tr>
+<tr><td class="n">33</td><td>Spent-water divert valve<small>Belimo B3 series 3-way ball valve + LRB24 actuator · Diverts low-nutrient water out</small></td><td class="q">1</td></tr>
+<tr><td class="n">34</td><td>Discharge coupling<small>PT Coupling 1½" cam-lock, type C · Rear sill</small></td><td class="q">1</td></tr>
+<tr><td class="n">35</td><td>Pipe & fittings<small>Spears / Charlotte Sch 80 PVC, 1½" main, ¾" laterals</small></td><td class="q">lot</td></tr>
+<tr><td class="n">36</td><td>Isolation valves<small>Hayward TBH true-union ball valves · One per run lateral</small></td><td class="q">16 × ¾", 6 × 1½"</td></tr>
+<tr><td class="n">37</td><td>Inlet spreaders<small>¾" Sch 80 PVC, drilled ⅛" @ 2" · Run floor, nose end</small></td><td class="q">16</td></tr>
+<tr><td class="n">38</td><td>Overflow bulkheads<small>Hayward or Banjo ¾" bulkhead fittings · Rear weirs</small></td><td class="q">16</td></tr>
+<tr><td class="n">39</td><td>Pipe hangers<small>Eaton B-Line clevis hangers + ⅜" all-thread</small></td><td class="q">≈30</td></tr>
+<tr class="grp"><td colspan="3">Harvest & dewatering</td></tr>
+<tr><td class="n">40</td><td>Collection chutes<small>Tuffak (Plaskolite) ¼" polycarbonate + 304 SS angle</small></td><td class="q">2</td></tr>
+<tr><td class="n">41</td><td>Receiving bin + step grating<small>Fab 304 SS; McMaster-Carr molded FRP grating</small></td><td class="q">1</td></tr>
+<tr><td class="n">42</td><td>Transfer auger<small>Hapman Helix flexible screw conveyor, 2.5"</small></td><td class="q">1</td></tr>
+<tr><td class="n">43</td><td>Vibratory dewatering screen<small>Kason or Sweco 24" vibratory separator</small></td><td class="q">1</td></tr>
+<tr><td class="n">44</td><td>Screw press<small>Vincent Corporation CP-4 · Final dewatering</small></td><td class="q">1</td></tr>
+<tr><td class="n">45</td><td>Biomass tote<small>Uline 48 × 40 plastic bulk container · Swap at rear doors</small></td><td class="q">2</td></tr>
+<tr class="grp"><td colspan="3">Electrical & controls</td></tr>
+<tr><td class="n">46</td><td>Shore-power inlet<small>Meltric DSN 60 A switch-rated inlet · Nose, curb side</small></td><td class="q">1</td></tr>
+<tr><td class="n">47</td><td>Main disconnect<small>Eaton fusible safety switch, 60 A, NEMA 4X</small></td><td class="q">1</td></tr>
+<tr><td class="n">48</td><td>Control enclosure<small>nVent Hoffman NEMA 4X, 36 × 24 × 12</small></td><td class="q">1</td></tr>
+<tr><td class="n">49</td><td>PLC + I/O<small>AutomationDirect Productivity1000 P1-540 · Screens, valves, sensors, conveyors</small></td><td class="q">1</td></tr>
+<tr><td class="n">50</td><td>HMI<small>AutomationDirect C-more CM5, 7"</small></td><td class="q">1</td></tr>
+<tr><td class="n">51</td><td>VFDs<small>AutomationDirect GS20 · Pump, auger, screen, press</small></td><td class="q">4</td></tr>
+<tr><td class="n">52</td><td>24 VDC supplies<small>Mean Well SDR-960-24 · Actuators, solenoid, sensors</small></td><td class="q">2</td></tr>
+<tr><td class="n">53</td><td>Actuator relays<small>AutomationDirect relay output modules / DPDT relays · One per run, reversing</small></td><td class="q">16</td></tr>
+<tr><td class="n">54</td><td>Cable tray<small>Legrand Cablofil wire-mesh tray, 2" × 4" · Wall side, above racks</small></td><td class="q">≈110 ft</td></tr>
+<tr><td class="n">55</td><td>Conduit & cable<small>Liquid-tight flex (UL 360), SOOW cord, 18/2 for actuators · Wet-location rated</small></td><td class="q">lot</td></tr>
+<tr><td class="n">56</td><td>GFCI protection<small>Eaton GFCI breakers for wet-location circuits</small></td><td class="q">lot</td></tr>
+<tr><td class="n">57</td><td>E-stops<small>IDEC XW series, 40 mm · Nose, aisle, rear</small></td><td class="q">3</td></tr>
+        </table>
+      </div>
+    </aside>
+  </div>
 </div>
 
 <script type="importmap">
@@ -324,6 +397,10 @@ M('supply', { color: '#3b78c2', roughness: 0.45 });
 M('wire', { color: '#e8742a', roughness: 0.5 });
 M('wireLed', { color: '#e0507f', roughness: 0.5 });
 M('trayG', { color: '#9aa1a8', metalness: 0.8, roughness: 0.4 });
+M('feed', { color: '#7a55c9', roughness: 0.45 });
+M('bronze', { color: '#9b7a3c', metalness: 0.8, roughness: 0.4 });
+M('probe', { color: '#20262c', roughness: 0.4 });
+M('wireDc', { color: '#9cc23a', roughness: 0.5 });
 M('debris', { color: '#5a4a2c', roughness: 0.95 });
 const setRepeat = (name, w, h, tile) => { R[name].map.repeat.set(w / tile, h / tile); };
 
@@ -683,6 +760,29 @@ box(W, 'ss', 558, 566, 40.5, 47, -44, -24);
 box(W, 'debris', 558.5, 565.5, 41, 44.5, -43.5, -24.5);
 plate(W, 'debris', 540, 54.5, 555, 46.6, -34, 16, 0.5);
 
+// feed-water (waste-water nutrient stream) inlet → backflow preventer → Y-strainer → flow meter → solenoid → tank
+const FEED = [[626, 4, -28], [614, 4, -28], [614, 46, -28], [571, 46, -28], [571, 36, -28]];
+pipeRun(W, 'feed', FEED, 0.9);
+cyl(W, 'yellow', [623, 4, -28], [627, 4, -28], 1.6);                      // cam-lock inlet through rear sill
+box(W, 'bronze', 612, 616, 12, 22, -30.5, -25.5);                         // backflow preventer (double check)
+cyl(W, 'bronze', [614, 17, -25.5], [614, 17, -24], 0.5, 'cyl8');
+cyl(W, 'feed', [604, 46, -28], [600, 46, -28], 1.4);                      // Y-strainer body
+cyl(W, 'feed', [602, 46, -28], [600, 43.5, -28], 0.9);                    // strainer leg
+box(W, 'white', 590, 594, 44.5, 50.5, -29.5, -26.5);                       // paddlewheel flow meter + display
+box(W, 'motor', 580, 584, 46, 50.5, -30, -26);                             // solenoid valve coil
+for (const [y, z] of [[34, -24], [20, -24], [8, -24]]) cyl(W, 'white', [571.5, y, z], [571.5, y + 3, z], 0.6, 'cyl8');   // float switches
+for (let i = 0; i < 4; i++) cyl(W, 'probe', [568 - i * 3, 40, -44.5], [568 - i * 3, 22, -44.5], 0.35, 'cyl8');          // nitrate / EC / pH / DO probes
+box(W, 'panel', 559, 571, 40.5, 42, -46.5, -45);                          // probe mounting bar
+// pump-side hardware: check valve, gauges, suction strainer, unions
+cyl(W, 'pvc', [581, 14, -38], [581, 18, -38], 1.7);
+for (const [x, y] of [[581, 20], [602, 51]]) { cyl(W, 'ss', [x, y, -38], [x, y, -40.5], 0.25, 'cyl8'); cyl(W, 'white', [x, y, -40.5], [x, y, -41.3], 1.3); }
+cyl(W, 'pvc', [574, 7.5, -38], [576.5, 7.5, -38], 1.6); cyl(W, 'pvc', [575, 7.5, -38], [573.6, 4.6, -38], 1.0);
+// supply-main clevis hangers every 4'
+for (let x = 30; x < 600; x += 48) { cyl(W, 'ss', [x, 99, RZ], [x, 103, RZ], 0.2, 'cyl8'); cyl(W, 'ss', [x - 0.3, 99, RZ], [x + 0.3, 99, RZ], 1.45); }
+// riser drain valves + unions, overflow bulkheads
+for (const zs of [-RZ, RZ]) { box(W, 'yellow', RX + 1, RX + 4.5, TB(0) + 4, TB(0) + 4.5, zs - 0.3, zs + 0.3); cyl(W, 'supply', [RX, 60, zs], [RX, 62, zs], 1.5); }
+for (let c = 0; c < 2; c++) for (let t = 0; t < TIERS; t++) cyl(W, 'pvc', [479.4, TB(t) + 3, Z(c, 6)], [480.6, TB(t) + 3, Z(c, 6)], 1.3);
+
 /* ---------- ELECTRICAL: shore power → main disconnect → panel → cable trays → loads ---------- */
 const E = 'elec', CY = 102.35;
 box(E, 'panel', -9, -4, 30, 52, 40, 50);                                    // shore-power inlet + main disconnect (nose, exterior)
@@ -708,6 +808,21 @@ for (let c = 0; c < 2; c++) {
   }
 }
 conduit([[540, CY, -45], [598, CY, -45], [598, 10, -45], [590, 10, -42]], 'wire', 0.45);   // pump circuit
+// 24 VDC screen-actuator circuits: tray → drop at the nose → one branch per run onto the screen-rail harness → whip to each actuator
+for (let c = 0; c < 2; c++) {
+  const zw = Z(c, -0.75);
+  conduit([[540, CY, Z(c, -4.5)], [5, CY, Z(c, -4.5)], [5, CY, zw], [5, TB(0) + 7.62, zw]], 'wireDc', 0.4);
+  for (let t = 0; t < TIERS; t++) {
+    const y = TB(t) + 7.62;
+    conduit([[5, y, zw], [5, y, Z(c, 11.4)]], 'wireDc', 0.25);
+    box(E, 'panel', 4, 7, y - 0.9, y + 0.9, zw - 0.8, zw + 0.8);                 // junction box per run
+    for (let k = 0; k < 8; k++) cyl(E, 'wireDc', [k * 60 + 30, y, Z(c, 11.4)], [k * 60 + 30, TB(t) + 8.3, Z(c, 14)], 0.12, 'cyl8');
+  }
+}
+conduit([[540, CY, -30], [582, CY, -30], [582, 51, -30]], 'wireDc', 0.35);       // feed solenoid + flow meter
+conduit([[540, CY, -40], [565, CY, -40], [565, 42, -40]], 'wireDc', 0.35);       // sensor bus to probes
+conduit([[540, CY, -36], [600, CY, -36], [600, 60, -36]], 'wireDc', 0.35);       // divert valve actuator + EC sensor
+for (const [x, z] of [[2, -9.6], [478, 9.6], [612, 46]]) { box(E, 'yellow', x - 1.5, x + 1.5, 46, 52, z - 0.8, z + 0.8); cyl(E, 'red', [x, 50, z], [x, 50, z + (z < 0 ? 1.5 : -1.5)], 0.9); }   // e-stops
 conduit([[548, CY, 45], [548, CY, 24], [548, 76, 24]], 'wire', 0.4);                       // auger motor
 conduit([[560, 72, 46], [568, 62, 46], [568, 56, 45]], 'wire', 0.4);                       // screen vibrators
 conduit([[545, 72, 46], [545, 38, 46], [545, 38, 25], [567, 38, 25]], 'wire', 0.4);        // screw press
@@ -763,7 +878,7 @@ function flow(kind, pts, o = {}) {
   const len = cum[cum.length - 1];
   flows.push({ kind, P3, cum, len, tier: o.tier ?? -1, speed: o.speed ?? 14, n: Math.max(2, Math.round(len / (o.gap ?? 18))) });
 }
-const WC = { supply: '#4fc3ff', ret: '#8fe3d0', drain: '#d9a441', elec: '#ff9a3c', led: '#ff6fa0' };
+const WC = { supply: '#4fc3ff', ret: '#8fe3d0', drain: '#d9a441', feed: '#a77df0', dc24: '#c4e45a', elec: '#ff9a3c', led: '#ff6fa0' };
 // water
 flow('supply', [[556, 14, -36], ...SUPPLY, [602, 48.5, -38], [602, 99, -38], [602, 99, RZ], [RX, 99, RZ], [RX, TB(0) + 6.5, RZ]], { speed: 24 });
 flow('supply', [[RX, 85, RZ], [RX, 85, -RZ], [RX, TB(0) + 6.5, -RZ]], { speed: 24 });
@@ -777,6 +892,15 @@ for (let c = 0; c < 2; c++) for (let t = 0; t < TIERS; t++) {
 }
 flow('ret', [[487.5, 3, Z(0, 6)], [529.5, 3, Z(0, 6)], [529.5, 54, Z(0, 6)], [537, 55, Z(0, 6)], [556, 46, -34], [552, 20, -34]], { speed: 16 });
 flow('ret', [[487.5, 3, Z(1, 6)], [529.5, 3, Z(1, 6)], [529.5, 3, -24], [529.5, 54, -24], [537, 55, -24], [556, 46, -34], [552, 20, -34]], { speed: 16 });
+flow('feed', FEED, { speed: 14, gap: 8 });
+for (let c = 0; c < 2; c++) {
+  const zw = Z(c, -0.75);
+  flow('dc24', [[540, CY, Z(c, -4.5)], [5, CY, Z(c, -4.5)], [5, CY, zw], [5, TB(0) + 7.62, zw]], { speed: 50, gap: 34 });
+  for (let t = 0; t < TIERS; t++) flow('dc24', [[5, TB(t) + 7.62, zw], [5, TB(t) + 7.62, Z(c, 11.4)], [474, TB(t) + 7.62, Z(c, 11.4)]], { tier: t, speed: 40, gap: 40 });
+}
+flow('dc24', [[540, CY, -30], [582, CY, -30], [582, 51, -30]], { speed: 30, gap: 14 });
+flow('dc24', [[540, CY, -40], [565, CY, -40], [565, 42, -40]], { speed: 30, gap: 14 });
+flow('dc24', [[540, CY, -36], [600, CY, -36], [600, 60, -36]], { speed: 30, gap: 14 });
 flow('drain', [[602, 57, -38], [612, 57, -38], [612, 2, -38], [626, 2, -38]], { speed: 14, gap: 8 });
 flow('ret', [[584, 42, 14], [584, 3, 14], [584, 3, -18], [570, 3, -18], [570, 3, -22], [566, 12, -30]], { speed: 12 });
 // electrical
@@ -793,7 +917,7 @@ for (let c = 0; c < 2; c++) {
 }
 const overlay = { water: new THREE.Group(), elec: new THREE.Group() };
 scene.add(overlay.water, overlay.elec);
-const kindGroup = k => (k === 'elec' || k === 'led') ? 'elec' : 'water';
+const kindGroup = k => (k === 'elec' || k === 'led' || k === 'dc24') ? 'elec' : 'water';
 const pMats = {}, pMeshes = {};
 for (const k of Object.keys(WC)) {
   pMats[k] = new THREE.MeshBasicMaterial({ color: WC[k], depthTest: false, transparent: true, opacity: 0.95 });
@@ -809,7 +933,7 @@ const _fp = V(0, 0, 0), _fs = V(1, 1, 1);
 function updateFlows(time) {
   for (const k in pMeshes) {
     const { im, list } = pMeshes[k]; let i = 0;
-    const r = k === 'elec' || k === 'led' ? 0.7 : 0.75;
+    const r = kindGroup(k) === 'elec' ? 0.6 : 0.75;
     for (const f of list) {
       const on = f.tier < 0 || f.tier < tierN;
       for (let j = 0; j < f.n; j++, i++) {
@@ -948,6 +1072,9 @@ callout([552, 20, -34], [30, -80, -40], 'Return tank', '≈165 gal', WV);
 callout([600, 30, -38], [70, 10, -20], 'Pump + cartridge filter', 'back to supply main', WV);
 callout([604, 52, -38], [-10, 95, -90], 'EC / nitrate sensor + 3-way valve', 'diverts nutrient-spent water', WV);
 callout([624, 2, -38], [-30, -60, -110], 'Spent-water discharge', 'cam-lock outlet at rear', WV);
+callout([626, 4, -28], [40, -40, -70], 'Feed-water inlet', 'waste-water nutrient stream · cam-lock', WV);
+callout([614, 17, -28], [60, 30, -40], 'Backflow preventer → strainer', 'flow meter · float solenoid', WV);
+callout([566, 30, -44.5], [20, 60, -90], 'Nutrient monitoring', 'nitrate · EC · pH · DO · temp (no dosing)', WV);
 callout([2, TB(7) + 0.75, Z(0, 20)], [-30, -90, -90], 'Front inlet spreaders', 'one per run, under the screen', WV);
 // callouts — electrical
 const EV = { v: 'elec' };
@@ -958,6 +1085,9 @@ callout([3, TB(4) + 10.3, Z(0, -0.75)], [-30, -80, -80], 'LED driver drops', '1 
 callout([483, 60, -4.75], [20, 80, -80], 'Conveyor motor drops', '16 gearmotors at rear', EV);
 callout([552, 85, 41.5], [40, 50, -30], 'Control panel', 'VFDs · LED drivers · breakers', EV);
 callout([598, 40, -45], [60, -60, -40], 'Pump circuit', null, EV);
+callout([5, TB(5) + 7.62, Z(0, 6)], [-40, 90, -90], 'Screen actuator circuits', '24 VDC · drop + junction box per run', EV);
+callout([300, TB(7) + 7.62, Z(0, 11.4)], [20, 60, -40], 'Actuator harness', 'along each screen rail · whip per actuator', EV);
+callout([582, 60, -30], [40, 60, -60], 'Valve + sensor wiring', 'solenoid · divert valve · probes', EV);
 
 // callouts — plan view (labels placed in two rows outside the trailer)
 const at = (a, l, title, sub) => callout(a, [l[0] - a[0], l[1] - a[1], l[2] - a[2]], title, sub, { v: 'plan' });
@@ -976,6 +1106,7 @@ const SV = { v: 'screen', rel: 1 };
 callout(tb => [262, tb + 4.6, Z(0, 13.5)], [-4, 14, 10], 'Moving repop. screen', 'SS mesh gate · one per 5\' section', SV);
 callout(tb => [240.6, tb + 6, Z(0, 13.5)], [8, 12, 4], 'Guide channel', 'at each 5\'-0" frame', SV);
 callout(tb => [270, tb + 8.6, Z(0, 14)], [-6, 12, -6], 'Linear actuator', '24 VDC · 2.4" stroke', SV);
+callout(tb => [150, tb + 7.62, Z(0, 11.4)], [-10, 10, -14], 'Actuator harness', '24 VDC from nose junction box', SV);
 callout(tb => [250, tb + 3.1, Z(0, 5)], [4, -9, -10], 'Repopulation zone ⅓', 'mat held while gate is down', SV);
 callout(tb => [280, tb + 3.1, Z(0, 26)], [-6, -10, 8], 'Harvest zone ⅔', 'reseeded when gate lifts', SV);
 callout(tb => [300, tb + 7.5, Z(0, 12)], [10, 12, 14], 'Screen rail', 'carries screen + actuators', SV);
@@ -992,15 +1123,15 @@ callout(tb => [440, tb + LED, Z(0, 6)], [-34, 14, -18], 'LED bar', '9" above run
 
 /* ---------- views ---------- */
 const VIEWS = {
-  iso: { dir: [0.62, 0.34, -0.71], tgt: [318, 18, 0], fit: [760, 300], fov: 32, dims: 'overall', tiers: 8 },
+  iso: { dir: [0.62, 0.34, -0.71], tgt: [318, 18, 0], fit: [600, 250], fov: 32, dims: 'overall', tiers: 8 },
   side: { dir: [0, 0.05, -1], tgt: [320, 26, 0], fit: [760, 200], fov: 28, dims: 'overall', tiers: 8 },
   plan: { dir: [0, 1, -0.02], tgt: [318, 0, 0], fit: [820, 270], fov: 28, dims: 'plan', tiers: 8 },
   section: { dir: [1, 0.035, 0], tgt: [SECTION_X, 46, -26], fit: [250, 200], fov: 13, dims: 'section', tiers: 8, section: true },
   screen: { pos: [238, 74, -84], tgt: [272, 35, -33], fov: 40, dims: 'none', tiers: 3, peek: true },
   harvest: { pos: [505, 84, -110], tgt: [466, 34, -26], fov: 40, dims: 'none', tiers: 3 },
   process: { pos: [590, 182, -250], tgt: [560, 30, 4], fov: 40, dims: 'none', tiers: 8 },
-  water: { dir: [0.62, 0.34, -0.71], tgt: [318, 18, 0], fit: [760, 300], fov: 32, dims: 'none', tiers: 8, water: true },
-  elec: { dir: [0.62, 0.34, -0.71], tgt: [318, 18, 0], fit: [760, 300], fov: 32, dims: 'none', tiers: 8, elec: true },
+  water: { dir: [0.62, 0.34, -0.71], tgt: [318, 18, 0], fit: [600, 250], fov: 32, dims: 'none', tiers: 8, water: true },
+  elec: { dir: [0.62, 0.34, -0.71], tgt: [318, 18, 0], fit: [600, 250], fov: 32, dims: 'none', tiers: 8, elec: true },
   nose: { dir: [-0.62, 0.3, -0.72], tgt: [90, 30, 0], fit: [420, 260], fov: 34, dims: 'none', tiers: 8 },
 };
 const clipPlane = new THREE.Plane(V(-1, 0, 0), SECTION_X);
@@ -1051,7 +1182,8 @@ function applyVisibility() {
 tiersInput.addEventListener('input', () => setTiers(+tiersInput.value));
 document.querySelectorAll('[data-view]').forEach(b => b.addEventListener('click', () => setView(b.dataset.view)));
 if (reduceMotion) $('tAnim').checked = false;
-if (innerWidth < 1200) $('layersPanel').open = false;
+for (const [t, pnl, o, op] of [['tabData', 'data', 'tabBom', 'bom'], ['tabBom', 'bom', 'tabData', 'data']])
+  $(t).addEventListener('click', () => { $(t).setAttribute('aria-selected', 'true'); $(o).setAttribute('aria-selected', 'false'); $(pnl).hidden = false; $(op).hidden = true; });
 if (innerWidth < 720) { $('tCallouts').checked = false; $('tDims').checked = false; }
 
 /* ---------- post-processing ---------- */
@@ -1067,9 +1199,48 @@ function resize() {
   camera.aspect = w / h; camera.updateProjectionMatrix();
 }
 addEventListener('resize', resize);
+new ResizeObserver(resize).observe(host);
 resize();
 setView(location.hash.slice(1) in VIEWS ? location.hash.slice(1) : 'iso', true);
 document.getElementById('loading').remove();
+
+/* ---------- label declutter: push overlapping callouts apart, keep them inside the viewport, draw 2D leaders ---------- */
+const svg = document.getElementById('leaders'), NS = 'http://www.w3.org/2000/svg', pool = [];
+function declutter() {
+  const vr = host.getBoundingClientRect(), live = labels.filter(c => c.lab.visible);
+  const items = live.map(c => {
+    const r = c.lab.element.getBoundingClientRect(), sh = c.shift || [0, 0];
+    return { c, x0: r.left - sh[0], x1: r.right - sh[0], y0: r.top - sh[1], y1: r.bottom - sh[1] };
+  }).sort((a, b) => a.y0 - b.y0);
+  const done = [], pad = 4;
+  for (const it of items) {
+    let dx = 0, dy = 0;
+    const w = it.x1 - it.x0, h = it.y1 - it.y0;
+    if (it.x0 < vr.left + pad) dx = vr.left + pad - it.x0;
+    if (it.x1 > vr.right - pad) dx = vr.right - pad - it.x1;
+    if (it.y0 < vr.top + pad) dy = vr.top + pad - it.y0;
+    for (let guard = 0; guard < 30; guard++) {
+      const hit = done.find(d => it.x0 + dx < d.x1 + pad && it.x1 + dx > d.x0 - pad && it.y0 + dy < d.y1 + pad && it.y1 + dy > d.y0 - pad);
+      if (!hit) break;
+      dy = hit.y1 + pad - it.y0;
+    }
+    if (it.y1 + dy > vr.bottom - pad) dy = vr.bottom - pad - it.y1;
+    it.c.shift = [dx, dy];
+    it.c.lab.element.style.translate = `${dx}px ${dy}px`;
+    done.push({ x0: it.x0 + dx, x1: it.x1 + dx, y0: it.y0 + dy, y1: it.y1 + dy, w, h });
+  }
+  let i = 0;
+  for (const it of items) {
+    const d = it.c.dot.element.getBoundingClientRect(), px = (d.left + d.right) / 2 - vr.left, py = (d.top + d.bottom) / 2 - vr.top;
+    const [dx, dy] = it.c.shift, l = it.x0 + dx - vr.left, r = it.x1 + dx - vr.left, t = it.y0 + dy - vr.top, b = it.y1 + dy - vr.top;
+    const qx = Math.min(Math.max(px, l), r), qy = Math.min(Math.max(py, t), b);
+    let ln = pool[i];
+    if (!ln) { ln = document.createElementNS(NS, 'line'); svg.appendChild(ln); pool.push(ln); }
+    ln.setAttribute('x1', px); ln.setAttribute('y1', py); ln.setAttribute('x2', qx); ln.setAttribute('y2', qy); ln.style.display = '';
+    i++;
+  }
+  for (; i < pool.length; i++) pool[i].style.display = 'none';
+}
 
 /* ---------- loop ---------- */
 const clock = new THREE.Clock();
@@ -1097,10 +1268,11 @@ function frame() {
   for (const c of labels) {
     const hiddenBySection = sectionOn && c.anchor.x > SECTION_X;
     const vis = annot.callouts.visible && !hiddenBySection && c.views.includes(current);
-    c.line.visible = c.dot.visible = c.lab.visible = vis;
+    c.line.visible = false; c.dot.visible = c.lab.visible = vis;
   }
   composer.render();
   labelRenderer.render(scene, camera);
+  declutter();
   requestAnimationFrame(frame);
 }
 frame();
