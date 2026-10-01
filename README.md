@@ -9,7 +9,7 @@ Interactive 3D engineering model (Three.js) of a 16-run duckweed cultivation and
 
 Open `index.html` in a browser. Views: Iso, Side, Plan, Section A–A, Harvest end, Processing, Water loop, Electrical, Nose.
 
-Water loop: supply main → risers at the nose → run manifolds → flow front to rear → rear overflow weirs → organic debris screen → return tank → pump + cartridge filter → supply main.
+Water loop: supply main → risers at the nose → an inlet spreader on the floor of each run (passing under the screen) → flow front to rear through the water → rear overflow weirs → organic debris screen → return tank → pump + cartridge filter → supply main. An EC/nitrate sensor and motorised 3-way valve after the filter divert nutrient-spent water to a cam-lock discharge outlet at the rear sill.
 
 Electrical: shore power + main disconnect (nose) → feeder in wall-side cable trays → control panel (VFDs, LED drivers, breakers) → LED driver drops at the nose end of each run, conveyor gearmotor drops at the rear, pump, auger, screen and press circuits.
 

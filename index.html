@@ -141,7 +141,7 @@ details.ov[open]>summary::after{content:"–"}
       <tr><td>Growing area</td><td>1,920 ft²</td></tr>
       <tr><td>Harvest / repop.</td><td>1,280 ft² / 640 ft²</td></tr>
       <tr><td>LED fixtures</td><td>384 × 56" bars (3 per bay)</td></tr>
-      <tr><td>Water loop</td><td>nose risers → runs → rear weirs → debris screen → tank → pump/filter</td></tr>
+      <tr><td>Water loop</td><td>nose risers → inlet spreaders → runs → rear weirs → debris screen → tank → pump/filter → back to supply, or out via EC/nitrate divert valve when spent</td></tr>
       <tr><td>Electrical</td><td>shore power → main disc. → panel → wall-side trays → LED drivers · motors</td></tr>
       <tr><td>Water in runs</td><td>480 ft³ ≈ 3,590 gal</td></tr>
       <tr><td>Water weight</td><td>≈ 29,950 lb</td></tr>
@@ -432,7 +432,7 @@ for (let c = 0; c < 2; c++) {
     cyl(g, 'ss', [481.2, tb + 6.05, z(35)], [481.2, tb + 6.05, z(37.8)], 0.35, 'cyl8');
     box(g, 'motor', 479.6, 482.8, tb + 4.4, tb + 7.7, z(37.8), z(39.6));
     cyl(g, 'motor', [481.2, tb + 6.05, z(39.6)], [481.2, tb + 6.05, z(43.4)], 1.45);
-    // longitudinal manifold dividing the width 1/3 : 2/3, with divider skirt, saddles and nozzles
+    // longitudinal screen rail at the 1/3 line (carries the repop. screen and actuators; no water in it)
     box(g, 'ss', 0.5, 480, tb + 5.5, tb + 7.5, z(11), z(13));
     // repopulation screen hardware at the 1/3 line: guide channels each 5'-0", one actuator per section, 24 VDC harness
     for (const x of FRAMES) { const gx = Math.min(Math.max(x, 0.8), 479.2); box(g, 'ss', gx - 0.6, gx + 0.6, tb + 0.25, tb + 7.5, z(13.05), z(14.0)); }
@@ -443,7 +443,6 @@ for (let c = 0; c < 2; c++) {
     }
     cyl(g, 'wire', [3, tb + 7.62, z(11.4)], [474, tb + 7.62, z(11.4)], 0.12, 'cyl8');
     for (const x of FRAMES) box(g, 'ss', fx(x) + 0.25, fx(x) + 1.25, tb + 5.15, tb + 5.5, z(0), z(13));
-    for (let x = 7.5; x < 478; x += 15) for (const d of [10.6, 13.4]) cyl(g, 'nozzle', [x, tb + 5.6, z(d)], [x, tb + 4.85, z(d)], 0.22, 'cyl8');
     // LED fixtures: 3 bars per 5'-0" bay, lens 9" above the run floor
     for (let k = 0; k < 8; k++) {
       const x0 = k * 60 + 2, x1 = k * 60 + 58;
@@ -650,6 +649,10 @@ for (const s of [-1, 1]) box(C, 'chassis', 612, 616, -33, -10, s * 20, s * 24);
 /* ---------- WATER LOOP: nose-fed supply → runs → rear overflow → debris screen → tank → pump/filter ---------- */
 const W = 'plumb', RZ = 7.6, RX = 11;          // supply risers sit in the aisle just aft of the evaporator
 const SUPPLY = [[572, 7.5, -38], [581, 7.5, -38], [581, 22, -38], [602, 22, -38], [602, 26, -38]];
+box(W, 'panel', 603.2, 606, 50, 53.5, -39.5, -36.5);                         // EC / nitrate sensor
+box(W, 'motor', 599.5, 604.5, 55, 59, -40.5, -35.5);                       // motorised 3-way divert valve
+pipeRun(W, 'pvc', [[602, 57, -38], [612, 57, -38], [612, 2, -38], [623, 2, -38]], 1.0);
+cyl(W, 'yellow', [623, 2, -38], [626, 2, -38], 1.6);                      // cam-lock discharge coupling through rear sill
 pipeRun(W, 'supply', [[602, 48.5, -38], [602, 99, -38], [602, 99, RZ], [RX, 99, RZ], [RX, TB(0) + 6.5, RZ]], 1.1);
 pipeRun(W, 'supply', [[RX, 85, RZ], [RX, 85, -RZ]], 1.0);
 cyl(W, 'supply', [RX, TB(7) + 6.5, -RZ], [RX, TB(0) + 6.5, -RZ], 1.1);
@@ -657,7 +660,9 @@ for (let c = 0; c < 2; c++) {
   const zs = c ? RZ : -RZ;
   for (let t = 0; t < TIERS; t++) {
     const y = TB(t) + 6.5;
-    cyl(W, 'supply', [RX, y, zs], [RX, y, Z(c, 12)], 0.75);              // lateral into the manifold
+    // lateral over the aisle-side wall → drop at the nose end → perforated inlet spreader across the run floor (passes under the screen)
+    pipeRun(W, 'supply', [[RX, y, zs], [RX, y, Z(c, 35)], [2, y, Z(c, 35)], [2, TB(t) + 0.75, Z(c, 35)]], 0.6);
+    cyl(W, 'supply', [2, TB(t) + 0.75, Z(c, 35)], [2, TB(t) + 0.75, Z(c, 1)], 0.4, 'cyl8');
     box(W, 'yellow', RX - 0.3, RX + 0.3, y + 0.8, y + 1.3, zs + (c ? 2 : -2), zs + (c ? 6 : -6));   // isolation valve
     // rear overflow weir in the repop zone → drain riser
     cyl(W, 'pvc', [479.5, TB(t) + 3, Z(c, 6)], [487.5, TB(t) + 3, Z(c, 6)], 0.8);
@@ -758,18 +763,21 @@ function flow(kind, pts, o = {}) {
   const len = cum[cum.length - 1];
   flows.push({ kind, P3, cum, len, tier: o.tier ?? -1, speed: o.speed ?? 14, n: Math.max(2, Math.round(len / (o.gap ?? 18))) });
 }
-const WC = { supply: '#4fc3ff', ret: '#8fe3d0', elec: '#ff9a3c', led: '#ff6fa0' };
+const WC = { supply: '#4fc3ff', ret: '#8fe3d0', drain: '#d9a441', elec: '#ff9a3c', led: '#ff6fa0' };
 // water
 flow('supply', [[556, 14, -36], ...SUPPLY, [602, 48.5, -38], [602, 99, -38], [602, 99, RZ], [RX, 99, RZ], [RX, TB(0) + 6.5, RZ]], { speed: 24 });
 flow('supply', [[RX, 85, RZ], [RX, 85, -RZ], [RX, TB(0) + 6.5, -RZ]], { speed: 24 });
 flow('supply', [[RX, 85, -RZ], [RX, TB(7) + 6.5, -RZ]], { speed: 24 });
 for (let c = 0; c < 2; c++) for (let t = 0; t < TIERS; t++) {
   const tb = TB(t), zs = c ? RZ : -RZ;
-  flow('supply', [[RX, tb + 6.5, zs], [RX, tb + 6.5, Z(c, 12)], [478, tb + 6.5, Z(c, 12)]], { tier: t, speed: 30, gap: 30 });
-  flow('ret', [[4, tb + 3.3, Z(c, 6)], [479, tb + 3.3, Z(c, 6)], [487.5, tb + 3, Z(c, 6)], [487.5, 3, Z(c, 6)]], { tier: t, speed: 9, gap: 34 });
+  flow('supply', [[RX, tb + 6.5, zs], [RX, tb + 6.5, Z(c, 35)], [2, tb + 6.5, Z(c, 35)], [2, tb + 0.75, Z(c, 35)], [2, tb + 0.75, Z(c, 1)]], { tier: t, speed: 24, gap: 8 });
+  // water moves through the run itself (below the floating mat, under the screen), to the rear weir
+  flow('ret', [[4, tb + 2.2, Z(c, 6)], [479, tb + 2.2, Z(c, 6)], [487.5, tb + 3, Z(c, 6)], [487.5, 3, Z(c, 6)]], { tier: t, speed: 9, gap: 40 });
+  flow('ret', [[4, tb + 2.2, Z(c, 26)], [445, tb + 2.2, Z(c, 26)], [468, tb + 1.0, Z(c, 26)], [474, tb + 1.0, Z(c, 6)], [479, tb + 2.6, Z(c, 6)]], { tier: t, speed: 9, gap: 40 });
 }
 flow('ret', [[487.5, 3, Z(0, 6)], [529.5, 3, Z(0, 6)], [529.5, 54, Z(0, 6)], [537, 55, Z(0, 6)], [556, 46, -34], [552, 20, -34]], { speed: 16 });
 flow('ret', [[487.5, 3, Z(1, 6)], [529.5, 3, Z(1, 6)], [529.5, 3, -24], [529.5, 54, -24], [537, 55, -24], [556, 46, -34], [552, 20, -34]], { speed: 16 });
+flow('drain', [[602, 57, -38], [612, 57, -38], [612, 2, -38], [626, 2, -38]], { speed: 14, gap: 8 });
 flow('ret', [[584, 42, 14], [584, 3, 14], [584, 3, -18], [570, 3, -18], [570, 3, -22], [566, 12, -30]], { speed: 12 });
 // electrical
 flow('elec', [[-6, 40, 45], [2, 40, 48.5], [2, CY, 48.5], [2, CY, 45], [553, CY, 45], [553, 98, 45]], { speed: 60, gap: 30 });
@@ -801,7 +809,7 @@ const _fp = V(0, 0, 0), _fs = V(1, 1, 1);
 function updateFlows(time) {
   for (const k in pMeshes) {
     const { im, list } = pMeshes[k]; let i = 0;
-    const r = k === 'supply' || k === 'ret' ? 1.3 : 0.9;
+    const r = k === 'elec' || k === 'led' ? 0.7 : 0.75;
     for (const f of list) {
       const on = f.tier < 0 || f.tier < tierN;
       for (let j = 0; j < f.n; j++, i++) {
@@ -930,14 +938,17 @@ callout([200, 50, -51], [-10, -100, -50], 'Near sidewall removed', 'shown cut fo
 callout([110, 104, -51], [0, 34, -40], 'Near sidewall removed', 'shown cut for clarity', { v: 'nose' });
 // callouts — water loop
 const WV = { v: 'water' };
-callout([RX, 60, RZ], [-40, 80, -70], 'Supply enters at nose', 'risers feed every manifold', WV);
+callout([RX, 60, RZ], [-40, 80, -70], 'Supply enters at nose', 'risers feed a front inlet in each run', WV);
 callout([300, 99, RZ], [0, 60, -90], 'Supply main', 'aisle ceiling, nose-bound', WV);
-callout([240, TB(7) + 3.3, Z(0, 6)], [-20, -150, -80], 'Flow front → rear', 'manifold nozzles, 3" deep runs', WV);
+callout([240, TB(7) + 3.3, Z(0, 6)], [-20, -150, -80], 'Flow front → rear', 'through the water, under the mat', WV);
 callout([487.5, 40, Z(0, 6)], [30, -90, -60], 'Rear overflow weirs', 'drain risers, one per column', WV);
 callout([546, 52, -34], [40, 70, -40], 'Organic debris screen', 'wedge-wire; removes coarse matter', WV);
 callout([562, 44, -34], [70, -40, -50], 'Debris tray', 'emptied at rear doors', WV);
 callout([552, 20, -34], [30, -80, -40], 'Return tank', '≈165 gal', WV);
 callout([600, 30, -38], [70, 10, -20], 'Pump + cartridge filter', 'back to supply main', WV);
+callout([604, 52, -38], [-10, 95, -90], 'EC / nitrate sensor + 3-way valve', 'diverts nutrient-spent water', WV);
+callout([624, 2, -38], [-30, -60, -110], 'Spent-water discharge', 'cam-lock outlet at rear', WV);
+callout([2, TB(7) + 0.75, Z(0, 20)], [-30, -90, -90], 'Front inlet spreaders', 'one per run, under the screen', WV);
 // callouts — electrical
 const EV = { v: 'elec' };
 callout([-9, 46, 45], [-40, 60, -80], 'Shore power + main disconnect', 'nose, curb side', EV);
@@ -967,10 +978,10 @@ callout(tb => [240.6, tb + 6, Z(0, 13.5)], [8, 12, 4], 'Guide channel', 'at each
 callout(tb => [270, tb + 8.6, Z(0, 14)], [-6, 12, -6], 'Linear actuator', '24 VDC · 2.4" stroke', SV);
 callout(tb => [250, tb + 3.1, Z(0, 5)], [4, -9, -10], 'Repopulation zone ⅓', 'mat held while gate is down', SV);
 callout(tb => [280, tb + 3.1, Z(0, 26)], [-6, -10, 8], 'Harvest zone ⅔', 'reseeded when gate lifts', SV);
-callout(tb => [300, tb + 7.5, Z(0, 12)], [10, 12, 14], 'Manifold', 'carries screen + actuators', SV);
+callout(tb => [300, tb + 7.5, Z(0, 12)], [10, 12, 14], 'Screen rail', 'carries screen + actuators', SV);
 const HV = { v: 'harvest', rel: 1 };
 callout(tb => [424, tb + 3.1, Z(0, 5)], [-6, 24, -4], 'Repopulation zone', '⅓ width retained', HV);
-callout(tb => [446, tb + 7.5, Z(0, 12)], [-14, 22, 12], 'Manifold + divider skirt', 'splits width ⅓ : ⅔', HV);
+callout(tb => [446, tb + 7.5, Z(0, 12)], [-14, 22, 12], 'Screen rail + screen', 'splits width ⅓ : ⅔', HV);
 callout(tb => [436, tb + 3.1, Z(0, 28)], [-16, 12, 34], 'Harvest section ⅔', 'conveyor belt under the mat', HV);
 callout(tb => [468, tb + 4.6, Z(0, 26)], [8, 22, 30], 'Cleated incline', 'lifts mat clear of water', HV);
 callout(tb => [486.5, tb + 5.2, Z(0, 24)], [24, 16, 10], 'Discharge flap', 'lowered · drops to chute', HV);
