@@ -18,3 +18,7 @@ Electrical: shore power + main disconnect (nose) → feeder in wall-side cable t
 
 ![Water loop](water-loop.png)
 ![Electrical](electrical.png)
+
+Repopulation screen: a stainless mesh gate on the 1/3 line of every run (one 58" panel per 5' section, running in guide channels on the manifold). A 24 VDC linear actuator per section moves it 2.4": down, the panel sits 1.4" into the water and holds the repop mat; up, it clears the surface by 1" so the mat can spread into the harvest zone.
+
+![Repopulation screen](repop-screen.png)

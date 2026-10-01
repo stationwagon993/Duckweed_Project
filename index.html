@@ -43,6 +43,7 @@ details.ov[open]>summary::after{content:"–"}
 .layers label{display:flex;align-items:center;gap:8px;cursor:pointer}
 .layers input[type=checkbox]{accent-color:var(--accent);width:15px;height:15px}
 .sw{display:inline-block;width:10px;height:10px;border-radius:2px;background:var(--c);margin-left:2px}
+#scrMode{font:500 13px var(--f-ui);background:var(--bg);color:var(--fg);border:1px solid var(--line);padding:4px}
 .range{display:grid;gap:4px;margin-top:4px;padding-top:9px;border-top:1px solid var(--line)}
 .range .row{display:flex;justify-content:space-between;font-size:13px}
 .range output{font-family:var(--f-data);color:var(--dim)}
@@ -96,6 +97,7 @@ details.ov[open]>summary::after{content:"–"}
     <button type="button" data-view="section">Section A–A</button>
     <button type="button" data-view="harvest">Harvest end</button>
     <button type="button" data-view="process">Processing</button>
+    <button type="button" data-view="screen">Repop. screen</button>
     <button type="button" data-view="water">Water loop</button>
     <button type="button" data-view="elec">Electrical</button>
     <button type="button" data-view="nose">Nose</button>
@@ -111,6 +113,10 @@ details.ov[open]>summary::after{content:"–"}
       <label><input type="checkbox" id="tCallouts" checked> Callouts</label>
       <label><input type="checkbox" id="tAnim" checked> Animate flows</label>
       <label><input type="checkbox" id="tWater"> Water flow overlay <span class="sw" style="--c:#4fc3ff"></span><span class="sw" style="--c:#8fe3d0"></span></label>
+      <div class="range">
+        <div class="row"><label for="scrMode">Repop. screen</label><output id="scrOut">down · holding</output></div>
+        <select id="scrMode"><option value="auto">Auto cycle</option><option value="down">Down (hold mat)</option><option value="up">Up (release mat)</option></select>
+      </div>
       <label><input type="checkbox" id="tElec"> Electrical overlay <span class="sw" style="--c:#ff9a3c"></span><span class="sw" style="--c:#ff6fa0"></span></label>
       <div class="range">
         <div class="row"><label for="tiers">Tiers shown</label><output id="tiersOut" for="tiers">1–8</output></div>
@@ -129,6 +135,7 @@ details.ov[open]>summary::after{content:"–"}
       <tr><td>Tier pitch</td><td>11¾" (floor to floor)</td></tr>
       <tr><td>LED plane</td><td>9" above run floor · 6" over water</td></tr>
       <tr><td>Width split</td><td>1'-0" repop. | 2'-0" harvest</td></tr>
+      <tr><td>Repop. screen</td><td>8 × 58" SS mesh gates / run · 2.4" stroke · 24 VDC actuators</td></tr>
       <tr><td>Supports</td><td>9 frames per run @ 5'-0" o.c.</td></tr>
       <tr><td>Aisle</td><td>21½" between trays · 18½" clear</td></tr>
       <tr><td>Growing area</td><td>1,920 ft²</td></tr>
@@ -427,7 +434,14 @@ for (let c = 0; c < 2; c++) {
     cyl(g, 'motor', [481.2, tb + 6.05, z(39.6)], [481.2, tb + 6.05, z(43.4)], 1.45);
     // longitudinal manifold dividing the width 1/3 : 2/3, with divider skirt, saddles and nozzles
     box(g, 'ss', 0.5, 480, tb + 5.5, tb + 7.5, z(11), z(13));
-    box(g, 'ss', 0.5, 479.5, tb + 1.6, tb + 5.5, z(11.94), z(12.06));
+    // repopulation screen hardware at the 1/3 line: guide channels each 5'-0", one actuator per section, 24 VDC harness
+    for (const x of FRAMES) { const gx = Math.min(Math.max(x, 0.8), 479.2); box(g, 'ss', gx - 0.6, gx + 0.6, tb + 0.25, tb + 7.5, z(13.05), z(14.0)); }
+    for (let k = 0; k < 8; k++) {
+      const ax = k * 60 + 30;
+      box(g, 'ss', ax - 1.2, ax + 1.2, tb + 7.5, tb + 7.75, z(11), z(14.6));
+      cyl(g, 'motor', [ax, tb + 7.75, z(14.0)], [ax, tb + 8.9, z(14.0)], 0.5, 'cyl8');
+    }
+    cyl(g, 'wire', [3, tb + 7.62, z(11.4)], [474, tb + 7.62, z(11.4)], 0.12, 'cyl8');
     for (const x of FRAMES) box(g, 'ss', fx(x) + 0.25, fx(x) + 1.25, tb + 5.15, tb + 5.5, z(0), z(13));
     for (let x = 7.5; x < 478; x += 15) for (const d of [10.6, 13.4]) cyl(g, 'nozzle', [x, tb + 5.6, z(d)], [x, tb + 4.85, z(d)], 0.22, 'cyl8');
     // LED fixtures: 3 bars per 5'-0" bay, lens 9" above the run floor
@@ -445,6 +459,34 @@ for (let c = 0; c < 2; c++) {
 setRepeat('dwR', 479.5, 11.65, 8);
 setRepeat('dwH', 451.75, 23.65, 8);
 R.belt.map.repeat.set(446 / 2, 22 / 2);
+
+/* ---------- moving repopulation screen (dynamic) ---------- */
+const texMesh = canvasTex(64, 64, (g, w, h) => {
+  g.clearRect(0, 0, w, h); g.fillStyle = '#e6eaee';
+  for (let i = 0; i < w; i += 8) { g.fillRect(i, 0, 3, h); g.fillRect(0, i, w, 3); }
+});
+texMesh.repeat.set(58 / 0.5, 3 / 0.5);
+M('mesh', { color: '#ffffff', map: texMesh, metalness: 0.85, roughness: 0.35, alphaTest: 0.4, side: THREE.DoubleSide }, { cast: false });
+const SCR_H = 3, SCR_DOWN = 1.6, SCR_UP = 4.0;      // panel 3" tall; bottom 1.4" below water when down, 1" above when up
+const vplane = new THREE.PlaneGeometry(1, 1);
+const scrPanels = new THREE.InstancedMesh(vplane, R.mesh, 2 * TIERS * 8);
+const scrRails = new THREE.InstancedMesh(GEO.box, R.ss, 2 * 2 * TIERS * 8);
+const scrRods = new THREE.InstancedMesh(GEO.cyl8, R.ss, 2 * TIERS * 8);
+[scrPanels, scrRails, scrRods].forEach(m => { m.instanceMatrix.setUsage(THREE.DynamicDrawUsage); m.frustumCulled = false; m.castShadow = true; scene.add(m); });
+let screenLift = 0;                                  // 0 = down (holding), 1 = up (releasing)
+function updateScreens() {
+  const off = SCR_DOWN + (SCR_UP - SCR_DOWN) * screenLift, m = new THREE.Matrix4();
+  let i = 0;
+  for (let c = 0; c < 2; c++) for (let t = 0; t < TIERS; t++) for (let k = 0; k < 8; k++, i++) {
+    const tb = TB(t), on = t < tierN, x = k * 60 + 30, zc = Z(c, 13.5), y0 = tb + off;
+    m.compose(V(x, y0 + SCR_H / 2, zc), Q0, on ? V(58, SCR_H, 1) : V(0, 0, 0)); scrPanels.setMatrixAt(i, m);
+    m.compose(V(x, y0 + SCR_H, zc), Q0, on ? V(58.4, 0.45, 0.35) : V(0, 0, 0)); scrRails.setMatrixAt(2 * i, m);
+    m.compose(V(x, y0, zc), Q0, on ? V(58.4, 0.3, 0.3) : V(0, 0, 0)); scrRails.setMatrixAt(2 * i + 1, m);
+    const top = tb + 7.75, len = top - (y0 + SCR_H);
+    m.compose(V(x, (top + y0 + SCR_H) / 2, Z(c, 14.0)), Q0, on ? V(0.18, len, 0.18) : V(0, 0, 0)); scrRods.setMatrixAt(i, m);
+  }
+  [scrPanels, scrRails, scrRods].forEach(mm => { mm.instanceMatrix.needsUpdate = true; });
+}
 
 /* ---------- PROCESSING BAY (x 480 → 618) ---------- */
 const P = 'proc';
@@ -919,6 +961,13 @@ at([552, 40, -34], [555, 110, -112], 'Filtrate tank', '≈165 gal');
 at([590, 8, -38], [670, 110, -112], 'Pump + filter', null);
 
 // callouts — harvest-end detail (follow the top visible tier, near column)
+const SV = { v: 'screen', rel: 1 };
+callout(tb => [262, tb + 4.6, Z(0, 13.5)], [-4, 14, 10], 'Moving repop. screen', 'SS mesh gate · one per 5\' section', SV);
+callout(tb => [240.6, tb + 6, Z(0, 13.5)], [8, 12, 4], 'Guide channel', 'at each 5\'-0" frame', SV);
+callout(tb => [270, tb + 8.6, Z(0, 14)], [-6, 12, -6], 'Linear actuator', '24 VDC · 2.4" stroke', SV);
+callout(tb => [250, tb + 3.1, Z(0, 5)], [4, -9, -10], 'Repopulation zone ⅓', 'mat held while gate is down', SV);
+callout(tb => [280, tb + 3.1, Z(0, 26)], [-6, -10, 8], 'Harvest zone ⅔', 'reseeded when gate lifts', SV);
+callout(tb => [300, tb + 7.5, Z(0, 12)], [10, 12, 14], 'Manifold', 'carries screen + actuators', SV);
 const HV = { v: 'harvest', rel: 1 };
 callout(tb => [424, tb + 3.1, Z(0, 5)], [-6, 24, -4], 'Repopulation zone', '⅓ width retained', HV);
 callout(tb => [446, tb + 7.5, Z(0, 12)], [-14, 22, 12], 'Manifold + divider skirt', 'splits width ⅓ : ⅔', HV);
@@ -936,6 +985,7 @@ const VIEWS = {
   side: { dir: [0, 0.05, -1], tgt: [320, 26, 0], fit: [760, 200], fov: 28, dims: 'overall', tiers: 8 },
   plan: { dir: [0, 1, -0.02], tgt: [318, 0, 0], fit: [820, 270], fov: 28, dims: 'plan', tiers: 8 },
   section: { dir: [1, 0.035, 0], tgt: [SECTION_X, 46, -26], fit: [250, 200], fov: 13, dims: 'section', tiers: 8, section: true },
+  screen: { pos: [238, 74, -84], tgt: [272, 35, -33], fov: 40, dims: 'none', tiers: 3, peek: true },
   harvest: { pos: [505, 84, -110], tgt: [466, 34, -26], fov: 40, dims: 'none', tiers: 3 },
   process: { pos: [590, 182, -250], tgt: [560, 30, 4], fov: 40, dims: 'none', tiers: 8 },
   water: { dir: [0.62, 0.34, -0.71], tgt: [318, 18, 0], fit: [760, 300], fov: 32, dims: 'none', tiers: 8, water: true },
@@ -966,7 +1016,8 @@ function setView(name, instant = false) {
 const tiersInput = document.getElementById('tiers'), tiersOut = document.getElementById('tiersOut');
 function setTiers(n) {
   tierN = n; tiersInput.value = n; tiersOut.textContent = n === 1 ? '1' : `1–${n}`;
-  for (let t = 0; t < TIERS; t++) { G('t' + t).visible = t < n; G('l' + t).visible = t < n; }
+  const peek = VIEWS[current]?.peek;
+  for (let t = 0; t < TIERS; t++) { G('t' + t).visible = t < n; G('l' + t).visible = t < (peek ? n - 1 : n); }
   labels.forEach(c => c.rel && placeCallout(c));
 }
 const $ = id => document.getElementById(id);
@@ -1018,6 +1069,12 @@ function frame() {
   if ($('tAnim').checked) { simTime += dt; R.belt.map.offset.x -= dt * 2.2 / 2; }
   updateParticles(simTime);
   updateFlows(simTime);
+  const mode = $('scrMode').value;
+  let target = mode === 'up' ? 1 : 0;
+  if (mode === 'auto') { const u = simTime % 16; target = u < 8 ? 0 : 1; }
+  screenLift += (target - screenLift) * Math.min(1, dt * 2.2);
+  updateScreens();
+  $('scrOut').textContent = screenLift < 0.05 ? 'down · holding' : screenLift > 0.95 ? 'up · releasing' : 'moving…';
   if (tween) {
     const k = Math.min((performance.now() - tween.t0) / tween.dur, 1), e = ease(k);
     camera.position.lerpVectors(tween.fromP, tween.to.pos, e);
