@@ -7,7 +7,7 @@ Interactive 3D engineering model (Three.js) of a 16-run duckweed cultivation and
 - Manifold splits each run ⅓ repopulation / ⅔ harvest; submerged conveyor lifts biomass to a discharge flap and collection chute
 - Rear 11'-6" processing bay: receiving bin, auger, dewatering screen, screw press, return tank
 
-Open `index.html` in a browser. Views: Iso, Side, Plan, Section A–A, Harvest end, Processing, Water loop, Electrical, Nose.
+Open `Reefer Render.html` in a browser. Views: Iso, Side, Plan, Section A–A, Harvest end, Processing, Water loop, Electrical, Nose.
 
 Water loop (nutrients come from a waste-water feed stream; monitored, not dosed): feed water enters by cam-lock at the rear → backflow preventer → Y-strainer → flow meter → float-controlled solenoid → return tank. Then supply main → risers at the nose → an inlet spreader on the floor of each run (passing under the screen) → flow front to rear through the water → rear overflow weirs → organic debris screen → return tank → pump + cartridge filter → supply main. An EC/nitrate sensor and motorised 3-way valve after the filter divert nutrient-spent water to a cam-lock discharge outlet at the rear sill.
 
