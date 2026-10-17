@@ -1,0 +1,1283 @@
+<title>Duckweed Module Array</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* Layout: full-bleed 3D viewport; a left control rail styled like a drawing-sheet margin; title block lower right */
+:root{
+  --scene:#e2e5e1;
+  --sheet:#f7f7f3;
+  --ink:#1e2829;
+  --muted:#5b6866;
+  --rule:#c8ccc4;
+  --accent:#3d7a2a;
+  --chip:#ffffff;
+  --leader:#1e2829;
+  --ww:#9b7647; --sl:#2f8a35; --rw:#7a58ad; --pw:#e07b25; --da:#2f78ad;
+  --f-disp:"Barlow Condensed","Arial Narrow",Arial,sans-serif;
+  --f-body:"Barlow",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --scene:#1c2326; --sheet:#20292b; --ink:#e4e9e5; --muted:#9daaa6; --rule:#364245;
+    --accent:#86c062; --chip:#2a3537; --leader:#e4e9e5; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --scene:#1c2326; --sheet:#20292b; --ink:#e4e9e5; --muted:#9daaa6; --rule:#364245;
+  --accent:#86c062; --chip:#2a3537; --leader:#e4e9e5; color-scheme:dark;
+}
+html,body{height:100%}
+body{margin:0;background:var(--scene);color:var(--ink);font-family:var(--f-body);overflow:hidden}
+#stage{position:fixed;inset:0}
+#c{display:block;width:100%;height:100%;touch-action:none;outline:none}
+#leaders{position:absolute;inset:0;pointer-events:none;overflow:visible}
+#callouts{position:absolute;inset:0;pointer-events:none}
+.co{position:absolute;left:0;top:0;display:flex;align-items:center;gap:6px;white-space:nowrap;
+  font-family:var(--f-disp);font-weight:600;font-size:14px;letter-spacing:.02em;color:var(--ink);
+  background:var(--chip);border:1px solid var(--rule);padding:3px 8px 3px 3px;border-radius:3px;
+  box-shadow:0 1px 2px rgba(0,0,0,.12)}
+.co b{display:inline-grid;place-items:center;min-width:20px;height:20px;border-radius:50%;
+  background:var(--ink);color:var(--sheet);font-size:12px;font-weight:700}
+.co.nonum{padding-left:8px}
+.co small{font-family:var(--f-mono);font-weight:400;font-size:11px;color:var(--muted);letter-spacing:0}
+.dim{position:absolute;left:0;top:0;font-family:var(--f-mono);font-size:11.5px;color:var(--ink);
+  background:var(--sheet);padding:1px 5px;border:1px solid var(--rule);white-space:nowrap}
+
+#rail{position:absolute;left:16px;top:16px;bottom:16px;width:300px;display:flex;flex-direction:column;gap:12px;
+  pointer-events:none}
+#rail > *{pointer-events:auto}
+.card{background:var(--sheet);border:1px solid var(--rule);border-radius:4px;padding:14px 14px 12px}
+.eyebrow{font-family:var(--f-disp);font-weight:600;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:0}
+h1{font-family:var(--f-disp);font-weight:700;font-size:26px;line-height:1.05;margin:4px 0 6px;text-wrap:balance;letter-spacing:.01em}
+.lede{margin:0;font-size:13.5px;line-height:1.45;color:var(--muted)}
+.views{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin-top:12px}
+.views button{font-family:var(--f-disp);font-weight:600;font-size:14px;letter-spacing:.02em;padding:8px 4px;
+  border:1px solid var(--rule);background:var(--chip);color:var(--ink);border-radius:3px;cursor:pointer;line-height:1.1}
+.views button[aria-pressed="true"]{background:var(--ink);color:var(--sheet);border-color:var(--ink)}
+button:focus-visible,input:focus-visible+span{outline:2px solid var(--accent);outline-offset:2px}
+.toggles{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:10px;font-size:13px}
+.toggles label{display:flex;align-items:center;gap:6px;cursor:pointer;user-select:none}
+.toggles input{accent-color:var(--accent);width:15px;height:15px;margin:0}
+#detail{flex:1 1 auto;min-height:0;overflow:auto}
+#detail h2{font-family:var(--f-disp);font-weight:700;font-size:17px;margin:0 0 8px;letter-spacing:.02em}
+ol.steps{list-style:none;margin:0;padding:0;display:grid;gap:7px}
+ol.steps li{display:grid;grid-template-columns:22px 1fr;gap:8px;font-size:13px;line-height:1.38}
+ol.steps li b{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;background:var(--ink);color:var(--sheet);
+  font-family:var(--f-disp);font-size:12px;font-weight:700}
+ol.steps li span strong{font-weight:600}
+.legend{display:grid;grid-template-columns:1fr 1fr;gap:5px 10px;margin-top:12px;padding-top:10px;border-top:1px solid var(--rule);font-size:12.5px}
+.legend span{display:flex;align-items:center;gap:7px}
+.legend i{width:18px;height:6px;border-radius:3px;flex:none}
+.note{font-size:12px;line-height:1.45;color:var(--muted);margin:10px 0 0}
+
+#tb{position:absolute;right:16px;bottom:16px;display:grid;grid-template-columns:auto auto auto;border:1px solid var(--ink);
+  background:var(--sheet);font-family:var(--f-mono);font-size:11px;color:var(--ink)}
+#tb div{padding:4px 8px;border-right:1px solid var(--ink);border-bottom:1px solid var(--ink)}
+#tb div:nth-child(3n){border-right:0}
+#tb div:nth-last-child(-n+3){border-bottom:0}
+#tb .k{display:block;font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+#hint{position:absolute;right:16px;top:16px;font-size:12px;color:var(--muted);background:var(--sheet);border:1px solid var(--rule);padding:5px 9px;border-radius:3px}
+#loading{position:absolute;inset:0;display:grid;place-items:center;font-family:var(--f-disp);font-size:18px;letter-spacing:.06em;color:var(--muted)}
+#fold{display:none}
+body.shot #rail,body.shot #hint{display:none}
+
+@media (max-width:760px){
+  #rail{left:16px;right:16px;top:auto;bottom:16px;width:auto;max-height:62%}
+  #detail{display:none}
+  #rail.open #detail{display:block}
+  #fold{display:block;margin-top:10px;font-family:var(--f-disp);font-weight:600;font-size:14px;background:none;border:1px solid var(--rule);
+    color:var(--ink);padding:6px 10px;border-radius:3px;cursor:pointer;width:100%}
+  .lede{display:none}
+  h1{font-size:21px}
+  #tb,#hint{display:none}
+  .co span{display:none}
+  .co{padding-right:3px}
+  .dim{display:none}
+}
+@media (prefers-reduced-motion: reduce){ *{transition:none!important} }
+</style>
+
+<div id="stage">
+  <canvas id="c" tabindex="0" aria-label="Interactive 3D model of the duckweed module array"></canvas>
+  <svg id="leaders"></svg>
+  <div id="callouts"></div>
+  <div id="loading">Building model…</div>
+</div>
+
+<div id="rail">
+  <div class="card">
+    <p class="eyebrow">Pilot array · concept model · feet</p>
+    <h1>Duckweed Module Array</h1>
+    <p class="lede">Three 40' high-cube growing modules feed one 20' high-cube processing module. Duckweed leaves each grower as a pumped wet slurry; recovered water is monitored and returned.</p>
+    <div class="views" role="group" aria-label="View">
+      <button id="v-overall" aria-pressed="true">Site overview</button>
+      <button id="v-growing" aria-pressed="false">Growing module</button>
+      <button id="v-processing" aria-pressed="false">Processing module</button>
+    </div>
+    <div class="toggles">
+      <label><input type="checkbox" id="t-cut" checked><span>Cutaway walls</span></label>
+      <label><input type="checkbox" id="t-labels" checked><span>Callouts</span></label>
+      <label><input type="checkbox" id="t-flow" checked><span>Flow arrows</span></label>
+      <label><input type="checkbox" id="t-peel" checked><span>Section near rack</span></label>
+    </div>
+    <button id="fold" aria-expanded="false">Show details</button>
+  </div>
+  <div class="card" id="detail">
+    <h2 id="d-title">Site overview</h2>
+    <ol class="steps" id="d-list"></ol>
+    <div class="legend">
+      <span><i style="background:var(--ww)"></i>Wastewater in</span>
+      <span><i style="background:var(--sl)"></i>Duckweed slurry</span>
+      <span><i style="background:var(--rw)"></i>Recovered water</span>
+      <span><i style="background:var(--pw)"></i>Power</span>
+      <span><i style="background:var(--da)"></i>Control / data</span>
+    </div>
+    <p class="note" id="d-note"></p>
+  </div>
+</div>
+
+<div id="hint">Drag to orbit · scroll or pinch to zoom · right-drag to pan</div>
+<div id="tb">
+  <div><span class="k">Drawing</span>DW-PILOT-01</div><div><span class="k">Units</span>1 model unit = 1 ft</div><div><span class="k">Rev</span>A</div>
+  <div><span class="k">Modules</span>3 × GM-40HC + PM-20HC</div><div><span class="k">Status</span>Concept visualization</div><div><span class="k">Date</span>2026-10-02</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/environments/RoomEnvironment.js"></script>
+<script>
+(async function(){
+"use strict";
+try{ await Promise.race([Promise.all([
+  document.fonts.load('600 64px "Barlow Condensed"'), document.fonts.load('700 64px "Barlow Condensed"'),
+  document.fonts.load('500 40px "IBM Plex Mono"'), document.fonts.ready]), new Promise(r=>setTimeout(r,3000))]); }catch(e){}
+
+const T = THREE;
+const DS = T.DoubleSide;
+const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ------------------------------------------------------------------ renderer */
+const canvas = document.getElementById('c');
+const renderer = new T.WebGLRenderer({canvas, antialias:true, preserveDrawingBuffer:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio||1, 2));
+renderer.outputEncoding = T.sRGBEncoding;
+renderer.toneMapping = T.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 0.82;
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = T.PCFSoftShadowMap;
+const maxAniso = renderer.capabilities.getMaxAnisotropy();
+
+const scene = new T.Scene();
+const camera = new T.PerspectiveCamera(32, 1, 0.3, 900);
+const controls = new T.OrbitControls(camera, canvas);
+controls.enableDamping = true; controls.dampingFactor = 0.08;
+controls.maxPolarAngle = Math.PI*0.495; controls.minDistance = 4; controls.maxDistance = 260;
+
+const pmrem = new T.PMREMGenerator(renderer);
+scene.environment = pmrem.fromScene(new T.RoomEnvironment(), 0.04).texture;
+
+scene.add(new T.HemisphereLight(0xe8eef2, 0x6f6858, 0.42));
+const sun = new T.DirectionalLight(0xfff1df, 1.9);
+sun.position.set(-35, 62, 38);
+sun.target.position.set(24, 0, -4);
+sun.castShadow = true;
+sun.shadow.mapSize.set(4096, 4096);
+Object.assign(sun.shadow.camera, {left:-62, right:62, top:48, bottom:-48, near:10, far:200});
+sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.03;
+scene.add(sun, sun.target);
+
+function syncTheme(){
+  const cs = getComputedStyle(document.documentElement);
+  const col = new T.Color(cs.getPropertyValue('--scene').trim() || '#e2e5e1');
+  scene.background = col;
+  scene.fog = new T.Fog(col, 160, 420);
+  leaderColor = cs.getPropertyValue('--leader').trim() || '#1e2829';
+}
+let leaderColor = '#1e2829';
+syncTheme();
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', syncTheme);
+new MutationObserver(syncTheme).observe(document.documentElement, {attributes:true, attributeFilter:['data-theme']});
+
+/* ------------------------------------------------------------------ textures */
+function rng(seed){ return function(){ seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed);
+  t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+function canvasTex(cv, {repeat=true, srgb=true}={}){
+  const t = new T.CanvasTexture(cv);
+  if(repeat){ t.wrapS = t.wrapT = T.RepeatWrapping; }
+  if(srgb) t.encoding = T.sRGBEncoding;
+  t.anisotropy = maxAniso; return t;
+}
+function mkCanvas(w,h){ const c=document.createElement('canvas'); c.width=w; c.height=h; return c; }
+
+// periodic smooth field (wraps in u) for duckweed patchiness
+function fieldFn(seed){
+  const r = rng(seed); const terms=[];
+  for(let i=0;i<9;i++) terms.push({k:1+Math.floor(r()*7), m:(r()*2.2+0.3), p:r()*6.283, a:0.5+r()});
+  const norm = terms.reduce((s,t)=>s+t.a,0);
+  return (u,v)=>{ let s=0; for(const t of terms) s+=t.a*Math.sin(6.2832*t.k*u + 6.2832*t.m*v + t.p); return s/norm*1.6; };
+}
+
+/* Duckweed surface: 2048 px along the run (10.67 ft) x 512 px across the lane -> ~192 px/ft, so a 3-4 mm Lemna frond is ~2-3 px */
+const DW_PX_FT = 192, DW_TILE_FT = 2048/DW_PX_FT;
+function duckweedTex({seed=1, cover=0.9, patch=0.15, belt=false, water='#22403a', beltWet=false, colonies=56000}){
+  const W=2048, H=512, cv=mkCanvas(W,H), x=cv.getContext('2d'); const r=rng(seed); const f=fieldFn(seed+7);
+  x.fillStyle=water; x.fillRect(0,0,W,H);
+  for(let i=0;i<260;i++){ // soft mottling of the shallow water / channel floor
+    const cx=r()*W, cy=r()*H, rad=20+r()*90; const g=x.createRadialGradient(cx,cy,0,cx,cy,rad);
+    const a=(r()*0.10).toFixed(3); g.addColorStop(0, r()<0.5?`rgba(10,24,20,${a})`:`rgba(70,95,80,${a})`); g.addColorStop(1,'rgba(0,0,0,0)');
+    x.fillStyle=g; x.fillRect(cx-rad,cy-rad,rad*2,rad*2);
+  }
+  if(belt){ // stainless mesh belt with flights every 6 in, seen through ~1 in of water
+    x.strokeStyle= beltWet ? 'rgba(170,180,176,0.55)' : 'rgba(150,168,160,0.32)'; x.lineWidth=1;
+    for(let i=0;i<W;i+=6){ x.beginPath(); x.moveTo(i+.5,0); x.lineTo(i+.5,H); x.stroke(); }
+    for(let j=0;j<H;j+=6){ x.beginPath(); x.moveTo(0,j+.5); x.lineTo(W,j+.5); x.stroke(); }
+    x.fillStyle= beltWet ? 'rgba(200,206,203,0.85)' : 'rgba(176,188,182,0.5)';
+    for(let i=0;i<W;i+=96) x.fillRect(i,0,5,H);
+    if(!beltWet){ x.fillStyle='rgba(24,52,46,0.42)'; x.fillRect(0,0,W,H); }
+  }
+  const greens=[[96,52,30],[100,55,34],[92,58,38],[104,50,27],[88,48,42],[108,45,24],[78,50,44]];
+  for(let i=0;i<colonies;i++){
+    const u=r(), v=r(); let p = cover + patch*f(u,v);
+    // fronds drift and pile slightly against channel walls
+    if(v<0.06||v>0.94) p+=0.12;
+    if(r()>p) continue;
+    const px=u*W, py=v*H; const n=1+Math.floor(r()*3.4);
+    const old = r()<0.05; const g=greens[Math.floor(r()*greens.length)];
+    const hue = old? 66+r()*8 : g[0]+r()*8-4, sat = old? 48 : g[1]+r()*8-4, lit = old? 46+r()*6 : g[2]+r()*8-4;
+    let a0=r()*6.283;
+    for(let j=0;j<n;j++){
+      const rx=2.3+r()*1.3, ry=1.6+r()*0.6; const ang=a0+j*2.1+r()*0.6;
+      const ox = j===0?0:Math.cos(ang)*(rx+0.6), oy = j===0?0:Math.sin(ang)*(rx+0.6);
+      for(const wx of [0, px<8?W:0, px>W-8?-W:0]){ if(j>0||wx!==0||true){
+        const cx=px+ox+wx, cy=py+oy; if(wx!==0 && Math.abs(wx)<1) continue;
+        x.beginPath(); x.ellipse(cx,cy,rx,ry,ang,0,6.2832);
+        x.fillStyle=`hsl(${hue+j*2},${sat}%,${lit-j*2}%)`; x.fill();
+        x.beginPath(); x.ellipse(cx-0.5,cy-0.5,rx*0.45,ry*0.4,ang,0,6.2832);
+        x.fillStyle=`hsla(${hue-6},60%,${lit+16}%,0.35)`; x.fill();
+      }}
+    }
+  }
+  return canvasTex(cv);
+}
+function paintTex(seed){ // light weathering for container steel: streaks and a grimy lower band
+  const W=1024,H=256,cv=mkCanvas(W,H),x=cv.getContext('2d'),r=rng(seed);
+  x.fillStyle='#ffffff'; x.fillRect(0,0,W,H);
+  const g=x.createLinearGradient(0,H,0,H*0.6); g.addColorStop(0,'rgba(95,80,60,0.28)'); g.addColorStop(1,'rgba(95,80,60,0)');
+  x.fillStyle=g; x.fillRect(0,0,W,H);
+  for(let i=0;i<140;i++){ const sx=r()*W, len=10+r()*70; x.fillStyle=`rgba(90,85,75,${(r()*0.10).toFixed(3)})`; x.fillRect(sx,0,1+r()*2,len); }
+  for(let i=0;i<60;i++){ x.fillStyle=`rgba(130,80,40,${(r()*0.25).toFixed(3)})`; x.beginPath(); x.arc(r()*W, H-r()*40, 0.5+r()*2.5, 0, 6.28); x.fill(); }
+  const t=canvasTex(cv); return t;
+}
+function noiseTex(base, spread, seed, size=512, dots=26000, srgb=true){
+  const cv=mkCanvas(size,size),x=cv.getContext('2d'),r=rng(seed);
+  x.fillStyle=base; x.fillRect(0,0,size,size);
+  for(let i=0;i<dots;i++){ const l=(r()-0.5)*spread; x.fillStyle= l>0?`rgba(255,255,255,${l.toFixed(3)})`:`rgba(0,0,0,${(-l).toFixed(3)})`;
+    const s=1+r()*2.6; x.fillRect(r()*size,r()*size,s,s); }
+  return canvasTex(cv,{srgb});
+}
+function gravelTex(){
+  const S=512,cv=mkCanvas(S,S),x=cv.getContext('2d'),r=rng(31);
+  x.fillStyle='#a39d8f'; x.fillRect(0,0,S,S);
+  for(let i=0;i<9000;i++){ const l=118+r()*70|0; x.fillStyle=`rgb(${l},${l-6|0},${l-18|0})`; x.beginPath(); x.ellipse(r()*S,r()*S,1+r()*3.2,1+r()*2.4,r()*3,0,6.28); x.fill(); }
+  const t=canvasTex(cv); t.repeat.set(70,70); return t;
+}
+function grateTex(){ const cv=mkCanvas(64,64),x=cv.getContext('2d'); x.fillStyle='#202425'; x.fillRect(0,0,64,64);
+  x.fillStyle='#8e9599'; for(let i=0;i<64;i+=8) x.fillRect(i,0,3,64); return canvasTex(cv); }
+function perfTex(){ const S=256,cv=mkCanvas(S,S),x=cv.getContext('2d'); x.fillStyle='#fff'; x.fillRect(0,0,S,S); x.fillStyle='#000';
+  for(let j=0;j<16;j++) for(let i=0;i<16;i++){ x.beginPath(); x.arc(i*16+8+(j%2)*8, j*16+8, 4.6, 0, 6.28); x.fill(); }
+  const t=canvasTex(cv,{srgb:false}); t.repeat.set(10,5); return t; }
+function bioTex(){ const S=512,cv=mkCanvas(S,S),x=cv.getContext('2d'),r=rng(77);
+  x.fillStyle='#3c5420'; x.fillRect(0,0,S,S);
+  for(let i=0;i<5200;i++){ const h=78+r()*30, l=16+r()*24; x.fillStyle=`hsla(${h},${40+r()*25}%,${l}%,0.75)`;
+    x.beginPath(); x.ellipse(r()*S,r()*S,2+r()*9,1.5+r()*6,r()*3,0,6.28); x.fill(); }
+  for(let i=0;i<1500;i++){ x.fillStyle=`rgba(190,210,120,${(r()*0.4).toFixed(2)})`; x.fillRect(r()*S,r()*S,1.5,1.5); }
+  return canvasTex(cv); }
+function beltTex(){ const W=256,H=512,cv=mkCanvas(W,H),x=cv.getContext('2d'); x.fillStyle='#d7dde0'; x.fillRect(0,0,W,H);
+  x.fillStyle='#9fb0b8'; for(let j=0;j<H;j+=64) x.fillRect(0,j,W,7);
+  x.fillStyle='rgba(60,90,40,0.25)'; for(let j=0;j<H;j+=64) x.fillRect(0,j+7,W,5);
+  return canvasTex(cv); }
+
+function textTex(lines, {w=512, h=128, bg='#f3f3ee', fg='#1b1f1f', band=null, align='left', pad=18, sizes=null, fonts=null}={}){
+  const cv=mkCanvas(w,h), x=cv.getContext('2d');
+  if(bg){ x.fillStyle=bg; x.fillRect(0,0,w,h); }
+  if(band){ x.fillStyle=band; x.fillRect(0,0,align==='band-left'?20:w, align==='band-left'?h:Math.round(h*0.16)); }
+  const n=lines.length; let y=pad;
+  const sz = sizes || lines.map((_,i)=> i===0? Math.round(h*0.5/Math.max(1,n*0.75)) : Math.round(h*0.28/Math.max(1,n*0.7)));
+  const total = sz.reduce((a,b)=>a+b*1.12,0); y = (h-total)/2 + (band&&align!=='band-left'?h*0.06:0);
+  lines.forEach((ln,i)=>{
+    x.fillStyle=fg; x.font = (fonts&&fonts[i]) || (i===0? `700 ${sz[i]}px "Barlow Condensed", Arial Narrow, sans-serif` : `500 ${sz[i]}px "IBM Plex Mono", monospace`);
+    x.textBaseline='top'; x.textAlign = align==='center'?'center':'left';
+    x.fillText(ln, align==='center'? w/2 : pad + (align==='band-left'?20:0), y); y += sz[i]*1.12;
+  });
+  const t=canvasTex(cv,{repeat:false}); return t;
+}
+function hmiTex(){
+  const W=512,H=330,cv=mkCanvas(W,H),x=cv.getContext('2d');
+  x.fillStyle='#0f1a1f'; x.fillRect(0,0,W,H);
+  x.fillStyle='#24414d'; x.fillRect(0,0,W,40);
+  x.fillStyle='#d9eef2'; x.font='600 22px "Barlow Condensed", sans-serif'; x.textBaseline='middle';
+  x.fillText('T-201 RECOVERED WATER · NUTRIENT MONITOR', 14, 21);
+  const rows=[['pH','6.8',''],['EC','1.4','mS/cm'],['NO3','35','mg/L'],['PO4','4','mg/L'],['TEMP','72','°F'],['LEVEL','68','%']];
+  rows.forEach((rw,i)=>{ const cx=14+(i%2)*250, cy=58+Math.floor(i/2)*82;
+    x.fillStyle='#16262d'; x.fillRect(cx,cy,236,72);
+    x.fillStyle='#8fb3bd'; x.font='500 18px "IBM Plex Mono", monospace'; x.textBaseline='top'; x.fillText(rw[0],cx+10,cy+8);
+    x.fillStyle='#f2fbf7'; x.font='600 38px "IBM Plex Mono", monospace'; x.fillText(rw[1],cx+10,cy+28);
+    x.fillStyle='#8fb3bd'; x.font='500 18px "IBM Plex Mono", monospace'; x.fillText(rw[2],cx+120,cy+44);
+    x.fillStyle='#57c27a'; x.beginPath(); x.arc(cx+220,cy+16,6,0,6.28); x.fill();
+  });
+  x.fillStyle='#6f8d96'; x.font='500 13px "IBM Plex Mono", monospace'; x.fillText('ILLUSTRATIVE VALUES · NOT DESIGN SETPOINTS', 14, H-20);
+  return canvasTex(cv,{repeat:false});
+}
+
+const TX = {
+  dwProp: duckweedTex({seed:11, cover:0.97, patch:0.10}),
+  dwHarv: duckweedTex({seed:23, cover:0.50, patch:0.38, belt:true}),
+  ramp:   duckweedTex({seed:37, cover:0.62, patch:0.30, belt:true, beltWet:true, water:'#56635f', colonies:52000}),
+  slurry: duckweedTex({seed:41, cover:0.42, patch:0.25, water:'#4b5a2c', colonies:30000}),
+  paint: paintTex(5),
+  gravel: gravelTex(),
+  concrete: noiseTex('#b4b1a8', 0.16, 9, 512, 22000),
+  grate: grateTex(), perf: perfTex(), bio: bioTex(), belt: beltTex(), hmi: hmiTex(),
+};
+TX.paint.repeat.set(1,1);
+TX.concrete.repeat.set(6,6);
+TX.grate.repeat.set(120,1);
+
+/* ------------------------------------------------------------------ materials */
+const std = o => new T.MeshStandardMaterial(o);
+const dwMat = (map, emi=0.14) => std({map, emissive:0xffffff, emissiveMap:map, emissiveIntensity:emi, roughness:0.55, metalness:0});
+const M = {
+  gmPaint: std({color:0xdcdfd9, metalness:0.35, roughness:0.55}),
+  gmPaintW: std({color:0xe2e4df, metalness:0.3, roughness:0.6, map:TX.paint, side:DS}),
+  pmPaint: std({color:0x3e5d76, metalness:0.35, roughness:0.55}),
+  pmPaintW: std({color:0x456680, metalness:0.3, roughness:0.6, map:TX.paint, side:DS}),
+  casting: std({color:0x4b5154, metalness:0.5, roughness:0.6}),
+  liner: std({color:0xeef0eb, roughness:0.45, side:DS}),
+  floor: std({color:0x8d9590, roughness:0.32, metalness:0.05}),
+  drain: std({color:0x6e7477, map:TX.grate, roughness:0.5, metalness:0.6}),
+  galv: std({color:0xb2b8bb, metalness:0.75, roughness:0.42}),
+  strut: std({color:0xa7aeb1, metalness:0.7, roughness:0.45}),
+  ss: std({color:0xcfd3d5, metalness:0.85, roughness:0.28, side:DS}),
+  ssDark: std({color:0x9aa0a3, metalness:0.8, roughness:0.35, side:DS}),
+  hdpe: std({color:0xe8e9e3, roughness:0.72}),
+  alu: std({color:0x9aa1a4, metalness:0.6, roughness:0.4}),
+  fixture: std({color:0x5d6468, metalness:0.55, roughness:0.45}),
+  led: std({color:0xffffff, emissive:0xfff2dc, emissiveIntensity:1.8, roughness:0.5, side:DS}),
+  dwProp: dwMat(TX.dwProp), dwHarv: dwMat(TX.dwHarv), ramp: dwMat(TX.ramp, 0.25),
+  pvc: std({color:0x596064, roughness:0.48}),
+  ww: std({color:0x9b7647, roughness:0.55}),
+  sl: std({color:0x2c6b31, roughness:0.5}),
+  slHose: std({color:0x2f7435, roughness:0.65}),
+  rw: std({color:0x7a58ad, roughness:0.45}),
+  pw: std({color:0xe07b25, roughness:0.5}),
+  da: std({color:0x2f78ad, roughness:0.5}),
+  black: std({color:0x1c1e1f, roughness:0.7}),
+  motor: std({color:0x3c5a76, metalness:0.4, roughness:0.45}),
+  iron: std({color:0x4a4f53, metalness:0.5, roughness:0.55}),
+  encl: std({color:0xd2d4ce, metalness:0.25, roughness:0.5}),
+  enclDark: std({color:0x8d9293, metalness:0.3, roughness:0.5}),
+  yellow: std({color:0xe0b020, roughness:0.5}),
+  red: std({color:0xc23529, roughness:0.5}),
+  green: std({color:0x3aa655, emissive:0x1d7a35, emissiveIntensity:0.6}),
+  amber: std({color:0xe6a21f, emissive:0xb06d00, emissiveIntensity:0.5}),
+  concrete: std({color:0xffffff, map:TX.concrete, roughness:0.92}),
+  ground: std({color:0xcfcac0, map:TX.gravel, roughness:1}),
+  tankPE: std({color:0xf1eee2, roughness:0.35, transparent:true, opacity:0.38, depthWrite:false, side:DS}),
+  water: std({color:0x8cb4b6, roughness:0.12, metalness:0.0, transparent:true, opacity:0.55, depthWrite:false}),
+  slurry: std({map:TX.slurry, roughness:0.3, transparent:true, opacity:0.9, side:DS}),
+  slurrySide: std({color:0x56682f, roughness:0.4, transparent:true, opacity:0.85, side:DS}),
+  biomass: std({map:TX.bio, bumpMap:TX.bio, bumpScale:0.05, roughness:0.82, color:0xffffff}),
+  belt: std({map:TX.belt, roughness:0.55}),
+  screen: std({color:0xc9cdd0, metalness:0.85, roughness:0.33, alphaMap:TX.perf, alphaTest:0.5, side:DS}),
+  hmi: std({map:TX.hmi, emissive:0xffffff, emissiveMap:TX.hmi, emissiveIntensity:0.85, roughness:0.3}),
+  clear: std({color:0xd8ecf0, roughness:0.1, transparent:true, opacity:0.45, depthWrite:false}),
+  binPE: std({color:0x2f4d63, roughness:0.6}),
+  white: std({color:0xf4f4f0, roughness:0.5}),
+  pool: new T.MeshBasicMaterial({color:0xfff6e4, transparent:true, opacity:0.17, blending:T.AdditiveBlending, depthWrite:false}),
+  arrowWW: std({color:0xb98a4f, emissive:0x6b4a1f, emissiveIntensity:0.45, roughness:0.5}),
+  arrowSL: std({color:0x47b04e, emissive:0x1f6b26, emissiveIntensity:0.55, roughness:0.5}),
+  arrowRW: std({color:0x9a74d6, emissive:0x4c2d80, emissiveIntensity:0.55, roughness:0.5}),
+};
+
+for(const m of Object.values(M)) if(m.isMeshStandardMaterial) m.envMapIntensity = 0.55;
+/* ------------------------------------------------------------------ geometry helpers */
+const UP = new T.Vector3(0,1,0);
+const V3 = a => new T.Vector3(a[0],a[1],a[2]);
+function add(parent, geo, mat, x=0,y=0,z=0){ const m=new T.Mesh(geo,mat); m.position.set(x,y,z); parent.add(m); return m; }
+function B(parent, mat, x0,y0,z0,x1,y1,z1){
+  const g=new T.BoxGeometry(Math.abs(x1-x0)||0.001, Math.abs(y1-y0)||0.001, Math.abs(z1-z0)||0.001);
+  return add(parent, g, mat, (x0+x1)/2, (y0+y1)/2, (z0+z1)/2);
+}
+function Bc(parent, mat, cx,cy,cz, w,h,d){ return add(parent, new T.BoxGeometry(w,h,d), mat, cx,cy,cz); }
+function cyl(parent, mat, r, a, b, seg=14, r2){
+  const A=V3(a), Bv=V3(b), d=new T.Vector3().subVectors(Bv,A), len=d.length(); if(len<1e-5) return null;
+  const m=new T.Mesh(new T.CylinderGeometry(r2===undefined?r:r2, r, len, seg, 1, false), mat);
+  m.position.copy(A).addScaledVector(d,0.5); m.quaternion.setFromUnitVectors(UP, d.normalize()); parent.add(m); return m;
+}
+function sph(parent, mat, r, p, seg=12){ return add(parent, new T.SphereGeometry(r,seg,Math.max(6,seg/2|0)), mat, p[0],p[1],p[2]); }
+function pipe(parent, mat, r, pts, {elbow=true, seg=14}={}){
+  for(let i=0;i<pts.length-1;i++) cyl(parent, mat, r, pts[i], pts[i+1], seg);
+  if(elbow) for(let i=1;i<pts.length-1;i++) sph(parent, mat, r*1.06, pts[i], seg);
+}
+function dirOf(a,b){ return V3(b).sub(V3(a)).normalize(); }
+function flange(parent, mat, r, p, d, t=0.035){ const D=V3(d).normalize(); cyl(parent, mat, r, p.map((v,i)=>v-D.getComponent(i)*t), p.map((v,i)=>v+D.getComponent(i)*t), 18); }
+function perp(d){ const D=V3(d).normalize(); const ref = Math.abs(D.y)>0.9? new T.Vector3(1,0,0) : new T.Vector3(0,1,0); return new T.Vector3().crossVectors(D, ref).normalize(); }
+function ballValve(parent, p, d, r, handle=M.red){
+  const D=V3(d).normalize(); sph(parent, M.ss, r*1.55, p, 14);
+  flange(parent, M.ss, r*1.45, p.map((v,i)=>v-D.getComponent(i)*r*1.5), d, 0.03);
+  flange(parent, M.ss, r*1.45, p.map((v,i)=>v+D.getComponent(i)*r*1.5), d, 0.03);
+  const up = Math.abs(D.y)>0.9 ? new T.Vector3(0,0,1) : new T.Vector3(0,1,0);
+  const s = V3(p).addScaledVector(up, r*1.9);
+  cyl(parent, M.ss, r*0.25, p, s.toArray(), 8);
+  const lever = Math.abs(D.y)>0.9 ? new T.Vector3(1,0,0) : D;
+  cyl(parent, handle, r*0.22, s.toArray(), V3(s.toArray()).addScaledVector(lever, r*5).toArray(), 8);
+}
+function butterfly(parent, p, d, r, handle=M.red){
+  const D=V3(d).normalize(); flange(parent, M.iron, r*1.75, p, d, 0.06);
+  const up = Math.abs(D.y)>0.9 ? new T.Vector3(0,0,1) : new T.Vector3(0,1,0);
+  const s=V3(p).addScaledVector(up, r*2.1); cyl(parent, M.iron, r*0.3, p, s.toArray(), 8);
+  Bc(parent, M.iron, s.x, s.y, s.z, r*0.7, r*0.35, r*0.7);
+  const lever = Math.abs(D.y)>0.9 ? new T.Vector3(1,0,0) : D;
+  cyl(parent, handle, r*0.2, s.toArray(), V3(s.toArray()).addScaledVector(lever, r*4.2).addScaledVector(up, r*0.3).toArray(), 8);
+}
+function camlock(parent, p, d, r, body=M.alu){ // quick-connect coupling: socket + two cam arms
+  const D=V3(d).normalize(); const a=V3(p).addScaledVector(D,-0.18), b=V3(p).addScaledVector(D,0.18);
+  cyl(parent, body, r*1.32, a.toArray(), b.toArray(), 18);
+  cyl(parent, M.ssDark, r*1.4, V3(p).addScaledVector(D,-0.02).toArray(), V3(p).addScaledVector(D,0.02).toArray(), 18);
+  const P=perp(d); const Q=new T.Vector3().crossVectors(D,P).normalize();
+  for(const s of [1,-1]){ const base=V3(p).addScaledVector(P, s*r*1.35); cyl(parent, M.ssDark, r*0.16, base.toArray(), base.clone().addScaledVector(D,-r*2.2).addScaledVector(P,s*r*0.5).toArray(), 6); }
+  return Q;
+}
+function triclamp(parent, p, d, r){ const D=V3(d).normalize(); flange(parent, M.ss, r*1.5, p, d, 0.04);
+  const P=perp(d); const k=V3(p).addScaledVector(P, r*1.55); Bc(parent, M.ss, k.x,k.y,k.z, 0.06,0.06,0.06); }
+function capOn(parent, p, d, r){ const D=V3(d).normalize(); cyl(parent, M.black, r*1.3, p, V3(p).addScaledVector(D,0.12).toArray(), 16); }
+function motorX(parent, mat, x0, x1, y, z, r){ // motor along x with cooling fins and fan cover
+  cyl(parent, mat, r, [x0,y,z], [x1-0.12,y,z], 20);
+  for(let x=x0+0.06; x<x1-0.16; x+=0.09) cyl(parent, mat, r*1.08, [x,y,z],[x+0.025,y,z], 20);
+  cyl(parent, M.iron, r*0.93, [x1-0.12,y,z],[x1,y,z], 20);
+  Bc(parent, mat, (x0+x1)/2-0.05, y+r+0.07, z, Math.min(0.32,(x1-x0)*0.3), 0.16, r*0.9);
+  B(parent, M.iron, x0+0.05, y-r-0.05, z-r*0.75, x1-0.18, y-r+0.02, z+r*0.75);
+}
+/* End-suction centrifugal pump on a baseplate, built along +x (suction at -x, discharge up). Returns key points. */
+function pumpES(parent, s=1, {motor=M.motor, volute=M.iron}={}){
+  const g=new T.Group(); parent.add(g); const h=0.42*s;
+  B(g, M.iron, -0.28*s,0,-0.32*s, 1.75*s,0.08*s,0.32*s);
+  B(g, volute, -0.05*s,0.08*s,-0.14*s, 0.08*s,h-0.15*s,0.14*s);
+  cyl(g, volute, 0.27*s, [-0.11*s,h,0],[0.11*s,h,0], 20);
+  cyl(g, volute, 0.09*s, [-0.30*s,h,0],[-0.11*s,h,0], 14); flange(g, volute, 0.13*s, [-0.30*s,h,0],[1,0,0]);
+  cyl(g, volute, 0.08*s, [0,h+0.2*s,0.08*s],[0,h+0.44*s,0.08*s], 14); flange(g, volute, 0.12*s, [0,h+0.44*s,0.08*s],[0,1,0]);
+  cyl(g, M.iron, 0.11*s, [0.11*s,h,0],[0.5*s,h,0], 14);
+  B(g, M.yellow, 0.5*s,h-0.15*s,-0.15*s, 0.74*s,h+0.15*s,0.15*s);
+  motorX(g, motor, 0.74*s, 1.72*s, h, 0, 0.23*s);
+  B(g, M.iron, 0.8*s,0.08*s,-0.2*s, 1.6*s,h-0.2*s,0.2*s);
+  return {g, suction:[-0.30*s,h,0], discharge:[0,h+0.44*s,0.08*s]};
+}
+/* Progressive-cavity pump along +x: discharge at x=0, stator, suction housing, drive. */
+function pumpPC(parent, s=1){
+  const g=new T.Group(); parent.add(g); const h=0.42*s;
+  B(g, M.iron, -0.1*s,0,-0.3*s, 3.0*s,0.08*s,0.3*s);
+  flange(g, M.ss, 0.13*s, [0,h,0],[1,0,0]); cyl(g, M.ss, 0.1*s, [0,h,0],[0.12*s,h,0]);
+  cyl(g, M.ssDark, 0.16*s, [0.12*s,h,0],[1.1*s,h,0], 18);
+  for(const x of [0.18,1.04]) cyl(g, M.ss, 0.19*s, [x*s,h,0],[(x+0.05)*s,h,0], 18);
+  B(g, M.ss, 1.1*s,0.1*s,-0.24*s, 1.62*s,0.76*s,0.24*s);
+  cyl(g, M.ss, 0.12*s, [1.36*s,0.76*s,0],[1.36*s,0.95*s,0]); flange(g, M.ss, 0.17*s, [1.36*s,0.95*s,0],[0,1,0]);
+  cyl(g, M.iron, 0.12*s, [1.62*s,h,0],[1.9*s,h,0]);
+  B(g, M.motor, 1.9*s,h-0.24*s,-0.22*s, 2.25*s,h+0.24*s,0.22*s);
+  motorX(g, M.motor, 2.25*s, 3.0*s, h, 0, 0.21*s);
+  for(const x of [0.3,1.0]) B(g, M.iron, x*s,0.08*s,-0.08*s,(x+0.06)*s,h-0.12*s,0.08*s);
+  return {g, discharge:[0,h,0], suction:[1.36*s,0.95*s,0]};
+}
+/* Generic polygon geometry from triangles */
+function polyGeo(verts, tris){
+  const pos=[]; tris.forEach(t=>t.forEach(i=>pos.push(...verts[i])));
+  const g=new T.BufferGeometry(); g.setAttribute('position', new T.Float32BufferAttribute(pos,3));
+  g.setAttribute('uv', new T.Float32BufferAttribute(new Array(pos.length/3*2).fill(0),2)); g.computeVertexNormals(); return g;
+}
+/* Corrugated sheet: length along +x, height along +y, corrugation depth toward -z */
+function corrGeo(len, h, pitch=0.91, depth=0.12){
+  const prof=[[0,0]]; const k=pitch/0.91; let x=0;
+  while(x < len-1e-6){ for(const [dx,dz] of [[0.35,0],[0.10,-depth],[0.36,-depth],[0.10,0]]){ x=Math.min(len, x+dx*k); prof.push([x,dz]); if(x>=len) break; } }
+  const pos=[], uv=[];
+  for(let i=0;i<prof.length-1;i++){ const [x0,z0]=prof[i],[x1,z1]=prof[i+1]; if(x1-x0<1e-6) continue;
+    const q=[[x0,0,z0],[x1,0,z1],[x1,h,z1],[x0,0,z0],[x1,h,z1],[x0,h,z0]];
+    q.forEach(p=>{ pos.push(...p); uv.push(p[0]/len, p[1]/h); }); }
+  const g=new T.BufferGeometry(); g.setAttribute('position', new T.Float32BufferAttribute(pos,3)); g.setAttribute('uv', new T.Float32BufferAttribute(uv,2)); g.computeVertexNormals(); return g;
+}
+/* Horizontal textured surface (water / duckweed) */
+function surface(parent, mat, x0,x1, y, z0,z1, uOff=0){
+  const g=new T.PlaneGeometry(x1-x0, z1-z0); g.rotateX(-Math.PI/2);
+  const uv=g.attributes.uv; const L=(x1-x0)/DW_TILE_FT;
+  for(let i=0;i<uv.count;i++) uv.setX(i, uv.getX(i)*L + uOff);
+  return add(parent, g, mat, (x0+x1)/2, y, (z0+z1)/2);
+}
+function signMesh(parent, tex, w, h, pos, rotY=0, rotX=0){
+  const m=add(parent, new T.PlaneGeometry(w,h), std({map:tex, roughness:0.6}), pos[0],pos[1],pos[2]); m.rotation.set(rotX, rotY, 0); return m;
+}
+
+/* Merge every mesh under root (except keep / separately baked groups) into one mesh per material. */
+function bake(root, {cast=true, receive=true}={}){
+  root.updateMatrixWorld(true);
+  const inv = new T.Matrix4().copy(root.matrixWorld).invert();
+  const buckets = new Map(), victims=[];
+  (function walk(o){
+    for(const c of o.children){
+      if(c.userData.sep || c.userData.keep) continue;
+      if(c.isMesh){ victims.push(c); continue; }
+      walk(c);
+    }
+  })(root);
+  for(const m of victims){
+    let g = m.geometry.index ? m.geometry.toNonIndexed() : m.geometry.clone();
+    g.applyMatrix4(new T.Matrix4().multiplyMatrices(inv, m.matrixWorld));
+    if(!g.attributes.uv) g.setAttribute('uv', new T.Float32BufferAttribute(new Float32Array(g.attributes.position.count*2),2));
+    if(!g.attributes.normal) g.computeVertexNormals();
+    const k=m.material.uuid; if(!buckets.has(k)) buckets.set(k,{mat:m.material, list:[]}); buckets.get(k).list.push(g);
+    m.parent.remove(m);
+  }
+  for(const {mat, list} of buckets.values()){
+    let n=0; list.forEach(g=>n+=g.attributes.position.count);
+    const P=new Float32Array(n*3), N=new Float32Array(n*3), U=new Float32Array(n*2); let o=0;
+    for(const g of list){ P.set(g.attributes.position.array,o*3); N.set(g.attributes.normal.array,o*3); U.set(g.attributes.uv.array,o*2); o+=g.attributes.position.count; g.dispose(); }
+    const geo=new T.BufferGeometry(); geo.setAttribute('position',new T.BufferAttribute(P,3)); geo.setAttribute('normal',new T.BufferAttribute(N,3)); geo.setAttribute('uv',new T.BufferAttribute(U,2));
+    geo.computeBoundingSphere();
+    const mesh=new T.Mesh(geo, mat); mesh.castShadow = cast && !mat.transparent; mesh.receiveShadow = receive; root.add(mesh);
+  }
+  // drop empty groups
+  (function prune(o){ for(const c of [...o.children]){ if(c.isMesh||c.userData.sep||c.userData.keep) continue; prune(c); if(c.children.length===0) o.remove(c);} })(root);
+}
+
+/* ------------------------------------------------------------------ container shell */
+function buildShell(L, paint, paintW){
+  const g=new T.Group(); g.name='shell'; const H=9.5;
+  for(const x of [0.21, L-0.21]) for(const z of [-3.79,3.79]) B(g, paint, x-0.21,0.39,z-0.21, x+0.21,H-0.39,z+0.21);
+  for(const x of [0.29, L-0.29]) for(const z of [-3.735,3.735]) for(const y of [0.195,H-0.195]) Bc(g, M.casting, x,y,z, 0.58,0.39,0.53);
+  for(const z of [-3.92,3.92]){ B(g, paint, 0.58,0.02,z-0.08, L-0.58,0.55,z+0.08); B(g, paint, 0.58,9.18,z-0.08, L-0.58,9.5,z+0.08); }
+  for(const x of [0.15, L-0.15]){ B(g, paint, x-0.15,0.02,-3.47, x+0.15,0.5,3.47); B(g, paint, x-0.15,9.0,-3.47, x+0.15,9.5,3.47); }
+  // forklift pockets on 20' boxes
+  if(L<30) for(const x of [L/2-3.4, L/2+2.2]) for(const z of [-3.95,3.95]) B(g, M.casting, x,0.08,z-0.06, x+1.2,0.42,z+0.06);
+  const walls=[];
+  const len=L-0.84, cg=corrGeo(len, 8.63);
+  const sp=add(g, cg, paintW, 0.42,0.55,3.98); sp.userData={keep:true, wall:'S+'};
+  const sm=add(g, cg, paintW, 0.42+len,0.55,-3.98); sm.rotation.y=Math.PI; sm.userData={keep:true, wall:'S-'};
+  const lg=new T.PlaneGeometry(L-0.6, 8.75);
+  const lp=add(g, lg, M.liner, L/2, 4.875, 3.83); lp.userData={keep:true, wall:'S+'};
+  const lm=add(g, lg, M.liner, L/2, 4.875, -3.83); lm.userData={keep:true, wall:'S-'};
+  const eg=corrGeo(6.94, 8.45, 0.91, 0.1);
+  const ef=add(g, eg, paintW, L-0.02, 0.55, 3.47); ef.rotation.y=Math.PI/2;
+  const el=add(g, new T.PlaneGeometry(7.66,8.75), M.liner, L-0.26, 4.875, 0); el.rotation.y=Math.PI/2;
+  // door end (x=0): two insulated leaves with locking bars
+  for(const side of [-1,1]){
+    const leaf=new T.Group(); leaf.userData={sep:true, wall:'D'}; leaf.name= side<0?'doorA':'doorB';
+    leaf.position.set(0.08,0,side*3.47); g.add(leaf);
+    const w=3.45, s=-side; // leaf extends from hinge toward centre
+    B(leaf, paint, -0.05,0.55,0, 0.05,9.0,s*w);
+    for(let i=1;i<5;i++) B(leaf, paintW, -0.09,0.7,s*(i*w/5-0.22), -0.04,8.85,s*(i*w/5+0.22));
+    B(leaf, M.liner, 0.05,0.55,0, 0.27,9.0,s*w);
+    for(const off of [0.75, 2.35]){ cyl(leaf, M.galv, 0.045, [-0.14,0.6,s*off],[-0.14,8.95,s*off], 10);
+      Bc(leaf, M.galv, -0.17,3.4,s*(off+0.25), 0.06,0.08,0.55); for(const y of [0.62,8.93]) Bc(leaf, M.casting, -0.13,y,s*off, 0.12,0.12,0.16); }
+    for(const y of [1.4,3.6,5.9,8.1]) Bc(leaf, M.casting, -0.08,y,s*0.08, 0.14,0.35,0.16);
+    walls.push(leaf);
+  }
+  const roof=B(g, paint, 0.3,9.4,-3.92, L-0.3,9.47,3.92); roof.userData={keep:true, wall:'R'};
+  const ceil=add(g, new T.PlaneGeometry(L-0.6,7.66), M.liner, L/2, 9.25, 0); ceil.rotation.x=Math.PI/2; ceil.userData={keep:true, wall:'R'};
+  for(const leaf of walls) bake(leaf);
+  bake(g);
+  g.traverse(o=>{ if(o.isMesh){ o.castShadow=true; o.receiveShadow=true; } });
+  return g;
+}
+
+/* ------------------------------------------------------------------ 40' growing module */
+const RX0=2.6, RX1=37.6, XP=RX0+35/3;
+const TB = k => 1.15 + 1.27*k;
+const XF = Array.from({length:8},(_,f)=>RX0+5*f);
+const LANE_IN=1.043, LANE_OUT=3.71;
+
+function trapTray(parent, mat, x0,y0,x1,y1, zc, w0,w1, wh=0.22){
+  const v=[[x0,y0,zc-w0/2],[x0,y0,zc+w0/2],[x1,y1,zc+w1/2],[x1,y1,zc-w1/2],
+           [x0,y0+wh,zc-w0/2],[x0,y0+wh,zc+w0/2],[x1,y1+wh,zc+w1/2],[x1,y1+wh,zc-w1/2]];
+  add(parent, polyGeo(v, [[0,1,2],[0,2,3],[0,3,7],[0,7,4],[1,5,6],[1,6,2]]), mat);
+}
+
+function buildTier(tg, sg, k){
+  const b=TB(k), zi=sg*LANE_IN, zo=sg*LANE_OUT, z0=Math.min(zi,zo), z1=Math.max(zi,zo), zc=(z0+z1)/2;
+  // transverse arms at every 5-ft frame + longitudinal channel rails
+  for(const x of XF) B(tg, M.galv, x-0.083,b-0.30,Math.min(sg*0.96,sg*3.77), x+0.083,b-0.13,Math.max(sg*0.96,sg*3.77));
+  B(tg, M.galv, RX0,b-0.13,z0+0.08, RX1,b,z0+0.2); B(tg, M.galv, RX0,b-0.13,z1-0.2, RX1,b,z1-0.08);
+  // HDPE raceway: 5 in walls, 1 in floor
+  B(tg, M.hdpe, RX0,b,z0, RX1,b+0.08,z1);
+  B(tg, M.hdpe, RX0,b,z0, RX1,b+0.5,z0+0.06); B(tg, M.hdpe, RX0,b,z1-0.06, RX1,b+0.5,z1);
+  B(tg, M.hdpe, RX0,b,z0, RX0+0.06,b+0.5,z1); B(tg, M.hdpe, RX1-0.06,b,z0, RX1,b+0.5,z1);
+  for(const x of XF.slice(1,-1)) B(tg, M.hdpe, x-0.03,b+0.5,z0, x+0.03,b+0.53,z1); // cross ties
+  // water + duckweed (3 in deep, 2 in freeboard)
+  const ys=b+0.33, off=(k*0.37+(sg>0?0.5:0))%1;
+  surface(tg, M.dwProp, RX0+0.06, XP, ys, z0+0.06, z1-0.06, off);
+  surface(tg, M.dwHarv, XP, 36.4, ys, z0+0.06, z1-0.06, off*1.7);
+  // conveyor ramp lifting biomass over the end wall
+  const rv=[[36.4,ys-0.06,z0+0.09],[36.4,ys-0.06,z1-0.09],[37.64,b+0.63,z1-0.09],[37.64,b+0.63,z0+0.09]];
+  const rg=polyGeo(rv,[[0,1,2],[0,2,3]]); const uv=rg.attributes.uv; const U=[[0,0],[0,1],[0.12,1],[0,0],[0.12,1],[0.12,0]]; U.forEach((p,i)=>uv.setXY(i,p[0],p[1]));
+  add(tg, rg, M.ramp);
+  cyl(tg, M.ss, 0.075, [37.57,b+0.56,z0+0.07],[37.57,b+0.56,z1-0.07], 14);
+  cyl(tg, M.ss, 0.05, [XP+0.05,b+0.26,z0+0.07],[XP+0.05,b+0.26,z1-0.07], 10);
+  B(tg, M.ss, XP,b+0.29,z0+0.06, 37.5,b+0.36,z0+0.1); B(tg, M.ss, XP,b+0.29,z1-0.1, 37.5,b+0.36,z1-0.06);
+  // propagation boundary boom (floating), keeps the propagation third undisturbed
+  cyl(tg, M.yellow, 0.045, [XP,ys+0.02,z0+0.07],[XP,ys+0.02,z1-0.07], 10);
+  // conveyor drive under the raceway
+  cyl(tg, M.motor, 0.09, [36.75,b-0.2,zc-0.25],[36.75,b-0.2,zc+0.25], 12); Bc(tg, M.iron, 36.75,b-0.2,zc+(sg>0?-0.33:0.33), 0.22,0.2,0.16);
+  // discharge chute to the rack downcomer
+  trapTray(tg, M.ss, 37.62,b+0.55, 38.32,b+0.1, sg*2.38, 2.45,0.5);
+  // LED rows: two 4-ft IP66 linear fixtures per 5-ft bay, 5 in above the water
+  for(const rz of [zc-0.62, zc+0.62]){
+    B(tg, M.strut, RX0,b+0.94,rz-0.068, RX1,b+1.075,rz+0.068);
+    cyl(tg, M.black, 0.022, [RX0,b+1.0,rz+0.1*sg],[RX1,b+1.0,rz+0.1*sg], 6);
+    for(let f=0; f<7; f++){
+      const x0=XF[f]+0.5, x1=XF[f]+4.5;
+      B(tg, M.fixture, x0,b+0.75,rz-0.13, x1,b+0.87,rz+0.13);
+      B(tg, M.iron, x0-0.04,b+0.76,rz-0.11, x0,b+0.86,rz+0.11); B(tg, M.iron, x1,b+0.76,rz-0.11, x1+0.04,b+0.86,rz+0.11);
+      B(tg, M.led, x0+0.03,b+0.715,rz-0.14, x1-0.03,b+0.755,rz+0.14);
+      const pool=add(tg, new T.PlaneGeometry(x1-x0+0.6, 0.95), M.pool, (x0+x1)/2, ys+0.012, rz); pool.rotation.x=-Math.PI/2;
+      for(const hx of [x0+0.4, x1-0.4]) B(tg, M.galv, hx-0.02,b+0.87,rz-0.02, hx+0.02,b+0.94,rz+0.02);
+      cyl(tg, M.black, 0.015, [x1+0.02,b+0.82,rz],[x1+0.15,b+1.0,rz+0.1*sg], 5);
+    }
+  }
+  // nutrient feed outlets from the 5-ft section drops
+  for(let f=0; f<7; f++){ const x=XF[f]+0.25;
+    pipe(tg, M.pvc, 0.03, [[x,b+0.62,sg*0.96],[x,b+0.62,sg*1.25],[x,b+0.42,sg*1.25]], {seg:8}); }
+}
+
+function buildGM(){
+  const gm=new T.Group(); gm.name='GM';
+  const shell=buildShell(40, M.gmPaint, M.gmPaintW); shell.userData.sep=true; gm.add(shell);
+  const st=new T.Group(); st.name='gmStatic'; gm.add(st);
+
+  // sealed floor with trench drain
+  B(st, M.floor, 0.3,0.44,-3.83, 39.75,0.5,3.83);
+  B(st, M.drain, RX0,0.5,-0.17, RX1,0.507,0.17);
+  // racks: inner uprights + wall struts at each 5-ft frame, portal beams across the top, top rails
+  for(const sg of [-1,1]){
+    for(const x of XF){
+      B(st, M.galv, x-0.083,0.5,Math.min(sg*0.876,sg*1.043), x+0.083,8.77,Math.max(sg*0.876,sg*1.043));
+      B(st, M.strut, x-0.06,0.5,Math.min(sg*3.71,sg*3.83), x+0.06,8.77,Math.max(sg*3.71,sg*3.83));
+      Bc(st, M.galv, x, 0.51, sg*0.96, 0.4,0.03,0.4);
+    }
+    B(st, M.galv, RX0-0.08,8.6,Math.min(sg*0.876,sg*1.043), RX1+0.08,8.77,Math.max(sg*0.876,sg*1.043));
+    B(st, M.galv, RX0-0.08,8.6,Math.min(sg*3.65,sg*3.83), RX1+0.08,8.77,Math.max(sg*3.65,sg*3.83));
+    // X-bracing in the end bays against the wall
+    for(const [xa,xb] of [[XF[0],XF[1]],[XF[6],XF[7]]]){ cyl(st, M.galv, 0.03, [xa,0.7,sg*3.76],[xb,8.5,sg*3.76],6); cyl(st, M.galv, 0.03, [xb,0.7,sg*3.76],[xa,8.5,sg*3.76],6); }
+    // downcomer collecting the six tier chutes, then to the slurry sump
+    cyl(st, M.ss, 0.25, [38.55,1.7,sg*2.38],[38.55,TB(5)+0.35,sg*2.38], 18);
+    pipe(st, M.ss, 0.2, [[38.55,1.7,sg*2.38],[38.55,1.55,sg*2.1],[38.55,1.55,sg*0.75]], {seg:16});
+    // ladder cable tray along the upper wall
+    const tz0=Math.min(sg*3.25,sg*3.75), tz1=Math.max(sg*3.25,sg*3.75);
+    B(st, M.galv, 0.6,8.85,sg>0?tz1-0.04:tz0, 39.5,9.0,sg>0?tz1:tz0+0.04);
+    B(st, M.galv, 0.6,8.85,sg>0?tz0:tz1-0.04, 39.5,9.0,sg>0?tz0+0.04:tz1);
+    for(let x=0.8;x<39.5;x+=1) B(st, M.galv, x,8.85,tz0, x+0.05,8.88,tz1);
+    cyl(st, M.black, 0.05, [0.6,8.93,sg*3.4],[39.5,8.93,sg*3.4], 8); cyl(st, M.pw, 0.045, [0.6,8.93,sg*3.55],[39.5,8.93,sg*3.55], 8);
+    cyl(st, M.da, 0.03, [0.6,8.92,sg*3.62],[39.5,8.92,sg*3.62], 6);
+    // light power drops from tray to each tier's rail
+    for(let k=0;k<6;k++) cyl(st, M.black, 0.02, [RX0+0.15,8.85,sg*3.45],[RX0+0.15,TB(k)+1.0,sg*(2.38+0.62)], 5);
+  }
+  // portal beams across the aisle tie both racks together and carry manifold + trays
+  for(const x of XF) B(st, M.galv, x-0.083,8.6,-3.77, x+0.083,8.77,3.77);
+
+  // main nutrient/water manifold along the aisle ceiling, branch drop at each 5-ft section
+  pipe(st, M.pvc, 0.1, [[0.8,8.92,-1.6],[0.8,8.92,0],[RX1,8.92,0]], {seg:16});
+  capOn(st, [RX1,8.92,0],[1,0,0],0.1);
+  for(const x of XF) { Bc(st, M.galv, x, 8.83, 0, 0.12,0.12,0.3); }
+  for(let f=0; f<7; f++){ const x=XF[f]+0.25;
+    for(const sg of [-1,1]){
+      pipe(st, M.pvc, 0.045, [[x,8.92,0],[x,8.92,sg*0.96],[x,TB(0)+0.62,sg*0.96]], {seg:10});
+      ballValve(st, [x,8.92,sg*0.5], [0,0,1], 0.045, sg>0?M.red:M.da);
+    }
+  }
+  // pretreatment skid at the door end: isolation valve -> basket strainer -> bag filter -> pump -> mag flow meter -> flow-control valve
+  flange(st, M.ww, 0.26, [1.5,2.2,-3.83],[0,0,1]);
+  pipe(st, M.ww, 0.15, [[1.5,2.2,-3.83],[1.5,2.2,-3.42]]);
+  butterfly(st, [1.5,2.2,-3.62],[0,0,1],0.15);
+  cyl(st, M.ss, 0.32, [1.5,1.25,-3.1],[1.5,2.6,-3.1], 22); cyl(st, M.ssDark, 0.36, [1.5,2.6,-3.1],[1.5,2.7,-3.1], 22);
+  cyl(st, M.ss, 0.04, [1.5,2.7,-3.1],[1.5,2.85,-3.1], 8); Bc(st, M.ss, 1.5,2.87,-3.1, 0.35,0.04,0.04);
+  for(const a of [0,2.1,4.2]) cyl(st, M.galv, 0.03, [1.5+0.25*Math.cos(a),0.5,-3.1+0.25*Math.sin(a)],[1.5+0.25*Math.cos(a),1.3,-3.1+0.25*Math.sin(a)],6);
+  pipe(st, M.ss, 0.12, [[1.5,2.0,-2.8],[1.5,2.0,-2.5]]);
+  cyl(st, M.ss, 0.27, [1.5,1.0,-2.25],[1.5,2.75,-2.25], 22); sph(st, M.ss, 0.27, [1.5,2.75,-2.25], 16);
+  for(const a of [0.5,2.6,4.7]) cyl(st, M.galv, 0.03, [1.5+0.22*Math.cos(a),0.5,-2.25+0.22*Math.sin(a)],[1.5+0.22*Math.cos(a),1.05,-2.25+0.22*Math.sin(a)],6);
+  pipe(st, M.ss, 0.1, [[1.5,1.0,-2.25],[1.5,0.92,-2.25],[0.52,0.92,-2.25],[0.52,0.92,-1.6],[0.66,0.92,-1.6]], {seg:12});
+  { const p=pumpES(st, 1.0); p.g.position.set(0.9,0.5,-1.6); p.g.scale.set(0.82,1,1);
+    // discharge riser with gauge, mag meter and actuated flow-control valve
+    const rx=0.9, rz=-1.6+0.08;
+    pipe(st, M.pvc, 0.09, [[rx,1.36,rz],[rx,8.92,rz],[0.8,8.92,rz]], {seg:12});
+    cyl(st, M.ss, 0.03,[rx,1.9,rz],[rx+0.18,1.9,rz],6); cyl(st, M.white, 0.09, [rx+0.18,1.9,rz-0.03],[rx+0.18,1.9,rz+0.03],16);
+    cyl(st, M.motor, 0.17, [rx,2.55,rz],[rx,3.15,rz], 18); flange(st, M.iron, 0.2, [rx,2.55,rz],[0,1,0]); flange(st, M.iron, 0.2, [rx,3.15,rz],[0,1,0]);
+    Bc(st, M.encl, rx+0.3, 2.85, rz, 0.24,0.3,0.22); cyl(st, M.encl, 0.04, [rx+0.17,2.85,rz],[rx+0.2,2.85,rz],6);
+    sph(st, M.ss, 0.15, [rx,3.9,rz], 14); Bc(st, M.yellow, rx+0.32, 3.9, rz, 0.34,0.26,0.3); cyl(st, M.ss, 0.04, [rx,3.9,rz],[rx+0.16,3.9,rz],6);
+    Bc(st, M.encl, rx+0.32, 4.12, rz, 0.16,0.12,0.16);
+  }
+  // control cabinet (dry side of the vestibule) with disconnect, pilot lights
+  B(st, M.encl, 0.6,3.6,3.1, 2.3,6.6,3.83);
+  B(st, M.enclDark, 0.62,3.62,3.08, 2.28,6.58,3.1);
+  Bc(st, M.black, 2.1,5.1,3.06, 0.06,0.35,0.05);
+  [M.green, M.amber, M.red].forEach((m,i)=> cyl(st, m, 0.04, [0.95+i*0.22,6.2,3.08],[0.95+i*0.22,6.2,3.03],10));
+  Bc(st, M.red, 0.85,4.0,3.04, 0.12,0.12,0.06);
+  B(st, M.galv, 1.1,6.6,3.35, 1.8,8.85,3.75);
+  signMesh(st, textTex(['GM LOCAL CONTROL PANEL','LCP · 480V 3Ø · PLC I/O'],{w:512,h:96,band:'#e07b25'}), 1.2,0.22, [1.45,5.6,3.075], Math.PI, 0);
+  // HVAC wall unit above the doors (conditioned space)
+  B(st, M.white, 0.36,7.4,-1.3, 1.05,8.5,1.3); B(st, M.iron, 1.0,7.45,-1.2, 1.06,7.7,1.2);
+  // recovered-water line from the utility end, ties into the manifold head; dilution branch to slurry sump
+  pipe(st, M.rw, 0.09, [[39.98,3.0,-1.2],[39.5,3.0,-1.2],[39.5,9.08,-1.2],[39.5,9.08,-0.3],[1.25,9.08,-0.3],[1.25,9.08,0],[1.25,8.98,0]], {seg:12});
+  ballValve(st, [39.5,4.2,-1.2],[0,1,0],0.09, M.rw); Bc(st, M.ss, 30,9.08,-0.3, 0.3,0.18,0.18);
+  pipe(st, M.rw, 0.04, [[38.9,9.08,-0.3],[38.9,2.7,-0.3]], {seg:8}); Bc(st, M.encl, 38.9,4.0,-0.3, 0.16,0.22,0.16);
+  // slurry sump: chutes -> 6 in downcomers -> sump, dilution water added, recessed-impeller pump to bulkhead
+  B(st, M.ss, 38.1,0.5,-0.75, 39.5,2.4,0.75); B(st, M.ssDark, 38.08,2.4,-0.77, 39.52,2.45,0.77);
+  cyl(st, M.motor, 0.14, [38.8,2.45,0.3],[38.8,2.95,0.3], 12); cyl(st, M.white, 0.08, [38.45,2.45,-0.45],[38.45,2.7,-0.45], 10);
+  { const p=pumpES(st, 0.9, {volute:M.iron}); p.g.position.set(39.3,0.5,1.0); p.g.rotation.y=-Math.PI/2; }
+  pipe(st, M.sl, 0.13, [[39.3,0.9,0.75],[39.3,0.9,0.73]]);
+  pipe(st, M.sl, 0.13, [[39.23,1.28,1.0],[39.23,3.0,1.0],[39.98,3.0,1.0]], {seg:14});
+  ballValve(st, [39.23,2.2,1.0],[0,1,0],0.13, M.sl);
+  // water-quality probes in the lanes (pH / EC / temp), level switch at sump
+  for(const [x,k,sg] of [[6.5,1,-1],[24,1,-1],[6.5,0,1]]){ const b=TB(k), z=sg*1.25;
+    Bc(st, M.encl, x, b+0.62, sg*1.12, 0.18,0.1,0.12); cyl(st, M.black, 0.025, [x,b+0.62,z],[x,b+0.18,z],8);
+    cyl(st, M.black, 0.015, [x,b+0.67,sg*1.12],[x,8.6,sg*0.96],5); }
+  Bc(st, M.white, 0.42,7.0,1.9, 0.08,0.35,0.25);
+  // rolling platform ladder in the aisle for upper-tier service
+  { const lx=23.2; for(const z of [-0.62,0.62]){ cyl(st, M.yellow, 0.05,[lx,0.6,z],[lx+1.6,5.1,z],8); cyl(st, M.yellow, 0.05,[lx+2.2,0.6,z],[lx+2.2,8.0,z],8); }
+    for(let i=1;i<9;i++){ const t=i/9; Bc(st, M.galv, lx+1.6*t, 0.6+4.5*t, 0, 0.32,0.05,1.2); }
+    B(st, M.galv, lx+1.55,5.05,-0.6, lx+2.25,5.12,0.6); for(const z of [-0.62,0.62]) cyl(st, M.yellow,0.04,[lx+1.6,8.0,z],[lx+2.2,8.0,z],8);
+    for(const x of [lx, lx+2.2]) for(const z of [-0.6,0.6]) sph(st, M.black, 0.09, [x,0.59,z], 8); }
+  // utility interface panel on the end wall: slurry out, slurry service, recovered water in, power, data
+  B(st, M.galv, 40.0,1.7,-3.0, 40.05,7.1,3.0);
+  signMesh(st, textTex(['UTILITY INTERFACE'],{w:512,h:64,bg:'#2b3436',fg:'#f2f2ee'}), 3.0,0.38, [40.06,6.82,0], Math.PI/2);
+  pipe(st, M.sl, 0.14, [[40.0,3.0,1.0],[40.32,3.0,1.0]]); camlock(st, [40.42,3.0,1.0],[1,0,0],0.14, M.alu);
+  pipe(st, M.sl, 0.1, [[40.0,3.0,2.2],[40.3,3.0,2.2]]); capOn(st, [40.3,3.0,2.2],[1,0,0],0.1);
+  pipe(st, M.rw, 0.09, [[40.0,3.0,-1.2],[40.3,3.0,-1.2]]); flange(st, M.rw, 0.17, [40.3,3.0,-1.2],[1,0,0]);
+  B(st, M.encl, 40.05,4.6,-2.75, 40.45,5.7,-1.95); cyl(st, M.pw, 0.05, [40.45,5.2,-2.35],[40.6,5.2,-2.35],10); Bc(st, M.red, 40.5,5.15,-2.1, 0.08,0.3,0.08);
+  cyl(st, M.encl, 0.13, [40.05,4.1,-2.35],[40.4,4.1,-2.35], 16); cyl(st, M.pw, 0.12, [40.4,4.1,-2.35],[40.45,4.1,-2.35], 16);
+  B(st, M.encl, 40.05,4.6,-1.55, 40.3,5.3,-0.95); for(const y of [4.8,5.1]) cyl(st, M.da, 0.04,[40.3,y,-1.25],[40.38,y,-1.25],10);
+  cyl(st, M.amber, 0.12, [40.2,7.25,0],[40.2,7.5,0], 14); Bc(st, M.galv, 40.15,7.2,0, 0.25,0.06,0.3);
+  const lab=(txt,band,z,y,w=1.0)=>signMesh(st, textTex([txt],{w:256,h:64,band,align:'band-left',sizes:[34]}), w,0.25, [40.06,y,z], Math.PI/2);
+  lab('SLURRY OUT','#2f8a35',1.0,3.55); lab('SLURRY SVC','#2f8a35',2.25,3.55); lab('REC. WATER IN','#7a58ad',-1.2,3.55,1.15);
+  lab('480V POWER','#e07b25',-2.35,6.0); lab('CTRL / DATA','#2f78ad',-1.25,5.6);
+  // wastewater inlet nozzle on the -z side wall near the door end
+  pipe(st, M.ww, 0.15, [[1.5,2.2,-3.83],[1.5,2.2,-4.32]]); flange(st, M.ww, 0.27, [1.5,2.2,-4.32],[0,0,1]);
+  signMesh(st, textTex(['WASTEWATER IN'],{w:256,h:64,band:'#9b7647',align:'band-left',sizes:[34]}), 1.2,0.3, [1.5,3.0,-4.03], Math.PI);
+  // HVAC condensing unit on its own pad beside the door end
+  B(st, M.concrete, 3.9,-0.6,-5.75, 6.7,-0.48,-4.25); B(st, M.encl, 4.05,-0.48,-5.6, 6.55,1.9,-4.4);
+  cyl(st, M.iron, 0.8, [5.3,0.7,-4.39],[5.3,0.7,-4.36], 24); pipe(st, M.black, 0.04, [[6.4,1.0,-4.4],[6.4,1.0,-4.1],[6.4,6.8,-4.1],[6.4,6.8,-4.0]], {seg:6});
+  // steel bearing plates under corner castings
+  for(const x of [0.29,20,39.71]) for(const z of [-3.73,3.73]) Bc(st, M.iron, x,-0.05,z, 0.75,0.1,0.65);
+
+  // twelve runs: two wall racks x six tiers, each tier its own group for sectioning
+  for(const sg of [-1,1]) for(let k=0;k<6;k++){
+    const tg=new T.Group(); tg.name=`tier-${sg<0?'A':'B'}-${k}`; tg.userData.sep=true; st.add(tg); buildTier(tg, sg, k);
+    bake(tg, {cast:false, receive:false});
+  }
+  bake(st, {cast:true, receive:false});
+  return gm;
+}
+
+/* ------------------------------------------------------------------ 20' processing module (built in process coords p,y,s) */
+function buildPM(){
+  const pm=new T.Group(); pm.name='PM';
+  const shell=buildShell(20, M.pmPaint, M.pmPaintW); shell.position.set(52,0.6,10); shell.rotation.y=Math.PI/2; pm.add(shell);
+  const P=new T.Group(); P.name='pmInner'; P.position.set(52,0.6,-10); P.rotation.y=-Math.PI/2; pm.add(P);
+  const S=new T.Group(); P.add(S);    // static, baked
+  const X=new T.Group(); X.userData.keep=true; P.add(X); // transparent / special items not merged
+
+  B(S, M.floor, 0.25,0.44,-3.83, 19.7,0.5,3.83);
+  // ---- receiving / buffer tank T-101 (~300 gal) with quarter cut to show agitator + slurry
+  const tc=[2.2,2.1], tr=1.6, ty0=1.9, ty1=6.9;
+  const win0=Math.PI*(42-62)/180, winL=Math.PI*124/180; // open window facing the aisle/camera
+  const tStart = win0+winL, tLen = Math.PI*2-winL;
+  const shellT=add(X, new T.CylinderGeometry(tr,tr,ty1-ty0,48,1,true,tStart,tLen), M.ss, tc[0],(ty0+ty1)/2,tc[1]);
+  const coneT=add(X, new T.CylinderGeometry(tr,0.2,0.65,48,1,true,tStart,tLen), M.ss, tc[0],ty0-0.325,tc[1]);
+  const lidT=add(X, new T.CylinderGeometry(tr+0.04,tr+0.04,0.06,48,1,false,tStart,tLen), M.ssDark, tc[0],ty1+0.03,tc[1]);
+  // rim edges at the cut
+  for(const th of [tStart, tStart+tLen]){ const ex=tc[0]+tr*Math.sin(th), ez=tc[1]+tr*Math.cos(th); B(S, M.ssDark, ex-0.03,ty0,ez-0.03, ex+0.03,ty1,ez+0.03); }
+  // slurry fill
+  const fy=5.5; const sR=tr-0.03;
+  add(X, new T.CylinderGeometry(sR,sR,fy-ty0,48,1,false,tStart,tLen), M.slurrySide, tc[0],(ty0+fy)/2,tc[1]);
+  const top=add(X, new T.CircleGeometry(sR,48,0,Math.PI*2), M.slurry, tc[0],fy+0.002,tc[1]); top.rotation.x=-Math.PI/2;
+  add(X, new T.CylinderGeometry(sR,0.18,0.62,48,1,false,tStart,tLen), M.slurrySide, tc[0],ty0-0.31,tc[1]);
+  // cut faces of slurry volume
+  for(const th of [tStart, tStart+tLen]){ const ex=sR*Math.sin(th), ez=sR*Math.cos(th);
+    const v=[[tc[0],ty0-0.6,tc[1]],[tc[0],fy,tc[1]],[tc[0]+ex,fy,tc[1]+ez],[tc[0]+ex,ty0,tc[1]+ez]];
+    add(X, polyGeo(v,[[0,1,2],[0,2,3]]), M.slurrySide); }
+  for(let a=0;a<4;a++){ const th=Math.PI/4+a*Math.PI/2; cyl(S, M.ss, 0.07, [tc[0]+1.45*Math.sin(th),0.5,tc[1]+1.45*Math.cos(th)],[tc[0]+1.45*Math.sin(th),2.2,tc[1]+1.45*Math.cos(th)],10); }
+  // agitator: bridge, gearbox, motor, shaft, two pitched-blade impellers
+  B(S, M.galv, tc[0]-0.18,6.96,tc[1]-1.55, tc[0]+0.18,7.1,tc[1]+1.55);
+  B(S, M.motor, tc[0]-0.25,7.1,tc[1]-0.25, tc[0]+0.25,7.45,tc[1]+0.25);
+  cyl(S, M.motor, 0.27, [tc[0],7.45,tc[1]],[tc[0],8.3,tc[1]], 20); cyl(S, M.iron, 0.24, [tc[0],8.3,tc[1]],[tc[0],8.45,tc[1]], 20);
+  cyl(S, M.ss, 0.05, [tc[0],7.1,tc[1]],[tc[0],2.1,tc[1]], 10);
+  for(const iy of [2.3,4.1]){ cyl(S, M.ss, 0.1,[tc[0],iy-0.08,tc[1]],[tc[0],iy+0.08,tc[1]],12);
+    for(let i=0;i<3;i++){ const a=i*2.094; const bl=Bc(S, M.ss, tc[0]+0.38*Math.sin(a), iy, tc[1]+0.38*Math.cos(a), 0.06,0.18,0.6); bl.rotation.y=a; bl.rotateZ(0.6); } }
+  // radar level sensor + hatch
+  cyl(S, M.encl, 0.11, [3.0,6.96,1.05],[3.0,7.35,1.05], 14); cyl(S, M.ssDark, 0.14, [3.0,6.93,1.05],[3.0,6.99,1.05], 14);
+  B(S, M.ssDark, 1.3,6.96,1.3, 1.9,7.02,1.9); Bc(S, M.ss, 1.6,7.06,1.32, 0.3,0.04,0.04);
+  // three separate slurry inlets (one per growing module) + capped spare for expansion
+  const inP=[1.0,2.2,3.4], inS=[2.75,3.3,2.75];
+  inP.forEach((p,i)=>{
+    pipe(S, M.sl, 0.15, [[p,7.6,3.83],[p,7.6,inS[i]],[p,6.96,inS[i]]], {seg:16});
+    // knife-gate isolation valve
+    B(S, M.ss, p-0.22,7.35,3.38, p+0.22,8.15,3.52); cyl(S, M.ss, 0.03,[p,8.15,3.45],[p,8.55,3.45],8); cyl(S, M.yellow, 0.14,[p,8.55,3.45],[p,8.6,3.45],16);
+  });
+  // tank outlet -> suction line -> progressive-cavity feed pump P-101
+  pipe(S, M.ss, 0.12, [[tc[0],1.25,tc[1]],[tc[0],0.95,tc[1]],[tc[0],0.95,1.25],[5.52,0.95,1.25],[5.52,1.36,1.25],[5.52,1.36,1.9]], {seg:12});
+  ballValve(S, [3.2,0.95,1.25],[1,0,0],0.12, M.sl);
+  { const pc=pumpPC(S, 0.9); pc.g.position.set(4.3,0.5,1.9); }
+  pipe(S, M.sl, 0.12, [[4.3,0.88,1.9],[4.12,0.88,1.9],[4.12,4.95,1.9],[7.2,4.95,1.9],[7.2,4.7,2.1]], {seg:14});
+  ballValve(S, [4.12,2.4,1.9],[0,1,0],0.12, M.sl);
+  cyl(S, M.ss, 0.03,[4.12,3.2,1.9],[3.95,3.2,1.9],6); cyl(S, M.white, 0.1,[3.95,3.2,1.87],[3.95,3.2,1.93],16);
+  // ---- screw press SP-101: inlet housing, perforated screen with exposed screw, outlet cone, drip pan
+  const ay=3.6, az=2.1;
+  B(S, M.ss, 6.8,3.0,1.5, 7.6,4.2,2.7);
+  cyl(S, M.ss, 0.45, [7.2,4.2,az],[7.2,4.7,az], 18, 0.2);
+  motorX(S, M.motor, 5.75, 6.55, ay, az, 0.3); B(S, M.motor, 6.55,ay-0.32,az-0.3, 6.8,ay+0.32,az+0.3);
+  const scr0=7.6, scr1=11.6, sr=0.55;
+  const sw0=Math.PI*(315-62)/180, swL=Math.PI*124/180;
+  const scrG=new T.CylinderGeometry(sr,sr,scr1-scr0,40,1,true,sw0+swL,Math.PI*2-swL); scrG.rotateZ(-Math.PI/2);
+  const scrM=add(X, scrG, M.screen, (scr0+scr1)/2, ay, az);
+  for(const x of [scr0, scr0+1.33, scr0+2.67, scr1]) cyl(S, M.ssDark, sr+0.05, [x-0.04,ay,az],[x+0.04,ay,az], 32);
+  B(S, M.ssDark, scr0,ay+sr-0.02,az-0.05, scr1,ay+sr+0.06,az+0.05);
+  // screw: shaft + helical flight with tightening pitch for compression
+  cyl(S, M.ss, 0.13, [6.8,ay,az],[12.1,ay,az], 14);
+  { const verts=[], tris=[]; let th=0, x=scr0-0.6; const steps=520; const r0=0.13, r1=0.49;
+    for(let i=0;i<=steps;i++){ const t=i/steps; const pitch=0.75-0.32*t; x=scr0-0.6+t*(scr1-scr0+0.75); th=(i===0?0:th+ (scr1-scr0+0.75)/steps/pitch*6.2832);
+      verts.push([x, ay+r0*Math.cos(th), az+r0*Math.sin(th)], [x, ay+r1*Math.cos(th), az+r1*Math.sin(th)]);
+      if(i>0){ const a=2*(i-1); tris.push([a,a+1,a+3],[a,a+3,a+2]); } }
+    add(S, polyGeo(verts,tris), M.ss); }
+  // compressed biomass plug in the last third
+  add(S, new T.CylinderGeometry(0.42,0.42,1.7,24,1,false), M.biomass, 10.75, ay, az).rotation.z=Math.PI/2;
+  add(S, new T.CylinderGeometry(0.36,0.36,1.4,20,1,false), M.slurrySide, 8.4, ay-0.1, az).rotation.z=Math.PI/2;
+  // outlet housing + pneumatic back-pressure cone
+  B(S, M.ss, 11.6,3.05,1.55, 12.15,4.15,2.65);
+  cyl(S, M.ssDark, 0.32, [12.15,ay,az],[12.45,ay,az], 20, 0.12); cyl(S, M.alu, 0.1,[12.45,ay,az],[12.95,ay,az],12);
+  trapTray(S, M.ss, 11.75,3.05, 12.55,2.75, az, 0.8,1.0, 0.18);
+  sph(S, M.biomass, 0.28, [12.2,3.0,az]).scale.set(1.2,0.6,1.1);
+  // drip pan under the screen -> drain into recovery tank (no floor discharge)
+  B(S, M.ss, 7.5,2.62,1.45, 11.7,2.66,2.75);
+  B(S, M.ss, 7.5,2.62,1.45, 11.7,2.95,1.49); B(S, M.ss, 7.5,2.62,2.71, 11.7,2.95,2.75);
+  B(S, M.ss, 7.5,2.62,1.45, 7.54,2.95,2.75); B(S, M.ss, 11.66,2.62,1.45, 11.7,2.95,2.75);
+  B(X, M.water, 7.55,2.66,1.5, 11.65,2.78,2.7);
+  pipe(S, M.ss, 0.09, [[9.6,2.62,2.1],[9.6,2.05,2.1]], {seg:10});
+  // press frame
+  for(const x of [7.0,12.0]) for(const z of [1.15,3.05]) B(S, M.ss, x-0.06,0.5,z-0.06, x+0.06,3.05,z+0.06);
+  for(const z of [1.15,3.05]) B(S, M.ss, 6.94,2.95,z-0.06, 12.06,3.05,z+0.06);
+  // ---- recovery tank T-102 under the press, transfer pump P-102
+  B(X, M.tankPE, 7.6,0.55,1.3, 11.4,2.0,3.0);
+  B(X, M.water, 7.66,0.58,1.36, 11.34,1.45,2.94);
+  cyl(S, M.ssDark, 0.16, [9.6,2.0,2.1],[9.6,2.06,2.1], 14);
+  { const p=pumpES(S, 0.65); p.g.position.set(11.95,0.5,2.3); }
+  pipe(S, M.rw, 0.06, [[11.4,0.77,2.3],[11.75,0.77,2.3]], {seg:8});
+  pipe(S, M.rw, 0.06, [[11.95,1.05,2.25],[11.95,1.4,2.25],[12.7,1.4,2.25],[12.7,1.4,3.45],[12.7,8.42,3.45],[12.7,8.42,-3.18],[3.0,8.42,-3.18],[3.0,6.0,-3.18]], {seg:10});
+  ballValve(S, [12.7,2.4,3.45],[0,1,0],0.06, M.rw);
+  // ---- biomass conveyor CV-101 (inclined, cleated food-grade belt)
+  { const c0=[12.35,2.45], c1=[16.1,3.55]; const len=Math.hypot(c1[0]-c0[0],c1[1]-c0[1]); const ang=Math.atan2(c1[1]-c0[1],c1[0]-c0[0]);
+    const cg=new T.Group(); cg.position.set(c0[0],c0[1],az); cg.rotation.z=ang; S.add(cg);
+    const bg=new T.PlaneGeometry(len,1.05); bg.rotateX(-Math.PI/2); const uv=bg.attributes.uv; for(let i=0;i<uv.count;i++) uv.setX(i, uv.getX(i)*len/1.0);
+    add(cg, bg, M.belt, len/2, 0.0, 0);
+    for(const z of [-0.6,0.6]){ B(cg, M.ss, 0,-0.2,z-0.04, len,0.18,z+0.04); }
+    cyl(cg, M.ss, 0.1, [0,-0.06,-0.55],[0,-0.06,0.55],14); cyl(cg, M.ss, 0.1, [len,-0.06,-0.55],[len,-0.06,0.55],14);
+    for(let i=0;i<9;i++){ const lx=0.3+i*0.4+(i%2)*0.07; const lump=sph(cg, M.biomass, 0.18+((i*37)%5)*0.02, [lx,0.04,((i*53)%7-3)*0.07], 12); lump.scale.set(1.3,0.5,1.6); }
+  }
+  for(const [x,h] of [[12.6,2.5],[15.8,3.5]]) for(const z of [1.5,2.7]) B(S, M.ss, x-0.05,0.5,z-0.05, x+0.05,h,z+0.05);
+  motorX(S, M.motor, 15.75, 16.35, 3.5, 1.2, 0.17);
+  // ---- wheeled biomass collection bin BN-101
+  B(S, M.binPE, 16.4,0.85,0.95, 18.95,3.2,3.25);
+  B(S, M.binPE, 16.35,3.1,0.9, 19.0,3.25,3.3);
+  for(const x of [16.6,18.75]) for(const z of [1.15,3.05]){ cyl(S, M.black, 0.16,[x,0.66,z-0.06],[x,0.66,z+0.06],14); B(S, M.galv, x-0.06,0.75,z-0.08, x+0.06,0.88,z+0.08); }
+  { const hg=new T.SphereGeometry(1,28,14,0,Math.PI*2,0,Math.PI/2); const pa=hg.attributes.position; const r=rng(5);
+    for(let i=0;i<pa.count;i++){ const y=pa.getY(i); pa.setY(i, y*(0.85+0.3*Math.sin(pa.getX(i)*7)*Math.cos(pa.getZ(i)*6))); }
+    hg.computeVertexNormals(); const h=add(S, hg, M.biomass, 17.67,3.05,2.1); h.scale.set(1.22,0.55,1.1); }
+  signMesh(S, textTex(['WET BIOMASS','BN-101 · REMOVABLE'],{w:512,h:128,band:'#2f8a35'}), 1.3,0.33, [17.67,2.4,0.94], Math.PI);
+  // ---- holding tank T-201 (recovered water, ~390 gal) with probes, level sensor, sampling port
+  B(X, M.tankPE, 1.2,0.6,-3.75, 5.6,6.0,-1.55);
+  B(X, M.water, 1.27,0.63,-3.68, 5.53,4.27,-1.62);
+  for(const y of [2.2,4.6]) { B(S, M.white, 1.18,y,-3.77, 5.62,y+0.05,-3.74); B(S, M.white, 1.18,y,-1.56, 5.62,y+0.05,-1.53); }
+  B(S, M.white, 1.15,5.95,-3.8, 5.65,6.05,-1.5);
+  cyl(S, M.iron, 0.42, [2.0,6.05,-2.65],[2.0,6.17,-2.65], 24);
+  // probe rack: pH, EC, temperature, nitrate ISE dipping into the tank
+  B(S, M.ss, 3.2,6.05,-2.85, 4.6,6.12,-2.45);
+  [3.4,3.75,4.1,4.45].forEach((x,i)=>{ cyl(S, M.black, 0.04, [x,6.6,-2.65],[x,3.2,-2.65],10); cyl(S, [M.da,M.encl,M.red,M.motor][i], 0.06, [x,6.12,-2.65],[x,6.6,-2.65],10);
+    cyl(S, M.black, 0.015, [x,6.6,-2.65],[x,7.3,-3.5],5); });
+  cyl(S, M.encl, 0.12, [5.1,6.05,-2.0],[5.1,6.4,-2.0], 16); // ultrasonic level
+  pipe(S, M.ss, 0.04, [[5.2,1.0,-1.55],[5.2,1.0,-1.25]], {seg:8}); ballValve(S, [5.2,1.0,-1.32],[0,0,1],0.04, M.red); // sampling port
+  signMesh(S, textTex(['SAMPLE'],{w:256,h:64,band:'#c23529',align:'band-left',sizes:[36]}), 0.5,0.13,[5.2,1.3,-1.53],0);
+  signMesh(S, textTex(['T-201 RECOVERED WATER','HOLDING TANK · ~390 GAL'],{w:512,h:128,band:'#7a58ad'}), 1.6,0.4, [3.4,5.0,-1.53], 0);
+  // recirculation pump P-201 with check valve, gauge, mag meter; return line out to the growing modules
+  pipe(S, M.rw, 0.1, [[5.6,0.95,-2.4],[6.1,0.95,-2.4]], {seg:12}); butterfly(S, [5.8,0.95,-2.4],[1,0,0],0.1, M.rw);
+  { const p=pumpES(S, 1.0); p.g.position.set(6.4,0.5,-2.4); }
+  const rx=6.4, rz=-2.32;
+  pipe(S, M.rw, 0.1, [[rx,1.36,rz],[rx,8.8,rz],[4.4,8.8,rz],[4.4,8.8,4.1]], {seg:12});
+  Bc(S, M.iron, rx,2.05,rz, 0.3,0.3,0.3);
+  cyl(S, M.ss, 0.03,[rx,2.6,rz],[rx+0.2,2.6,rz],6); cyl(S, M.white, 0.1,[rx+0.2,2.6,rz-0.03],[rx+0.2,2.6,rz+0.03],16);
+  cyl(S, M.motor, 0.17, [rx,3.1,rz],[rx,3.7,rz], 18); flange(S, M.iron, 0.21,[rx,3.1,rz],[0,1,0]); flange(S, M.iron, 0.21,[rx,3.7,rz],[0,1,0]);
+  Bc(S, M.encl, rx+0.3,3.4,rz, 0.24,0.3,0.22);
+  ballValve(S, [rx,4.4,rz],[0,1,0],0.1, M.rw);
+  // instrument panel: HMI, analyser transmitters, phosphate analyser, sample flow cell
+  B(S, M.white, 5.85,3.2,-3.83, 8.45,6.7,-3.76);
+  const hmi=add(S, new T.PlaneGeometry(1.15,0.74), M.hmi, 7.15,5.95,-3.68); B(S, M.iron, 6.52,5.53,-3.76, 7.78,6.37,-3.7);
+  ['pH','EC','NO3','TEMP'].forEach((t,i)=>{ B(S, M.encl, 5.98+i*0.6,4.7,-3.76, 6.42+i*0.6,5.25,-3.6);
+    signMesh(S, textTex([t],{w:128,h:64,bg:'#2b3436',fg:'#e9f1ee',align:'center',sizes:[36]}), 0.3,0.15,[6.2+i*0.6,5.0,-3.59],0); });
+  B(S, M.encl, 7.6,3.3,-3.76, 8.35,4.55,-3.25); signMesh(S, textTex(['PO4 ANALYSER'],{w:256,h:64,bg:'#2b3436',fg:'#e9f1ee',align:'center',sizes:[30]}), 0.6,0.15,[7.97,4.35,-3.24],0);
+  for(const [x,c] of [[7.75,0xd9e6c4],[7.95,0xe8d9a8],[8.15,0xcfe0ea]]) add(S, new T.CylinderGeometry(0.06,0.06,0.3,12), std({color:c, roughness:0.3}), x,3.55,-3.15);
+  cyl(X, M.clear, 0.07, [6.0,3.75,-3.6],[7.4,3.75,-3.6], 16);
+  [6.2,6.55,6.9,7.25].forEach(x=>{ cyl(S, M.black, 0.03, [x,3.72,-3.6],[x,4.3,-3.6],8); cyl(S, M.black, 0.012, [x,4.3,-3.6],[x,4.7,-3.68],5); });
+  pipe(S, M.da, 0.02, [[5.55,2.4,-3.0],[5.9,2.4,-3.0],[5.9,3.75,-3.6],[6.0,3.75,-3.6]], {seg:6});
+  pipe(S, M.da, 0.02, [[7.4,3.75,-3.6],[7.5,3.75,-3.6],[7.5,6.4,-3.6],[5.55,6.4,-3.0]], {seg:6});
+  signMesh(S, textTex(['NUTRIENT MONITORING','AIT-201 · pH EC T NO3 PO4 LVL'],{w:512,h:96,band:'#2f78ad'}), 1.8,0.34, [7.15,6.55,-3.75], 0);
+  // central control cabinet CP-001 (dry side, near the doors)
+  B(S, M.iron, 13.6,0.5,-3.83, 17.4,0.7,-2.5);
+  B(S, M.encl, 13.6,0.7,-3.83, 17.4,6.7,-2.5);
+  B(S, M.enclDark, 15.49,0.75,-2.5, 15.51,6.65,-2.48);
+  for(const x of [15.25,15.75]) Bc(S, M.black, x,3.8,-2.46, 0.06,0.45,0.05);
+  [M.green,M.green,M.amber,M.red,M.green].forEach((m,i)=> cyl(S, m, 0.045, [14.0+i*0.25,6.0,-2.48],[14.0+i*0.25,6.0,-2.43],10));
+  Bc(S, M.yellow, 17.0,5.4,-2.47, 0.3,0.3,0.04); cyl(S, M.red, 0.09, [17.0,5.4,-2.45],[17.0,5.4,-2.35],14);
+  cyl(S, M.encl, 0.12, [13.95,4.3,-2.5],[13.95,4.3,-2.39],14); Bc(S, M.red, 13.95,4.3,-2.36, 0.06,0.32,0.05);
+  signMesh(S, textTex(['CP-001 MAIN CONTROL PANEL','480V 3Ø · PLC · MCC · ALARMS'],{w:512,h:96,band:'#e07b25'}), 1.9,0.36, [15.5,6.4,-2.49], 0);
+  signMesh(S, textTex(['⚠ ARC FLASH HAZARD'],{w:256,h:64,bg:'#f2a91c',fg:'#111',align:'center',sizes:[30]}), 0.7,0.18, [14.6,5.3,-2.49], 0);
+  B(S, M.galv, 14.9,6.7,-3.6, 16.1,8.8,-3.1);
+  // cable trays along both upper walls; ceiling LED strips
+  for(const sg of [-1,1]){ const z0=Math.min(sg*3.3,sg*3.78), z1=Math.max(sg*3.3,sg*3.78);
+    B(S, M.galv, 0.4,8.82,z0, 19.6,8.96,z0+0.04); B(S, M.galv, 0.4,8.82,z1-0.04, 19.6,8.96,z1);
+    for(let x=0.6;x<19.6;x+=1) B(S, M.galv, x,8.82,z0, x+0.05,8.85,z1);
+    cyl(S, M.black, 0.05,[0.4,8.9,sg*3.5],[19.6,8.9,sg*3.5],8); cyl(S, M.pw, 0.045,[0.4,8.9,sg*3.62],[19.6,8.9,sg*3.62],8); }
+  for(const x of [5,11,17]){ B(S, M.alu, x-2,9.05,-0.15, x+2,9.18,0.15); const d=add(S, new T.PlaneGeometry(3.9,0.22), M.led, x,9.045,0); d.rotation.x=Math.PI/2; }
+  // fire extinguisher by the doors
+  cyl(S, M.red, 0.2, [19.2,1.2,-3.5],[19.2,2.7,-3.5], 16); Bc(S, M.black, 19.2,2.85,-3.5, 0.16,0.16,0.16);
+
+  // ---- exterior on the module-facing wall (s>0): slurry inlet risers with camlocks, return line, power/data
+  inP.forEach((p,i)=>{
+    pipe(S, M.sl, 0.15, [[p,7.6,3.83],[p,7.6,4.25],[p,2.17,4.25]], {seg:16});
+    camlock(S, [p,3.0,4.25],[0,1,0],0.15);
+    Bc(S, M.galv, p,5.5,4.12, 0.12,0.12,0.3); Bc(S, M.galv, p,3.9,4.12, 0.12,0.12,0.3);
+    signMesh(S, textTex([`SLURRY IN · GM-0${3-i}`],{w:512,h:64,band:'#2f8a35',align:'band-left',sizes:[34]}), 0.95,0.12, [p,6.3,4.03], 0, 0).rotation.y=0;
+  });
+  pipe(S, M.sl, 0.15, [[0.45,5.0,3.83],[0.45,5.0,4.2]]); capOn(S, [0.45,5.0,4.2],[0,0,1],0.15);
+  signMesh(S, textTex(['SPARE · GM-04'],{w:256,h:64,band:'#2f8a35',align:'band-left',sizes:[30]}), 0.6,0.15, [0.45,5.5,4.03],0);
+  pipe(S, M.rw, 0.1, [[4.4,8.8,4.1],[4.4,8.8,4.25],[4.4,3.72,4.25]], {seg:12});
+  flange(S, M.rw, 0.18, [4.4,4.6,4.25],[0,1,0]);
+  signMesh(S, textTex(['RECOVERED WATER OUT'],{w:512,h:64,band:'#7a58ad',align:'band-left',sizes:[34]}), 1.0,0.13, [4.95,6.0,4.05],0);
+  B(S, M.galv, 18.95,3.6,4.0, 19.55,8.6,4.25); cyl(S, M.pw, 0.05,[19.1,8.6,4.12],[19.1,5.0,4.12],8); cyl(S, M.da, 0.035,[19.4,8.6,4.12],[19.4,5.0,4.12],8);
+  B(S, M.encl, 18.8,4.2,4.0, 19.7,5.0,4.35);
+  // utility power pedestal at the receiving end
+  bake(S, {cast:true, receive:true});
+  X.traverse(o=>{ if(o.isMesh){ o.castShadow=false; o.receiveShadow=false; o.renderOrder = o.material.transparent? 2:0; } });
+  return pm;
+}
+
+/* ------------------------------------------------------------------ site: pads, ground, interconnects */
+const GM_Z = [13, 0, -13];            // GM-01 nearest the viewer
+const GM_NAMES = ['GM-01','GM-02','GM-03'];
+const site = new T.Group(); scene.add(site);
+
+const ground = new T.Mesh(new T.PlaneGeometry(600,600), M.ground); ground.rotation.x=-Math.PI/2; ground.receiveShadow=true; scene.add(ground);
+
+const GMs=[];
+const gmProto = buildGM();
+GM_Z.forEach((zc,i)=>{ const g = i===0 ? gmProto : gmProto.clone(); g.position.set(0,0.6,zc); site.add(g); GMs.push(g); });
+GM_Z.forEach((zc,i)=>{
+  const g = GMs[i];
+  // pad
+  const pad=B(site, M.concrete, -0.6,0,zc-4.5, 40.6,0.5,zc+4.5); pad.receiveShadow=true;
+  // stencil on both long walls (tied to the wall so it hides with it)
+  for(const sg of [-1,1]){
+    const t=textTex([`${GM_NAMES[i]}`,'DUCKWEED GROWING MODULE · 40\' HC · 12 RUNS'],{w:1024,h:200,bg:null,fg:'#2a3436',sizes:[110,34]});
+    const m=new T.Mesh(new T.PlaneGeometry(9,1.76), std({map:t, transparent:true, roughness:0.7, depthWrite:false}));
+    m.position.set(sg>0?7.5:32.5, 7.0, sg*4.005); m.rotation.y = sg>0?0:Math.PI; m.userData={wall:sg>0?'S+':'S-'};
+    g.getObjectByName('shell').add(m);
+    const t2=textTex(['GROW LIGHTS · WET PROCESS · AUTHORISED ENTRY'],{w:1024,h:64,bg:null,fg:'#2a3436',sizes:[38],fonts:['500 38px "IBM Plex Mono", monospace']});
+    const m2=new T.Mesh(new T.PlaneGeometry(9,0.56), std({map:t2, transparent:true, roughness:0.7, depthWrite:false}));
+    m2.position.set(sg>0?7.5:32.5, 5.7, sg*4.005); m2.rotation.y=m.rotation.y; m2.userData=m.userData; g.getObjectByName('shell').add(m2);
+  }
+  { const t=textTex([GM_NAMES[i]],{w:256,h:96,bg:null,fg:'#2a3436',align:'center',sizes:[80]});
+    const m=new T.Mesh(new T.PlaneGeometry(2.4,0.9), std({map:t, transparent:true, depthWrite:false})); m.position.set(-0.13,7.9,0); m.rotation.y=-Math.PI/2; g.add(m); }
+});
+const PM = buildPM(); site.add(PM);
+B(site, M.concrete, 47.4,0,-10.6, 56.6,0.5,10.6).receiveShadow=true;
+for(const z of [-9.7,0,9.7]) for(const x of [48.3,55.7]) Bc(site, M.iron, x,0.55,z, 0.65,0.1,0.75);
+{ const sh=PM.getObjectByName('shell');
+  for(const sg of [-1,1]){
+    const t=textTex(['PM-01','PROCESSING MODULE · 20\' HC · DEWATERING + WATER RECOVERY'],{w:1024,h:200,bg:null,fg:'#eef2f2',sizes:[110,27]});
+    const m=new T.Mesh(new T.PlaneGeometry(8.5,1.66), std({map:t, transparent:true, roughness:0.7, depthWrite:false}));
+    m.position.set(10, 7.6, sg*4.005); m.rotation.y = sg>0?0:Math.PI; m.userData={wall:sg>0?'S+':'S-'}; sh.add(m);
+  }
+}
+
+/* interconnect piping (world coords) */
+const IC = new T.Group(); site.add(IC);
+const W = (x,y,z)=>[x,y,z];
+const slX=[43.5,43.0,42.5];          // rack lanes for GM-01..03 slurry lines
+const inZ=[-6.6,-7.8,-9.0];          // PM inlets (p = 3.4, 2.2, 1.0) for GM-01..03
+const FLOW={ww:[], sl:[], rw:[]};
+// pipe rack: posts, three beam levels
+const rackZ=[-15,-11,-4,3,9,15];
+for(const z of rackZ){ for(const x of [42.1,46.2]){ B(IC, M.galv, x-0.17,0.0,z-0.17, x+0.17,6.0,z+0.17); B(IC, M.concrete, x-0.5,-0.2,z-0.5, x+0.5,0.25,z+0.5); }
+  for(const y of [2.45,4.05,5.45]) B(IC, M.galv, 41.95,y,z-0.12, 46.35,y+0.15,z+0.12);
+  cyl(IC, M.galv, 0.04,[42.1,0.4,z],[46.2,2.4,z],6); }
+// cable tray on the top level (power + data from CP-001 to each module)
+B(IC, M.galv, 43.6,5.6,-15.5, 44.4,5.75,15.5);
+cyl(IC, M.pw, 0.06,[43.8,5.72,-14],[43.8,5.72,14],8); cyl(IC, M.da, 0.04,[44.15,5.72,-14],[44.15,5.72,14],8);
+pipe(IC, M.pw, 0.06, [[47.75,5.4,9.25],[47.75,5.72,9.25],[43.8,5.72,9.25]], {seg:8});
+GM_Z.forEach((zc,i)=>{
+  const z=zc-2.35;
+  B(IC, M.galv, 40.6,5.6,z-0.25, 43.6,5.7,z+0.25);
+  pipe(IC, M.pw, 0.05, [[43.8,5.72,z],[40.75,5.72,z],[40.75,4.7,z],[40.45,4.7,z]], {seg:8});
+  pipe(IC, M.da, 0.035, [[44.15,5.72,zc-2.15],[44.15,5.72,zc-1.25],[40.5,5.72,zc-1.25],[40.5,5.55,zc-1.25],[40.32,5.55,zc-1.25]], {seg:6});
+});
+// slurry lines: flexible hose with camlock at the module, hard line on the rack, camlock riser at PM
+GM_Z.forEach((zc,i)=>{
+  const z0=zc+1.0, x=slX[i], zi=inZ[i];
+  const hose=new T.CatmullRomCurve3([V3([40.55,3.6,z0]),V3([41.0,3.45,z0]),V3([41.5,2.95,z0]),V3([x-0.6,2.77,z0]),V3([x-0.25,2.77,z0])]);
+  add(IC, new T.TubeGeometry(hose, 24, 0.17, 14, false), M.slHose);
+  triclamp(IC, [x-0.25,2.77,z0],[1,0,0],0.15);
+  pipe(IC, M.sl, 0.15, [[x-0.25,2.77,z0],[x,2.77,z0],[x,2.77,zi],[47.75,2.77,zi]], {seg:16});
+  for(const z of [z0, zi]) triclamp(IC, [x,2.77,z+(z0>zi?-0.8:0.8)*(z===zi?-1:1)],[0,0,1],0.15);
+  ballValve(IC, [45.1,2.77,zi],[1,0,0],0.15, M.sl);
+  FLOW.sl.push([W(40.6,3.6,z0),W(41.0,3.45,z0),W(41.5,2.95,z0),W(x,2.77,z0),W(x,2.77,zi),W(47.75,2.77,zi),W(47.75,8.2,zi)]);
+});
+// recovered-water header with a branch, valve and quick-connect flange to each module; blind flange for expansion
+pipe(IC, M.rw, 0.1, [[47.75,4.32,-5.6],[45.4,4.32,-5.6]], {seg:12});
+pipe(IC, M.rw, 0.1, [[45.4,4.32,-15.6],[45.4,4.32,11.8]], {seg:12});
+flange(IC, M.rw, 0.2, [45.4,4.32,-15.6],[0,0,1]); capOn(IC, [45.4,4.32,-15.6],[0,0,-1],0.12);
+GM_Z.forEach((zc,i)=>{
+  const z=zc-1.2;
+  pipe(IC, M.rw, 0.09, [[45.4,4.32,z],[40.85,4.32,z],[40.85,3.6,z],[40.32,3.6,z]], {seg:12});
+  butterfly(IC, [44.4,4.32,z],[1,0,0],0.09, M.rw);
+  camlock(IC, [40.56,3.6,z],[1,0,0],0.09, M.rw);
+  FLOW.rw.push([[47.75,9.4,-5.6],[47.75,4.32,-5.6],[45.4,4.32,-5.6],[45.4,4.32,z],[40.85,4.32,z],[40.85,3.6,z],[40.4,3.6,z]].map(p=>[p[0],p[1],p[2]]));
+});
+// pipe shoes on beams
+for(const z of rackZ){ for(const x of slX) Bc(IC, M.galv, x,2.62,z, 0.36,0.06,0.2); Bc(IC, M.galv, 45.4,4.22,z, 0.3,0.06,0.2); }
+// wastewater supply header along the door ends, branch + valve + flanged quick connect into each module
+const WWX=-3.6;
+for(let z=19; z>-22; z-=6){ B(IC, M.galv, WWX-0.3,0,z-0.12, WWX+0.3,1.4,z+0.12); B(IC, M.concrete, WWX-0.45,-0.2,z-0.4, WWX+0.45,0.15,z+0.4); }
+pipe(IC, M.ww, 0.2, [[WWX,1.6,20.5],[WWX,1.6,-22]], {seg:16});
+flange(IC, M.ww, 0.36, [WWX,1.6,20.5],[0,0,1]); flange(IC, M.ww, 0.36, [WWX,1.6,-22],[0,0,1]); capOn(IC, [WWX,1.6,-22],[0,0,-1],0.25);
+pipe(IC, M.ww, 0.2, [[WWX,1.6,20.5],[WWX,1.6,22.5],[WWX,0.2,24.5]], {seg:16});
+GM_Z.forEach((zc,i)=>{
+  const z=zc-4.6;
+  pipe(IC, M.ww, 0.14, [[WWX,1.6,z],[1.5,1.6,z],[1.5,2.8,z],[1.5,2.8,zc-4.32]], {seg:14});
+  butterfly(IC, [-1.6,1.6,z],[1,0,0],0.14);
+  camlock(IC, [1.5,2.8,zc-4.5],[0,0,1],0.14, M.alu);
+  B(IC, M.galv, -0.5,0,z-0.1, -0.2,1.4,z+0.1);
+  FLOW.ww.push([[WWX,1.6,22.5],[WWX,1.6,z],[1.5,1.6,z],[1.5,2.8,z],[1.5,2.8,zc-4.1]]);
+});
+signMesh(IC, textTex(['WASTEWATER FROM SOURCE','NUTRIENT-BEARING · PRE-SCREENED'],{w:512,h:128,band:'#9b7647'}), 2.4,0.6, [WWX-0.25,2.5,21.5], -Math.PI/2);
+// utility power pedestal feeding CP-001
+B(IC, M.concrete, 51.2,0,-13.6, 53.2,0.3,-12.4); B(IC, M.encl, 51.5,0.3,-13.3, 52.9,4.3,-12.7);
+signMesh(IC, textTex(['UTILITY POWER','480V 3Ø SERVICE'],{w:512,h:128,band:'#e07b25'}), 1.2,0.3,[52.2,3.6,-12.69],0);
+pipe(IC, M.pw, 0.07, [[52.2,0.3,-12.7],[52.2,0.25,-11.5],[52.2,0.6,-10.6],[52.2,1.5,-10.1]], {seg:8});
+// future expansion bay outline (GM-04)
+{ const zc=-26; const box=new T.BoxGeometry(40,9.5,8); const e=new T.LineSegments(new T.EdgesGeometry(box), new T.LineDashedMaterial({color:0x5b6866, dashSize:0.8, gapSize:0.6}));
+  e.position.set(20,0.6+4.75,zc); e.computeLineDistances(); site.add(e);
+  const p=new T.LineSegments(new T.EdgesGeometry(new T.BoxGeometry(41.2,0.5,9)), new T.LineDashedMaterial({color:0x5b6866, dashSize:0.8, gapSize:0.6}));
+  p.position.set(20,0.25,zc); p.computeLineDistances(); site.add(p); }
+bake(IC, {cast:true, receive:true});
+
+/* ------------------------------------------------------------------ flow arrows */
+const arrows=[]; const coneG=new T.ConeGeometry(0.3,0.7,12); coneG.rotateX(Math.PI/2); // points +z
+function polyLen(pts){ let L=0; const seg=[]; for(let i=0;i<pts.length-1;i++){ const l=V3(pts[i]).distanceTo(V3(pts[i+1])); seg.push(l); L+=l; } return {L,seg}; }
+function addFlow(pts, mat, spacing=2.6){
+  const {L,seg}=polyLen(pts); const n=Math.max(2, Math.floor(L/spacing));
+  for(let i=0;i<n;i++){ const m=new T.Mesh(coneG, mat); m.userData={pts,L,seg,off:i*L/n}; site.add(m); arrows.push(m); }
+}
+FLOW.ww.forEach(p=>addFlow(p.map(q=>[q[0],q[1],q[2]]), M.arrowWW, 3));
+FLOW.sl.forEach(p=>addFlow(p, M.arrowSL, 2.2));
+FLOW.rw.forEach(p=>addFlow(p, M.arrowRW, 2.2));
+const _a=new T.Vector3(), _b=new T.Vector3();
+function updateArrows(t){
+  for(const m of arrows){ const u=m.userData; let s=(u.off + t*1.6) % u.L; let i=0;
+    while(i<u.seg.length-1 && s>u.seg[i]){ s-=u.seg[i]; i++; }
+    _a.fromArray(u.pts[i]); _b.fromArray(u.pts[i+1]); const f=Math.min(1,s/u.seg[i]);
+    m.position.lerpVectors(_a,_b,f); m.lookAt(_b.x===m.position.x&&_b.y===m.position.y&&_b.z===m.position.z? _a : _b); }
+}
+
+/* ------------------------------------------------------------------ walls: auto cutaway */
+const wallSets=[];
+function collectWalls(root){
+  const shell=root.getObjectByName('shell'); if(!shell) return;
+  const sets={}; shell.traverse(o=>{ const w=o.userData&&o.userData.wall; if(!w) return; (sets[w]=sets[w]||[]).push(o); });
+  shell.updateMatrixWorld(true); const q=new T.Quaternion(); shell.getWorldQuaternion(q);
+  for(const [k,list] of Object.entries(sets)){
+    const n = k==='S+'? new T.Vector3(0,0,1) : k==='S-'? new T.Vector3(0,0,-1) : k==='D'? new T.Vector3(-1,0,0) : new T.Vector3(0,1,0);
+    n.applyQuaternion(q); const c=new T.Box3(); list.forEach(o=>c.expandByObject(o)); const center=c.getCenter(new T.Vector3());
+    wallSets.push({key:k, list, n, center, owner:root});
+  }
+}
+GMs.forEach(collectWalls); collectWalls(PM);
+const state={cut:true, labels:true, flow:true, peel:true, view:'overall'};
+const _v=new T.Vector3();
+function updateWalls(){
+  for(const w of wallSets){
+    let hide=false;
+    if(state.cut){ if(w.key==='R') hide=true; else { _v.subVectors(camera.position, w.center).normalize(); hide = _v.dot(w.n) > (w.key==='D'? 0.35 : 0.05); } }
+    for(const o of w.list) o.visible=!hide;
+  }
+}
+function applyPeel(){
+  const on = state.peel && state.view==='growing';
+  for(let k=3;k<6;k++){ const t=GMs[0].getObjectByName(`tier-B-${k}`); if(t) t.visible=!on; }
+}
+const pmDoor = PM.getObjectByName('doorB');
+function applyDoor(){ if(pmDoor) pmDoor.rotation.y = state.view==='processing' ? 1.7 : 0; }
+
+/* ------------------------------------------------------------------ callouts */
+const gw=(x,y,z)=>[x, y+0.6, z+GM_Z[0]];
+const pw=(p,y,s)=>[52-s, y+0.6, p-10];
+const VIEWS={
+  overall:{
+    title:'Site overview',
+    cam:{pos:[66,57,71], tgt:[26.5,1,-4], fov:31},
+    note:'Wall panels facing the camera are cut away automatically; roofs are removed. Orbit to see the far side. Dashed outline: a fourth growing module plugs into the capped header tees and spare slurry inlet.',
+    items:[
+      {n:1, t:'Wastewater enters', a:[WWX,1.8,21], o:[50,90], d:'<strong>Wastewater enters</strong> on a 4 in header along the door ends and branches through a valve and flanged quick-connect into each grower.'},
+      {n:2, t:'Duckweed grows', a:gw(12,8.0,-2.4), o:[-120,-60], d:'<strong>Duckweed grows</strong> on 12 shallow runs per 40\' module under linear LED fixtures.'},
+      {n:3, t:'Harvest + slurry sump', a:gw(38.6,6.5,2.38), o:[30,-95], d:'<strong>Harvest</strong> conveyors carry fronds to chutes, downcomers and a slurry sump at the utility end.'},
+      {n:4, t:'Slurry to processing', a:[43.0,2.8,4], o:[70,-60], d:'<strong>Slurry travels</strong> as pumped wet slurry in 3 in hose and hard line on the pipe rack, one line per module.'},
+      {n:5, t:'Dewatering', a:pw(9.6,4.2,2.1), o:[-60,-190], d:'<strong>Dewatering</strong> happens in the screw press inside PM-01.'},
+      {n:6, t:'Biomass out', a:pw(17.7,3.3,2.1), o:[60,60], d:'<strong>Biomass exits</strong> on a short conveyor into a removable wheeled bin at the door end.'},
+      {n:7, t:'Recovered water tank', a:pw(3.4,5.4,-2.6), o:[40,-150], d:'<strong>Recovered water</strong> drains to a recovery tank, then the 390 gal holding tank.'},
+      {n:8, t:'Nutrient monitoring', a:pw(7.15,6.0,-3.7), o:[70,-60], d:'<strong>Monitoring</strong>: pH, EC, temperature, nitrate, phosphate and level at an HMI panel beside the tank.'},
+      {n:9, t:'Return to growers', a:[45.4,4.32,-12], o:[-40,-130], d:'<strong>Water returns</strong> by recirculation pump on a purple header with a valve and quick-connect to each module.'},
+    ],
+    dims:[]
+  },
+  growing:{
+    title:'Growing module GM-01',
+    cam:{pos:[-17,20,41], tgt:[17.5,3.4,11.5], fov:36},
+    note:'Near rack sectioned above tier 3 so the lanes are visible. Lanes are 2\'-8" wide so a 21 in service aisle survives; at a full 3\'-0" the aisle would shrink to about 14 in.',
+    items:[
+      {n:1, t:'Wastewater inlet', a:gw(1.5,2.2,-4.3), o:[-80,40], d:'<strong>Wastewater inlet</strong>: flanged nozzle with isolation valve.'},
+      {n:2, t:'Pretreatment skid', a:gw(1.5,2.6,-2.6), o:[-110,-10], d:'<strong>Pretreatment</strong>: basket strainer (coarse screen), bag filter (small solids), pump, mag flow meter and actuated flow-control valve.'},
+      {n:3, t:'Local control panel', a:gw(1.45,5.2,3.1), o:[-90,-50], d:'<strong>Local control panel</strong> on the dry side of the door vestibule: pumps, lights, conveyors, level, flow, temperature, pH, EC, alarms.'},
+      {n:4, t:'Main manifold', a:gw(9,8.92,0), o:[-40,-70], d:'<strong>Main manifold</strong>: 2 in PVC along the aisle ceiling with a valved branch drop every 5 ft section.'},
+      {n:5, t:'Branch drop + valves', a:gw(12.85,6.0,0.96), o:[-60,-40], d:'<strong>Branch drops</strong> feed each tier through short outlets over the raceway wall.'},
+      {n:6, t:'LED fixtures, 5 in above water', a:gw(18,TB(2)+0.8,2.38+0.62), o:[-20,-110], d:'<strong>Lighting</strong>: 4 ft IP66 linear LEDs, two rows per lane, hung from unistrut rails.'},
+      {n:7, t:'Propagation third', a:gw(9,TB(2)+0.34,2.38), o:[-70,60], d:'<strong>Propagation zone</strong>: first third of each run, undisturbed, bounded by a floating boom.'},
+      {n:8, t:'Harvest conveyor (2/3)', a:gw(28,TB(2)+0.34,2.38), o:[30,80], d:'<strong>Harvest conveyor</strong>: submerged mesh belt with flights under the duckweed for the last two thirds of the run.'},
+      {n:9, t:'Chute + downcomer', a:gw(38.4,TB(1)+0.4,2.38), o:[60,-30], d:'<strong>Collection</strong>: each run discharges over a ramp into a stainless chute and a 6 in downcomer.'},
+      {n:10, t:'Slurry sump + pump', a:gw(39.2,1.6,0.9), o:[80,30], d:'<strong>Slurry sump</strong>: recovered water is added, a mixer keeps fronds suspended, a recessed-impeller pump sends slurry out.'},
+      {n:11, t:'Utility interface', a:gw(40.1,4.2,0), o:[90,-60], d:'<strong>Utility interface</strong>: slurry out, slurry service, recovered water in, 480 V disconnect and control/data connectors.'},
+      {n:12, t:'Probe (pH / EC / T)', a:gw(6.5,TB(0)+0.6,1.12), o:[-60,70], d:'<strong>In-lane probes</strong> report pH, conductivity and temperature to the local panel.'},
+    ],
+    dims:[
+      {a:gw(XF[3],10.6,0), b:gw(XF[4],10.6,0), t:'5\'-0" frame spacing (typ.)'},
+      {a:gw(RX0,TB(3)+0.05,4.4), b:gw(RX1,TB(3)+0.05,4.4), t:'35\'-0" run'},
+    ]
+  },
+  processing:{
+    title:'Processing module PM-01',
+    cam:{pos:[35,25,7.5], tgt:[51.8,3.0,-0.8], fov:35},
+    note:'Biomass line runs along the module-facing wall; water recovery, monitoring and electrical sit on the opposite wall across a 25 in to 42 in aisle. Receiving tank and press screen are drawn with cut windows.',
+    items:[
+      {n:1, t:'Slurry inlets (3)', a:pw(2.2,6.4,4.25), o:[-80,-70], d:'<strong>Slurry inlets</strong>: one camlock riser and knife-gate valve per growing module, plus a capped spare.'},
+      {n:2, t:'Receiving tank ~300 gal', a:pw(2.2,5.8,1.0), o:[-110,-20], d:'<strong>Receiving tank</strong> with lid, level radar, inlet and outlet nozzles.'},
+      {n:3, t:'Agitator', a:pw(2.2,7.9,2.1), o:[-70,-80], d:'<strong>Agitator</strong> keeps fronds suspended so the biomass does not settle.'},
+      {n:4, t:'Feed pump (PC)', a:pw(5.3,1.0,1.9), o:[-70,60], d:'<strong>Progressive-cavity feed pump</strong> meters slurry to the press.'},
+      {n:5, t:'Screw press', a:pw(9.2,4.15,2.1), o:[-30,-110], d:'<strong>Screw press</strong>: inlet hopper, rotating screw with tightening pitch, perforated screen, outlet back-pressure cone.'},
+      {n:6, t:'Biomass conveyor', a:pw(14.2,3.1,2.1), o:[30,-90], d:'<strong>Biomass conveyor</strong> carries the thick wet cake toward the door end.'},
+      {n:7, t:'Collection bin', a:pw(17.7,3.4,2.1), o:[70,-60], d:'<strong>Removable bin</strong> rolls out through the doors for drying, fertilizer or extraction.'},
+      {n:8, t:'Recovery tank', a:pw(9.6,1.4,1.3), o:[40,90], d:'<strong>Recovery tank</strong> under the press catches all pressate; a transfer pump lifts it to the holding tank.'},
+      {n:9, t:'Holding tank ~390 gal', a:pw(3.4,3.0,-1.55), o:[-120,40], d:'<strong>Holding tank</strong> with probes, ultrasonic level and a sampling port.'},
+      {n:10, t:'Nutrient sensors + HMI', a:pw(7.15,5.95,-3.7), o:[60,-40], d:'<strong>Nutrient monitoring</strong>: pH, EC, temperature, nitrate, phosphate analyser and level on an HMI panel.'},
+      {n:11, t:'Recirculation pump', a:pw(6.9,0.95,-2.4), o:[60,70], d:'<strong>Recirculation pump</strong> with check valve, gauge and mag meter.'},
+      {n:12, t:'Return line out', a:pw(4.4,8.8,1.0), o:[-60,-110], d:'<strong>Return line</strong> leaves through the module-facing wall to the recovered-water header.'},
+      {n:13, t:'Main control cabinet', a:pw(15.5,5.0,-2.5), o:[90,20], d:'<strong>Main control cabinet</strong> CP-001 on the dry wall, fed from the utility pedestal.'},
+    ],
+    dims:[]
+  }
+};
+const leaders=document.getElementById('leaders'), coLayer=document.getElementById('callouts');
+let coEls=[];
+const dimGroup=new T.Group(); scene.add(dimGroup);
+function buildCallouts(){
+  coLayer.innerHTML=''; leaders.innerHTML=''; coEls=[]; dimGroup.clear();
+  const v=VIEWS[state.view];
+  for(const it of v.items){ const el=document.createElement('div'); el.className='co'; el.innerHTML=`<b>${it.n}</b><span>${it.t}</span>`; coLayer.appendChild(el);
+    const ln=document.createElementNS('http://www.w3.org/2000/svg','line'); const dot=document.createElementNS('http://www.w3.org/2000/svg','circle'); dot.setAttribute('r','3');
+    leaders.appendChild(ln); leaders.appendChild(dot); coEls.push({it, el, ln, dot, p:V3(it.a)}); }
+  for(const d of v.dims){
+    const A=V3(d.a), Bv=V3(d.b); const mat=new T.LineBasicMaterial({color:0x1e2829});
+    const dir=new T.Vector3().subVectors(Bv,A).normalize(); const tick=new T.Vector3(0,0.35,0);
+    const g=new T.BufferGeometry().setFromPoints([A,Bv, A.clone().add(tick),A.clone().sub(tick), Bv.clone().add(tick),Bv.clone().sub(tick)]);
+    dimGroup.add(new T.LineSegments(g, mat));
+    const el=document.createElement('div'); el.className='dim'; el.textContent=d.t; coLayer.appendChild(el);
+    coEls.push({dim:true, el, p:A.clone().add(Bv).multiplyScalar(0.5)});
+  }
+  const list=document.getElementById('d-list'); list.innerHTML=v.items.map(it=>`<li><b>${it.n}</b><span>${it.d}</span></li>`).join('');
+  document.getElementById('d-title').textContent=v.title; document.getElementById('d-note').textContent=v.note;
+}
+function updateCallouts(){
+  const on=state.labels; coLayer.style.display=on?'':'none'; leaders.style.display=on?'':'none'; dimGroup.visible=on;
+  if(!on) return;
+  const w=canvas.clientWidth, h=canvas.clientHeight;
+  for(const c of coEls){
+    _v.copy(c.p).project(camera); const vis=_v.z<1 && Math.abs(_v.x)<1.2 && Math.abs(_v.y)<1.2;
+    const x=(_v.x+1)/2*w, y=(1-_v.y)/2*h;
+    c.el.style.display=vis?'':'none'; if(c.ln){ c.ln.style.display=vis?'':'none'; c.dot.style.display=vis?'':'none'; }
+    if(!vis) continue;
+    if(c.dim){ c.el.style.transform=`translate(${x}px,${y}px) translate(-50%,-140%)`; continue; }
+    const dx=c.it.o[0]*labelK, dy=c.it.o[1]*labelK; const lx=x+dx, ly=y+dy;
+    c.el.style.transform=`translate(${lx}px,${ly}px) translate(${dx<0?'-100%':'0'},-50%)`;
+    c.ln.setAttribute('x1',x); c.ln.setAttribute('y1',y); c.ln.setAttribute('x2',lx); c.ln.setAttribute('y2',ly);
+    c.ln.setAttribute('stroke',leaderColor); c.ln.setAttribute('stroke-width','1.2');
+    c.dot.setAttribute('cx',x); c.dot.setAttribute('cy',y); c.dot.setAttribute('fill',leaderColor);
+  }
+}
+
+/* ------------------------------------------------------------------ views + UI */
+let tween=null, labelK=1;
+function setView(name, instant=false){
+  state.view=name; const v=VIEWS[name];
+  document.querySelectorAll('.views button').forEach(b=>b.setAttribute('aria-pressed', String(b.id==='v-'+name)));
+  const to={pos:V3(v.cam.pos), tgt:V3(v.cam.tgt), fov:v.cam.fov};
+  if(instant||reduceMotion){ camera.position.copy(to.pos); controls.target.copy(to.tgt); camera.fov=to.fov; camera.updateProjectionMatrix(); tween=null; }
+  else tween={t0:performance.now(), dur:1100, from:{pos:camera.position.clone(), tgt:controls.target.clone(), fov:camera.fov}, to};
+  applyPeel(); applyDoor(); buildCallouts();
+  document.getElementById('t-peel').closest('label').style.display = name==='growing'?'':'none';
+}
+for(const n of ['overall','growing','processing']) document.getElementById('v-'+n).addEventListener('click',()=>setView(n));
+document.getElementById('t-cut').addEventListener('change',e=>{state.cut=e.target.checked;});
+document.getElementById('t-labels').addEventListener('change',e=>{state.labels=e.target.checked;});
+document.getElementById('t-flow').addEventListener('change',e=>{state.flow=e.target.checked; arrows.forEach(a=>a.visible=state.flow);});
+document.getElementById('t-peel').addEventListener('change',e=>{state.peel=e.target.checked; applyPeel();});
+const fold=document.getElementById('fold');
+fold.addEventListener('click',()=>{ const r=document.getElementById('rail'); const o=r.classList.toggle('open'); fold.setAttribute('aria-expanded',String(o)); fold.textContent=o?'Hide details':'Show details'; });
+
+function resize(){
+  const w=canvas.clientWidth, h=canvas.clientHeight; renderer.setSize(w,h,false);
+  const r = (!document.body.classList.contains('shot') && w>760) ? 316 : 0;
+  // keep the designed framing, scaled to fit the area right of the control rail
+  camera.aspect=w/h;
+  labelK = r? (w-r)/w : 1;
+  if(r){ const k=(w-r)/w, fw=w*k, fh=h*k; camera.setViewOffset(fw,fh, fw/2-(r+(w-r)/2), fh/2-h/2, w,h); } else camera.clearViewOffset();
+  camera.updateProjectionMatrix();
+  leaders.setAttribute('viewBox',`0 0 ${w} ${h}`); leaders.setAttribute('width',w); leaders.setAttribute('height',h);
+}
+const params=new URLSearchParams(location.search);
+if(params.has('shot')) document.body.classList.add('shot');
+addEventListener('resize', resize); resize();
+
+
+const hashView=(location.hash||'').slice(1);
+setView(VIEWS[params.get('view')]?params.get('view'):(VIEWS[hashView]?hashView:'overall'), true);
+if(params.has('cam')){ const c=params.get('cam').split(',').map(Number); camera.position.set(c[0],c[1],c[2]); controls.target.set(c[3],c[4],c[5]); }
+document.getElementById('loading').remove();
+
+const clock=new T.Clock(); let frames=0;
+const shotMode=params.has('shot');
+function frame(now){
+  if(!(shotMode && frames>=3)) requestAnimationFrame(frame);
+  if(tween){ const k=Math.min(1,(now-tween.t0)/tween.dur), e=k<0.5?4*k*k*k:1-Math.pow(-2*k+2,3)/2;
+    camera.position.lerpVectors(tween.from.pos, tween.to.pos, e); controls.target.lerpVectors(tween.from.tgt, tween.to.tgt, e);
+    camera.fov=tween.from.fov+(tween.to.fov-tween.from.fov)*e; camera.updateProjectionMatrix(); if(k>=1) tween=null; }
+  controls.update();
+  updateWalls();
+  if(state.flow) updateArrows(reduceMotion? 0 : clock.getElapsedTime());
+  renderer.render(scene, camera);
+  updateCallouts();
+  frames++; if(frames===4) window.__ready=true;
+}
+requestAnimationFrame(frame);
+window.__setView=(n)=>{ setView(n,true); };
+})().catch(err=>{ const l=document.getElementById('loading'); if(l) l.textContent='The 3D model could not start: '+err.message; console.error(err); });
+</script>
