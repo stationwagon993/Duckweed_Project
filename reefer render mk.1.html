@@ -1,0 +1,1279 @@
+<title>Duckweed Reefer Trailer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+/* Layout: header strip (title block + view tabs), then three columns: layers | 3D viewport | design data & BOM. Labels are clipped to the viewport, so they never sit on a panel. Single dark CAD look. */
+:root{
+  color-scheme: dark;
+  --bg:#101418; --panel:#141a1f; --line:#2a333c; --fg:#e6ecf0; --muted:#93a3b0;
+  --dim:#ffc65c; --lead:#7fd4c1; --accent:#7fd4c1; --warn:#ff9d6b;
+  --f-ui:"Barlow Semi Condensed","Arial Narrow",Arial,sans-serif;
+  --f-data:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+html,body{height:100%}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-ui);overflow:hidden}
+#app{height:100%;display:grid;grid-template-rows:auto minmax(0,1fr)}
+.top{display:flex;flex-wrap:wrap;gap:10px 20px;align-items:center;justify-content:space-between;padding-block:10px;padding-inline:16px;border-bottom:1px solid var(--line);background:var(--panel)}
+.tb{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 16px;min-width:0}
+.tb .name{font-size:20px;font-weight:700;letter-spacing:.01em}
+.tb .v{font-family:var(--f-data);font-size:11.5px;color:var(--muted)}
+.views{display:flex;flex-wrap:wrap;gap:4px}
+.views button,.tabs button{font:600 12px/1 var(--f-ui);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);background:transparent;border:1px solid var(--line);padding:7px 9px;cursor:pointer}
+.views button:hover,.tabs button:hover{color:var(--fg)}
+.views button[aria-pressed="true"],.tabs button[aria-selected="true"]{color:var(--bg);background:var(--accent);border-color:var(--accent)}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--dim);outline-offset:2px}
+.main{display:grid;grid-template-columns:250px minmax(0,1fr) 380px;min-height:0}
+.side{min-height:0;overflow:auto;background:var(--panel)}
+.left{border-right:1px solid var(--line)}
+.right{border-left:1px solid var(--line);display:flex;flex-direction:column}
+.h{font-weight:700;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);padding:12px 14px 6px}
+.layers{padding:0 14px 14px;display:grid;gap:7px;font-size:14px}
+.layers label{display:flex;align-items:center;gap:8px;cursor:pointer}
+.layers input[type=checkbox]{accent-color:var(--accent);width:15px;height:15px}
+.sw{display:inline-block;width:10px;height:10px;border-radius:2px;background:var(--c);margin-left:2px}
+.range{display:grid;gap:4px;margin-top:4px;padding-top:9px;border-top:1px solid var(--line)}
+.range .row{display:flex;justify-content:space-between;font-size:13px}
+.range output{font-family:var(--f-data);color:var(--dim)}
+.range input{width:100%;accent-color:var(--accent)}
+#scrMode{font:500 13px var(--f-ui);background:var(--bg);color:var(--fg);border:1px solid var(--line);padding:4px}
+.hint{color:var(--muted);font-size:12px;margin-top:2px}
+#viewport{position:relative;min-width:0;min-height:0;overflow:hidden}
+#gl,#labels{position:absolute;inset:0}
+#labels{pointer-events:none}
+#leaders{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+#leaders line{stroke:var(--lead);stroke-width:1;opacity:.85}
+.tabs{display:flex;gap:4px;padding:10px 14px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--panel);z-index:2}
+.pane{padding:0 0 14px}
+.pane table{border-collapse:collapse;width:100%;font-size:13px}
+.pane td,.pane th{padding:5px 12px;border-top:1px solid var(--line);vertical-align:top;text-align:left}
+#data td:first-child{color:var(--muted);white-space:nowrap}
+#data td:last-child{font-family:var(--f-data);font-size:11.5px;font-variant-numeric:tabular-nums;text-align:right}
+.note{padding:10px 14px;font-size:12.5px;line-height:1.4;color:var(--muted)}
+.note b{color:var(--warn);font-weight:600}
+#bom th{font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);font-weight:600}
+#bom tr.grp td{background:#1a2128;color:var(--lead);font-weight:700;letter-spacing:.08em;text-transform:uppercase;font-size:11px}
+#bom td.n{font-family:var(--f-data);color:var(--muted);font-size:11px;width:1%}
+#bom td.q{font-family:var(--f-data);font-size:11px;white-space:nowrap;text-align:right}
+#bom td small{display:block;color:var(--muted);font-size:11.5px;line-height:1.3;margin-top:2px}
+/* annotations */
+.dim{font:500 11px/1 var(--f-data);color:var(--dim);background:rgba(12,15,18,.86);border:1px solid rgba(255,198,92,.5);padding:3px 5px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.dim.sm{font-size:10px;padding:2px 4px}
+.co{font:600 11.5px/1.15 var(--f-ui);letter-spacing:.06em;text-transform:uppercase;color:var(--fg);background:rgba(12,15,18,.88);border-left:2px solid var(--lead);padding:4px 7px;white-space:nowrap}
+.co small{display:block;font:400 10px/1.2 var(--f-data);letter-spacing:0;text-transform:none;color:var(--muted);margin-top:2px}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--lead);box-shadow:0 0 0 2px rgba(12,15,18,.8)}
+.sect{font:700 13px/1 var(--f-ui);letter-spacing:.14em;color:var(--dim);text-transform:uppercase;white-space:nowrap;background:rgba(12,15,18,.7);padding:4px 8px}
+#loading{position:absolute;inset:0;display:grid;place-items:center;color:var(--muted);font:500 12px var(--f-data);letter-spacing:.1em;z-index:1}
+@media (max-width:1100px){ .main{grid-template-columns:220px minmax(0,1fr) 320px} }
+@media (max-width:900px){
+  body{overflow:auto} #app{height:auto;display:block}
+  .main{display:flex;flex-direction:column}
+  #viewport{height:62vh;order:-1}
+  .side{overflow:visible} .left,.right{border:0;border-top:1px solid var(--line)}
+  .co{font-size:10px}.co small{display:none}
+}
+</style>
+
+<div id="app">
+  <header class="top">
+    <div class="tb">
+      <span class="name">Duckweed Cultivation Trailer</span>
+      <span class="v">DW-100 · Rev B · 53' reefer · 51'-6" × 8'-1½" × 8'-7" int. · 16 runs, 2 across × 8 tiers · ft-in · NTS</span>
+    </div>
+    <nav class="views" aria-label="Camera views">
+      <button type="button" data-view="iso" aria-pressed="true">Iso</button>
+      <button type="button" data-view="side">Side elev.</button>
+      <button type="button" data-view="plan">Plan</button>
+      <button type="button" data-view="section">Section A–A</button>
+      <button type="button" data-view="harvest">Harvest end</button>
+      <button type="button" data-view="process">Processing</button>
+      <button type="button" data-view="screen">Repop. screen</button>
+      <button type="button" data-view="water">Water loop</button>
+      <button type="button" data-view="elec">Electrical</button>
+      <button type="button" data-view="nose">Nose</button>
+    </nav>
+  </header>
+  <div class="main">
+    <aside class="side left" aria-label="Layers">
+      <div class="h">Layers</div>
+      <div class="layers">
+        <label><input type="checkbox" id="tShell" checked> Trailer body &amp; chassis</label>
+        <label><input type="checkbox" id="tRoof" checked> Roof (transparent)</label>
+        <label><input type="checkbox" id="tLed" checked> LED grow lights on</label>
+        <label><input type="checkbox" id="tDims" checked> Dimensions</label>
+        <label><input type="checkbox" id="tCallouts" checked> Callouts</label>
+        <label><input type="checkbox" id="tAnim" checked> Animate flows</label>
+        <label><input type="checkbox" id="tWater"> Water overlay <span class="sw" style="--c:#4fc3ff"></span><span class="sw" style="--c:#8fe3d0"></span><span class="sw" style="--c:#a77df0"></span><span class="sw" style="--c:#d9a441"></span></label>
+        <label><input type="checkbox" id="tElec"> Electrical overlay <span class="sw" style="--c:#ff9a3c"></span><span class="sw" style="--c:#ff6fa0"></span><span class="sw" style="--c:#c4e45a"></span></label>
+        <div class="range">
+          <div class="row"><label for="scrMode">Repop. screen</label><output id="scrOut">down · holding</output></div>
+          <select id="scrMode"><option value="auto">Auto cycle</option><option value="down">Down (hold mat)</option><option value="up">Up (release mat)</option></select>
+        </div>
+        <div class="range">
+          <div class="row"><label for="tiers">Tiers shown</label><output id="tiersOut" for="tiers">1–8</output></div>
+          <input type="range" id="tiers" min="1" max="8" step="1" value="8">
+        </div>
+        <div class="hint">Water: blue supply · teal in-run/return · violet feed-water in · amber spent water out.<br>Electrical: orange AC · pink LED DC · lime 24 VDC actuators.</div>
+        <div class="hint">Drag to orbit · scroll to zoom · right-drag to pan</div>
+      </div>
+    </aside>
+    <div id="viewport">
+      <div id="loading">LOADING MODEL…</div>
+      <div id="gl"></div>
+      <svg id="leaders" aria-hidden="true"></svg>
+      <div id="labels"></div>
+    </div>
+    <aside class="side right" aria-label="Design data and bill of materials">
+      <div class="tabs" role="tablist">
+        <button type="button" role="tab" id="tabData" aria-selected="true" aria-controls="data">Design data</button>
+        <button type="button" role="tab" id="tabBom" aria-selected="false" aria-controls="bom">Bill of materials</button>
+      </div>
+      <div class="pane" id="data" role="tabpanel">
+        <table>
+          <tr><td>Runs</td><td>16 = 2 across × 8 tiers</td></tr>
+          <tr><td>Run size</td><td>40'-0" L × 3'-0" W</td></tr>
+          <tr><td>Wall / water</td><td>5" wall · 3" depth</td></tr>
+          <tr><td>Tier pitch</td><td>11¾" (floor to floor)</td></tr>
+          <tr><td>LED plane</td><td>9" above run floor · 6" over water</td></tr>
+          <tr><td>Width split</td><td>1'-0" repop. | 2'-0" harvest</td></tr>
+          <tr><td>Repop. screen</td><td>8 SS mesh gates / run · 2.4" travel</td></tr>
+          <tr><td>Supports</td><td>9 frames per run @ 5'-0" o.c.</td></tr>
+          <tr><td>Aisle</td><td>21½" between trays · 18½" clear</td></tr>
+          <tr><td>Growing area</td><td>1,920 ft²</td></tr>
+          <tr><td>Harvest / repop.</td><td>1,280 ft² / 640 ft²</td></tr>
+          <tr><td>LED fixtures</td><td>384 × 56" bars (3 per bay)</td></tr>
+          <tr><td>Water in runs</td><td>480 ft³ ≈ 3,590 gal</td></tr>
+          <tr><td>Water weight</td><td>≈ 29,950 lb</td></tr>
+          <tr><td>Nutrients</td><td>from waste-water feed · monitored, not dosed</td></tr>
+          <tr><td>Processing bay</td><td>11'-6" × 8'-1½"</td></tr>
+        </table>
+        <div class="note"><b>Water loop.</b> Feed water (a waste-water stream carrying the nutrients) enters by cam-lock at the rear, through a backflow preventer, strainer, flow meter and float-controlled solenoid into the return tank. The pump sends water through a filter to the supply main, forward to the nose risers, and into an inlet spreader in each run. Water flows front to rear under the mat, spills over the rear weirs, passes the debris screen and returns to the tank. Nitrate, EC, pH, DO and temperature are monitored only; when nutrients run low the 3-way valve sends water out the rear discharge.</div>
+        <div class="note">Sixteen 3'-0" runs cannot sit side by side in an 8'-1½" trailer, so they are stacked 2 across × 8 high. <b>Water alone is about 30,000 lb.</b> Check axle loads and the reefer floor rating before you size the frame.</div>
+      </div>
+      <div class="pane" id="bom" role="tabpanel" hidden>
+        <div class="note">Off-the-shelf products that fit each role, everything except the duckweed run trays. Models are representative: confirm size, rating, wet-location suitability and lead time with the supplier before ordering.</div>
+        <table>
+          <tr><th>#</th><th>Item / product</th><th style="text-align:right">Qty</th></tr>
+<tr class="grp"><td colspan="3">Trailer & climate</td></tr>
+<tr><td class="n">1</td><td>Refrigerated trailer, 53' (51'-6" int.)<small>Utility 3000R or Great Dane Everest, used · Check floor rating ≥ 16,000 lb/axle-pair and spec plate</small></td><td class="q">1</td></tr>
+<tr><td class="n">2</td><td>Reefer unit<small>Carrier Transicold Vector 8500 or Thermo King Precedent S-600 · Usually comes with the trailer; runs dehumidify/cool</small></td><td class="q">1</td></tr>
+<tr><td class="n">3</td><td>Fabric air chute<small>FabricAir (custom, Ø14") · Spreads reefer air down the aisle</small></td><td class="q">1</td></tr>
+<tr class="grp"><td colspan="3">Rack & screen mechanics</td></tr>
+<tr><td class="n">4</td><td>Rack frame extrusion<small>80/20 Inc. 1515 series 1.5" T-slot + gussets · Verify deflection with full trays (≈1,900 lb/run)</small></td><td class="q">≈2,300 ft</td></tr>
+<tr><td class="n">5</td><td>Leveling feet<small>80/20 Inc. 15-series leveling mount · One per post</small></td><td class="q">36</td></tr>
+<tr><td class="n">6</td><td>Submerged support grid<small>316 SS flat bar + rod, laser-cut by SendCutSend or local fab · Ribs every 5'-0"</small></td><td class="q">16 sets</td></tr>
+<tr><td class="n">7</td><td>Screen rail (2×2 tube)<small>McMaster-Carr 316 SS rectangular tube · Carries screens, actuators, harness</small></td><td class="q">16 × 40'</td></tr>
+<tr><td class="n">8</td><td>Screen guide channels<small>McMaster-Carr 304 SS U-channel, 1" × ½" · At each 5'-0" frame</small></td><td class="q">144</td></tr>
+<tr><td class="n">9</td><td>Repop. screen mesh<small>McMaster-Carr 316 SS woven wire cloth, 1/16" opening · 58" × 3" framed panels</small></td><td class="q">128 panels</td></tr>
+<tr><td class="n">10</td><td>Screen actuators<small>Progressive Automations PA-14, 24 VDC, 3" stroke · Set to 2.4" travel; or gang 8 panels per run on one rod to cut count to 16</small></td><td class="q">128</td></tr>
+<tr class="grp"><td colspan="3">Conveyors</td></tr>
+<tr><td class="n">11</td><td>Modular belt, 22" wide<small>Intralox Series 900 Flush Grid, acetal · Open area drains water back</small></td><td class="q">16 × ≈95 ft</td></tr>
+<tr><td class="n">12</td><td>Sprockets & shafts<small>Intralox S900 sprockets on 1" 316 SS shaft · Head + tail per run</small></td><td class="q">32 shafts</td></tr>
+<tr><td class="n">13</td><td>Wet-duty bearings<small>McMaster-Carr thermoplastic flange bearings, SS insert</small></td><td class="q">64</td></tr>
+<tr><td class="n">14</td><td>Gearmotors<small>Oriental Motor BLE2 brushless gearmotor, 60 W, with driver · Speed set by PLC</small></td><td class="q">16</td></tr>
+<tr><td class="n">15</td><td>Cleats & side guides<small>Intralox S900 flights; 304 SS formed skirts · Cleated incline at rear</small></td><td class="q">16 sets</td></tr>
+<tr><td class="n">16</td><td>Discharge flaps<small>304 SS sheet + McMaster SS piano hinge · Fixed lowered position</small></td><td class="q">16</td></tr>
+<tr class="grp"><td colspan="3">Lighting</td></tr>
+<tr><td class="n">17</td><td>LED top-lights, ~56"<small>Fluence RAPTR (multi-tier) or equivalent linear bar · 9" above run floor</small></td><td class="q">384</td></tr>
+<tr><td class="n">18</td><td>LED drivers<small>Mean Well XLG-240 series · Two per run, nose end</small></td><td class="q">32</td></tr>
+<tr class="grp"><td colspan="3">Water loop (fresh / waste-water fed)</td></tr>
+<tr><td class="n">19</td><td>Feed-water inlet coupling<small>PT Coupling or Banjo 1½" cam-lock, type A · Waste-water nutrient stream in</small></td><td class="q">1</td></tr>
+<tr><td class="n">20</td><td>Backflow preventer<small>Watts 007 double check · Keeps waste water off potable lines</small></td><td class="q">1</td></tr>
+<tr><td class="n">21</td><td>Feed Y-strainer<small>Hayward YS series PVC Y-strainer, 1"</small></td><td class="q">1</td></tr>
+<tr><td class="n">22</td><td>Feed flow meter<small>GF Signet 2536 paddlewheel + 9900 transmitter · Feed line + supply main</small></td><td class="q">2</td></tr>
+<tr><td class="n">23</td><td>Feed solenoid valve<small>ASCO 8210 series, 1", NC, 24 VDC · Opened by tank low-level float</small></td><td class="q">1</td></tr>
+<tr><td class="n">24</td><td>Tank level floats<small>Madison M8000 float switches · Low / refill / high</small></td><td class="q">3</td></tr>
+<tr><td class="n">25</td><td>Return tank ≈165 gal<small>Chem-Tainer or Ace Roto-Mold rectangular poly tank</small></td><td class="q">1</td></tr>
+<tr><td class="n">26</td><td>Organic debris screen<small>Parkson Hycor HydroSieve, smallest model, or McMaster wedge-wire panel in fab box · Removes coarse organic matter</small></td><td class="q">1</td></tr>
+<tr><td class="n">27</td><td>Supply pump<small>Grundfos CM5 horizontal multistage, 1 hp · 10–20 gpm</small></td><td class="q">1 (+1 spare)</td></tr>
+<tr><td class="n">28</td><td>Pump suction strainer<small>Hayward YS series, 1½"</small></td><td class="q">1</td></tr>
+<tr><td class="n">29</td><td>Check valve<small>Hayward SwingCheck, 1½"</small></td><td class="q">1</td></tr>
+<tr><td class="n">30</td><td>Pressure gauges<small>WIKA 213.53, 2½" liquid-filled, 0–60 psi · Pump discharge, after filter</small></td><td class="q">2</td></tr>
+<tr><td class="n">31</td><td>Cartridge filter<small>Pentair Pentek Big Blue 20" housing, 50 µm cartridge</small></td><td class="q">1</td></tr>
+<tr><td class="n">32</td><td>Nutrient monitoring (no dosing)<small>Hach Nitratax sc + SC200; Atlas Scientific EZO EC, pH, DO, temperature kits · Monitor only; waste water supplies nutrients</small></td><td class="q">1 set</td></tr>
+<tr><td class="n">33</td><td>Spent-water divert valve<small>Belimo B3 series 3-way ball valve + LRB24 actuator · Diverts low-nutrient water out</small></td><td class="q">1</td></tr>
+<tr><td class="n">34</td><td>Discharge coupling<small>PT Coupling 1½" cam-lock, type C · Rear sill</small></td><td class="q">1</td></tr>
+<tr><td class="n">35</td><td>Pipe & fittings<small>Spears / Charlotte Sch 80 PVC, 1½" main, ¾" laterals</small></td><td class="q">lot</td></tr>
+<tr><td class="n">36</td><td>Isolation valves<small>Hayward TBH true-union ball valves · One per run lateral</small></td><td class="q">16 × ¾", 6 × 1½"</td></tr>
+<tr><td class="n">37</td><td>Inlet spreaders<small>¾" Sch 80 PVC, drilled ⅛" @ 2" · Run floor, nose end</small></td><td class="q">16</td></tr>
+<tr><td class="n">38</td><td>Overflow bulkheads<small>Hayward or Banjo ¾" bulkhead fittings · Rear weirs</small></td><td class="q">16</td></tr>
+<tr><td class="n">39</td><td>Pipe hangers<small>Eaton B-Line clevis hangers + ⅜" all-thread</small></td><td class="q">≈30</td></tr>
+<tr class="grp"><td colspan="3">Harvest & dewatering</td></tr>
+<tr><td class="n">40</td><td>Collection chutes<small>Tuffak (Plaskolite) ¼" polycarbonate + 304 SS angle</small></td><td class="q">2</td></tr>
+<tr><td class="n">41</td><td>Receiving bin + step grating<small>Fab 304 SS; McMaster-Carr molded FRP grating</small></td><td class="q">1</td></tr>
+<tr><td class="n">42</td><td>Transfer auger<small>Hapman Helix flexible screw conveyor, 2.5"</small></td><td class="q">1</td></tr>
+<tr><td class="n">43</td><td>Vibratory dewatering screen<small>Kason or Sweco 24" vibratory separator</small></td><td class="q">1</td></tr>
+<tr><td class="n">44</td><td>Screw press<small>Vincent Corporation CP-4 · Final dewatering</small></td><td class="q">1</td></tr>
+<tr><td class="n">45</td><td>Biomass tote<small>Uline 48 × 40 plastic bulk container · Swap at rear doors</small></td><td class="q">2</td></tr>
+<tr class="grp"><td colspan="3">Electrical & controls</td></tr>
+<tr><td class="n">46</td><td>Shore-power inlet<small>Meltric DSN 60 A switch-rated inlet · Nose, curb side</small></td><td class="q">1</td></tr>
+<tr><td class="n">47</td><td>Main disconnect<small>Eaton fusible safety switch, 60 A, NEMA 4X</small></td><td class="q">1</td></tr>
+<tr><td class="n">48</td><td>Control enclosure<small>nVent Hoffman NEMA 4X, 36 × 24 × 12</small></td><td class="q">1</td></tr>
+<tr><td class="n">49</td><td>PLC + I/O<small>AutomationDirect Productivity1000 P1-540 · Screens, valves, sensors, conveyors</small></td><td class="q">1</td></tr>
+<tr><td class="n">50</td><td>HMI<small>AutomationDirect C-more CM5, 7"</small></td><td class="q">1</td></tr>
+<tr><td class="n">51</td><td>VFDs<small>AutomationDirect GS20 · Pump, auger, screen, press</small></td><td class="q">4</td></tr>
+<tr><td class="n">52</td><td>24 VDC supplies<small>Mean Well SDR-960-24 · Actuators, solenoid, sensors</small></td><td class="q">2</td></tr>
+<tr><td class="n">53</td><td>Actuator relays<small>AutomationDirect relay output modules / DPDT relays · One per run, reversing</small></td><td class="q">16</td></tr>
+<tr><td class="n">54</td><td>Cable tray<small>Legrand Cablofil wire-mesh tray, 2" × 4" · Wall side, above racks</small></td><td class="q">≈110 ft</td></tr>
+<tr><td class="n">55</td><td>Conduit & cable<small>Liquid-tight flex (UL 360), SOOW cord, 18/2 for actuators · Wet-location rated</small></td><td class="q">lot</td></tr>
+<tr><td class="n">56</td><td>GFCI protection<small>Eaton GFCI breakers for wet-location circuits</small></td><td class="q">lot</td></tr>
+<tr><td class="n">57</td><td>E-stops<small>IDEC XW series, 40 mm · Nose, aisle, rear</small></td><td class="q">3</td></tr>
+        </table>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<script type="importmap">
+{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+
+/* ---------- units: inches. X = length (0 at nose bulkhead → 618 at rear doors), Y = up (0 = trailer floor), Z = width (near side −) ---------- */
+const V = (x, y, z) => new THREE.Vector3(x, y, z);
+const L = 618, HW = 48.75, H = 103;
+const RUN_L = 480, WALL = 5, WATER = 3, LED = 9, PITCH = 11.75, BASE = 8, TIERS = 8;
+const GROUND = -50, SECTION_X = 330;
+const COLS = [{ w: -46.75, s: 1 }, { w: 46.75, s: -1 }];   // wall-side edge of each run column, direction toward aisle
+const Z = (c, d) => COLS[c].w + COLS[c].s * d;               // d = inches from wall-side tray edge (0..36)
+const TB = t => BASE + t * PITCH;                            // top of run floor for tier t
+const FRAMES = [0, 60, 120, 180, 240, 300, 360, 420, 480];
+const fx = x => Math.min(Math.max(x - 0.75, 0), RUN_L - 1.5);
+const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ---------- renderer ---------- */
+const host = document.getElementById('gl');
+const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance', preserveDrawingBuffer: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.0;
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+host.appendChild(renderer.domElement);
+const labelRenderer = new CSS2DRenderer({ element: document.getElementById('labels') });
+
+const scene = new THREE.Scene();
+const BG = new THREE.Color('#151a1f');
+scene.background = BG;
+scene.fog = new THREE.Fog(BG, 1500, 3800);
+const pmrem = new THREE.PMREMGenerator(renderer);
+scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+
+const camera = new THREE.PerspectiveCamera(32, 1, 2, 12000);
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.dampingFactor = 0.08;
+controls.maxPolarAngle = Math.PI * 0.495;
+controls.minDistance = 30;
+controls.maxDistance = 4000;
+
+/* ---------- procedural textures ---------- */
+function canvasTex(w, h, draw, repeat = [1, 1], srgb = true) {
+  const c = document.createElement('canvas'); c.width = w; c.height = h;
+  draw(c.getContext('2d'), w, h);
+  const t = new THREE.CanvasTexture(c);
+  t.wrapS = t.wrapT = THREE.RepeatWrapping;
+  t.repeat.set(repeat[0], repeat[1]);
+  if (srgb) t.colorSpace = THREE.SRGBColorSpace;
+  t.anisotropy = renderer.capabilities.getMaxAnisotropy();
+  return t;
+}
+let seed = 7;
+const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+function drawDuckweed(n) {
+  return (g, w, h) => {
+    g.clearRect(0, 0, w, h);
+    for (let i = 0; i < n; i++) {
+      const cx = rnd() * w, cy = rnd() * h, k = 1 + Math.floor(rnd() * 3.4);
+      for (let j = 0; j < k; j++) {
+        const a = rnd() * Math.PI * 2, rx = 7 + rnd() * 5, ry = 4.5 + rnd() * 3;
+        const x = cx + Math.cos(a) * rx * 0.9, y = cy + Math.sin(a) * rx * 0.9;
+        const hue = 88 + rnd() * 26, sat = 50 + rnd() * 22, lit = 26 + rnd() * 18;
+        for (const ox of [-w, 0, w]) for (const oy of [-h, 0, h]) {
+          if (Math.abs(x + ox - w / 2) > w / 2 + 16 || Math.abs(y + oy - h / 2) > h / 2 + 16) continue;
+          g.save(); g.translate(x + ox, y + oy); g.rotate(a);
+          g.fillStyle = `hsl(${hue},${sat}%,${lit}%)`;
+          g.beginPath(); g.ellipse(0, 0, rx, ry, 0, 0, Math.PI * 2); g.fill();
+          g.fillStyle = `hsla(${hue + 6},${sat + 10}%,${lit + 16}%,.55)`;
+          g.beginPath(); g.ellipse(-rx * 0.2, -ry * 0.25, rx * 0.45, ry * 0.35, 0, 0, Math.PI * 2); g.fill();
+          g.restore();
+        }
+      }
+    }
+  };
+}
+const texDense = canvasTex(512, 512, drawDuckweed(1500));
+const texSparse = canvasTex(512, 512, drawDuckweed(620));
+const texBelt = canvasTex(128, 128, (g, w, h) => {
+  g.fillStyle = '#7c8996'; g.fillRect(0, 0, w, h);
+  g.fillStyle = '#26303a';
+  for (let y = 0; y < 8; y++) for (let x = 0; x < 8; x++) g.fillRect(x * 16 + (y % 2) * 8 + 2, y * 16 + 4, 10, 7);
+  g.fillStyle = 'rgba(255,255,255,.12)'; for (let y = 0; y < 8; y++) g.fillRect(0, y * 16, w, 2);
+});
+const texFloor = canvasTex(64, 256, (g, w, h) => {
+  g.fillStyle = '#9ba3aa'; g.fillRect(0, 0, w, h);
+  for (let y = 0; y < h; y += 64) { g.fillStyle = '#4d555c'; g.fillRect(0, y, w, 9); g.fillStyle = '#c4cbd1'; g.fillRect(0, y + 9, w, 3); }
+  for (let i = 0; i < 160; i++) { g.fillStyle = `rgba(0,0,0,${rnd() * 0.06})`; g.fillRect(rnd() * w, rnd() * h, rnd() * 30, 1); }
+});
+const texGround = canvasTex(512, 512, (g, w, h) => {
+  g.fillStyle = '#3a3e42'; g.fillRect(0, 0, w, h);
+  for (let i = 0; i < 9000; i++) { const v = 40 + rnd() * 40; g.fillStyle = `rgba(${v},${v + 2},${v + 4},.35)`; g.fillRect(rnd() * w, rnd() * h, 2, 2); }
+  g.strokeStyle = 'rgba(15,17,19,.7)'; g.lineWidth = 2; g.strokeRect(0, 0, w, h);
+});
+const texGrate = canvasTex(128, 128, (g, w, h) => {
+  g.clearRect(0, 0, w, h); g.fillStyle = '#d7dadd';
+  for (let x = 0; x < w; x += 16) g.fillRect(x, 0, 5, h);
+  for (let y = 0; y < h; y += 32) g.fillRect(0, y, w, 3);
+});
+const texWedge = canvasTex(128, 128, (g, w, h) => {
+  g.fillStyle = '#3d4246'; g.fillRect(0, 0, w, h); g.fillStyle = '#c9ced2';
+  for (let y = 0; y < h; y += 4) g.fillRect(0, y, w, 3);
+});
+const texGrille = canvasTex(128, 128, (g, w, h) => {
+  g.fillStyle = '#1b1e21'; g.fillRect(0, 0, w, h); g.fillStyle = '#3c4247';
+  for (let y = 0; y < h; y += 8) g.fillRect(0, y, w, 4);
+});
+
+/* ---------- materials ---------- */
+const R = {};
+function M(name, p, o = {}) {
+  const m = new THREE.MeshStandardMaterial(p); m.name = name; m.userData = o; m.envMapIntensity = o.env ?? 0.85; R[name] = m; return m;
+}
+M('hdpe', { color: '#e6e9e7', roughness: 0.55 });
+M('ss', { color: '#c9cdd1', metalness: 1, roughness: 0.3 });
+M('frame', { color: '#454c53', metalness: 0.55, roughness: 0.45 });
+M('grid', { color: '#b8bec3', metalness: 0.95, roughness: 0.32 });
+M('belt', { color: '#ffffff', map: texBelt, roughness: 0.55, side: THREE.DoubleSide });
+M('beltS', { color: '#55616d', roughness: 0.55 });
+M('cleat', { color: '#27313a', roughness: 0.6 });
+M('water', { color: '#244f48', roughness: 0.05, transparent: true, opacity: 0.6, depthWrite: false }, { cast: false, env: 1.4 });
+M('dwR', { color: '#ffffff', map: texDense, emissive: '#3c8a1c', emissiveMap: texDense, emissiveIntensity: 0.35, roughness: 0.65, transparent: true, depthWrite: false, alphaTest: 0.02 }, { cast: false });
+M('dwH', { color: '#ffffff', map: texSparse, emissive: '#3c8a1c', emissiveMap: texSparse, emissiveIntensity: 0.35, roughness: 0.65, transparent: true, depthWrite: false, alphaTest: 0.02 }, { cast: false });
+M('ledH', { color: '#1c1f23', metalness: 0.6, roughness: 0.4 });
+M('ledL', { color: '#ffffff', emissive: '#ffd8ee', emissiveIntensity: 6, roughness: 0.3 }, { cast: false });
+M('nozzle', { color: '#2f6fb0', roughness: 0.5 }, { cast: false });
+M('poly', { color: '#cfe4f2', roughness: 0.05, transparent: true, opacity: 0.17, depthWrite: false, side: THREE.DoubleSide }, { cast: false, env: 1.5 });
+M('biomass', { color: '#4f8f2a', roughness: 0.55, emissive: '#1d3d0c', emissiveIntensity: 0.4 });
+M('cake', { color: '#355a1d', roughness: 0.9 });
+M('tankPoly', { color: '#e8eef0', roughness: 0.4, transparent: true, opacity: 0.5, depthWrite: false }, { cast: false });
+M('tankWater', { color: '#4b8088', roughness: 0.1, transparent: true, opacity: 0.55, depthWrite: false }, { cast: false });
+M('pump', { color: '#2a5ea8', metalness: 0.3, roughness: 0.4 });
+M('filter', { color: '#e9ecee', roughness: 0.45 });
+M('motor', { color: '#5b636b', metalness: 0.5, roughness: 0.45 });
+M('yellow', { color: '#e0b21a', roughness: 0.5 });
+M('pvc', { color: '#6b737b', roughness: 0.5 });
+M('tire', { color: '#161718', roughness: 0.92 });
+M('rim', { color: '#b9bec4', metalness: 1, roughness: 0.28 });
+M('chassis', { color: '#25292d', metalness: 0.4, roughness: 0.6 });
+M('white', { color: '#eef0f1', roughness: 0.5 });
+M('foam', { color: '#e3cf7f', roughness: 0.95 });
+M('alu', { color: '#b5bcc3', metalness: 0.9, roughness: 0.35 });
+M('aluNS', { color: '#b5bcc3', metalness: 0.9, roughness: 0.35 }, { cast: false });
+M('floor', { color: '#ffffff', map: texFloor, metalness: 0.6, roughness: 0.45 }, { cast: false });
+M('roof', { color: '#dfe9f2', roughness: 0.2, transparent: true, opacity: 0.05, depthWrite: false }, { cast: false, env: 0.25 });
+M('reefer', { color: '#30353a', metalness: 0.3, roughness: 0.5 });
+M('grille', { color: '#ffffff', map: texGrille, roughness: 0.7 });
+M('grate', { color: '#ffffff', map: texGrate, metalness: 0.8, roughness: 0.4, alphaTest: 0.5, side: THREE.DoubleSide });
+M('wedge', { color: '#ffffff', map: texWedge, metalness: 0.85, roughness: 0.35 });
+M('panel', { color: '#c9cdd0', roughness: 0.45, metalness: 0.2 });
+M('lampG', { color: '#0f2', emissive: '#22ff66', emissiveIntensity: 4 }, { cast: false });
+M('lampA', { color: '#fa0', emissive: '#ffaa22', emissiveIntensity: 4 }, { cast: false });
+M('red', { color: '#c4161c', roughness: 0.4, emissive: '#400', emissiveIntensity: 1 });
+M('tote', { color: '#d5dada', roughness: 0.6 });
+M('pallet', { color: '#8a6a45', roughness: 0.9 });
+M('fabric', { color: '#d4dbe2', roughness: 0.95, side: THREE.DoubleSide });
+M('ground', { color: '#ffffff', map: texGround, roughness: 0.95 }, { cast: false });
+M('tail', { color: '#f22', emissive: '#ff1a1a', emissiveIntensity: 2.5 }, { cast: false });
+M('particle', { color: '#5aa632', roughness: 0.5, emissive: '#245010', emissiveIntensity: 0.5 }, { cast: false });
+M('supply', { color: '#3b78c2', roughness: 0.45 });
+M('wire', { color: '#e8742a', roughness: 0.5 });
+M('wireLed', { color: '#e0507f', roughness: 0.5 });
+M('trayG', { color: '#9aa1a8', metalness: 0.8, roughness: 0.4 });
+M('feed', { color: '#7a55c9', roughness: 0.45 });
+M('bronze', { color: '#9b7a3c', metalness: 0.8, roughness: 0.4 });
+M('probe', { color: '#20262c', roughness: 0.4 });
+M('wireDc', { color: '#9cc23a', roughness: 0.5 });
+M('debris', { color: '#5a4a2c', roughness: 0.95 });
+const setRepeat = (name, w, h, tile) => { R[name].map.repeat.set(w / tile, h / tile); };
+
+/* ---------- geometry batching (everything becomes InstancedMesh) ---------- */
+const plane = new THREE.PlaneGeometry(1, 1); plane.rotateX(-Math.PI / 2);
+const halfCyl = new THREE.CylinderGeometry(1, 1, 1, 28, 1, true, 0, Math.PI);
+const GEO = {
+  box: new THREE.BoxGeometry(1, 1, 1),
+  cyl: new THREE.CylinderGeometry(1, 1, 1, 20),
+  cylHi: new THREE.CylinderGeometry(1, 1, 1, 44),
+  cyl8: new THREE.CylinderGeometry(1, 1, 1, 8),
+  sph: new THREE.SphereGeometry(1, 20, 12),
+  plane, halfCyl,
+};
+const groups = {};
+const G = name => {
+  if (!groups[name]) { groups[name] = new THREE.Group(); scene.add(groups[name]); }
+  return groups[name];
+};
+const batches = new Map();
+function push(g, mt, geo, m) {
+  const k = g + '|' + mt + '|' + geo;
+  let b = batches.get(k);
+  if (!b) batches.set(k, b = { g, mt, geo, list: [] });
+  b.list.push(m);
+}
+const Q0 = new THREE.Quaternion(), Y = V(0, 1, 0);
+function box(g, mt, x0, x1, y0, y1, z0, z1) {
+  const ax = Math.min(x0, x1), bx = Math.max(x0, x1), ay = Math.min(y0, y1), by = Math.max(y0, y1), az = Math.min(z0, z1), bz = Math.max(z0, z1);
+  push(g, mt, 'box', new THREE.Matrix4().compose(V((ax + bx) / 2, (ay + by) / 2, (az + bz) / 2), Q0, V(bx - ax || 0.01, by - ay || 0.01, bz - az || 0.01)));
+}
+function quad(g, mt, x0, x1, y, z0, z1) {
+  push(g, mt, 'plane', new THREE.Matrix4().compose(V((x0 + x1) / 2, y, (z0 + z1) / 2), Q0, V(Math.abs(x1 - x0), 1, Math.abs(z1 - z0))));
+}
+function cyl(g, mt, a, b, r, geo = 'cyl') {
+  const A = V(...a), B = V(...b), d = B.clone().sub(A), len = d.length();
+  const q = new THREE.Quaternion().setFromUnitVectors(Y, d.normalize());
+  push(g, mt, geo, new THREE.Matrix4().compose(A.clone().add(B).multiplyScalar(0.5), q, V(r, len, r)));
+}
+function sph(g, mt, c, s) { push(g, mt, 'sph', new THREE.Matrix4().compose(V(...c), Q0, V(...s))); }
+// sloped plate in the X–Y plane: from (x0,y0) to (x1,y1), centered at z = zc, width along Z, thickness normal to slope
+function plate(g, mt, x0, y0, x1, y1, zc, width, thick) {
+  const len = Math.hypot(x1 - x0, y1 - y0), q = new THREE.Quaternion().setFromAxisAngle(V(0, 0, 1), Math.atan2(y1 - y0, x1 - x0));
+  push(g, mt, 'box', new THREE.Matrix4().compose(V((x0 + x1) / 2, (y0 + y1) / 2, zc), q, V(len, thick, width)));
+}
+function pipeRun(g, mt, pts, r) {
+  for (let i = 0; i < pts.length - 1; i++) cyl(g, mt, pts[i], pts[i + 1], r);
+  for (let i = 1; i < pts.length - 1; i++) sph(g, mt, pts[i], [r * 1.25, r * 1.25, r * 1.25]);
+}
+
+/* ---------- RACK + RUNS ---------- */
+for (let c = 0; c < 2; c++) {
+  // posts at every 5'-0" frame, wall side and aisle side
+  for (const x of FRAMES) for (const d of [-1.5, 36]) {
+    box('rack', 'frame', fx(x), fx(x) + 1.5, 0.4, TB(TIERS) - 0.25, Z(c, d), Z(c, d + 1.5));
+    box('rack', 'frame', fx(x) - 1, fx(x) + 2.5, 0, 0.4, Z(c, d - 1), Z(c, d + 2.5));
+  }
+  // top frame
+  for (const x of FRAMES) box('rack', 'frame', fx(x), fx(x) + 1.5, TB(TIERS) - 1.75, TB(TIERS) - 0.25, Z(c, -1.5), Z(c, 37.5));
+  for (const d of [-1.5, 36]) box('rack', 'frame', 0, RUN_L, TB(TIERS) - 1.75, TB(TIERS) - 0.25, Z(c, d), Z(c, d + 1.5));
+  // X-bracing on the wall side
+  for (const k of [0, 3, 6]) {
+    const x0 = k * 60 + 1.5, x1 = k * 60 + 58.5, zz = Z(c, -0.75);
+    cyl('rack', 'frame', [x0, 3, zz], [x1, TB(TIERS) - 3, zz], 0.3, 'cyl8');
+    cyl('rack', 'frame', [x0, TB(TIERS) - 3, zz], [x1, 3, zz], 0.3, 'cyl8');
+  }
+  for (let t = 0; t < TIERS; t++) {
+    const tb = TB(t), g = 't' + t, gl = 'l' + t, z = d => Z(c, d);
+    // structural supports under the run: transverse beam every 5'-0", longitudinal rails
+    for (const x of FRAMES) box(g, 'frame', fx(x), fx(x) + 1.5, tb - 1.75, tb - 0.25, z(-1.5), z(37.5));
+    box(g, 'frame', 0, RUN_L, tb - 1.75, tb - 0.25, z(0), z(1.5));
+    box(g, 'frame', 0, RUN_L, tb - 1.75, tb - 0.25, z(34.5), z(36));
+    // tray: floor, 5" walls, end walls, stainless caps
+    box(g, 'hdpe', 0, RUN_L, tb - 0.25, tb, z(0), z(36));
+    box(g, 'hdpe', 0, RUN_L, tb, tb + WALL, z(0), z(0.25));
+    box(g, 'hdpe', 0, RUN_L, tb, tb + WALL, z(35.75), z(36));
+    box(g, 'hdpe', 0, 0.25, tb, tb + WALL, z(0.25), z(35.75));
+    box(g, 'hdpe', RUN_L - 0.25, RUN_L, tb, tb + WALL, z(0.25), z(35.75));
+    box(g, 'ss', 0, RUN_L, tb + WALL, tb + WALL + 0.15, z(-0.1), z(0.4));
+    box(g, 'ss', 0, RUN_L, tb + WALL, tb + WALL + 0.15, z(35.6), z(36.1));
+    // submerged stainless grid: section ribs every 5'-0", longitudinal bars, cross rods
+    for (const x of FRAMES.slice(1, -1)) box(g, 'grid', x - 0.4, x + 0.4, tb, tb + 1.5, z(0.25), z(35.75));
+    for (const d of [3, 6, 9, 15, 19, 23, 27, 31, 34]) box(g, 'grid', 0.5, 450, tb + 1.2, tb + 1.5, z(d - 0.15), z(d + 0.15));
+    for (let x = 12; x < 450; x += 12) if (x % 60) cyl(g, 'grid', [x, tb + 1.0, z(0.3)], [x, tb + 1.0, z(35.7)], 0.15, 'cyl8');
+    // water + duckweed mats (repop 1/3 at wall side, harvest 2/3 at aisle side)
+    quad(g, 'water', 0.25, RUN_L - 0.25, tb + WATER, z(0.25), z(35.75));
+    quad(g, 'dwR', 0.25, RUN_L - 0.25, tb + WATER + 0.06, z(0.25), z(11.9));
+    quad(g, 'dwH', 0.25, 452, tb + WATER + 0.06, z(12.1), z(35.75));
+    // harvest conveyor under the 2/3 section: belt, tail pulley, cleated incline, head pulley, discharge flap, drive
+    quad(g, 'belt', 6, 452, tb + 1.75, z(13), z(35));
+    cyl(g, 'ss', [4.5, tb + 0.95, z(13)], [4.5, tb + 0.95, z(35)], 0.8);
+    plate(g, 'beltS', 452, tb + 1.62, 481.2, tb + 6.88, z(24), 22, 0.25);
+    for (const d of [12.6, 35.4]) plate(g, 'ss', 448, tb + 2.6, 481.6, tb + 8.6, z(d), 0.14, 3.2);
+    {
+      const ang = Math.atan2(5.26, 29.2), ux = Math.cos(ang), uy = Math.sin(ang), nx = -uy, ny = ux;
+      for (let s = 2; s < 29; s += 3.2) {
+        const cx = 452 + ux * s + nx * 0.55, cy = tb + 1.62 + uy * s + ny * 0.55;
+        plate(g, 'cleat', cx - ux * 0.12, cy - uy * 0.12, cx + ux * 0.12, cy + uy * 0.12, z(24), 21.6, 0.85);
+      }
+    }
+    cyl(g, 'ss', [481.2, tb + 6.05, z(12.8)], [481.2, tb + 6.05, z(35.2)], 0.9);
+    box(g, 'ss', 479.8, 482.4, tb + 4.6, tb + 7.2, z(12.3), z(12.7));
+    box(g, 'ss', 479.8, 482.4, tb + 4.6, tb + 7.2, z(35.3), z(35.7));
+    cyl(g, 'ss', [482.4, tb + 6.9, z(13)], [482.4, tb + 6.9, z(35)], 0.3, 'cyl8');
+    plate(g, 'ss', 482.4, tb + 6.85, 488.6, tb + 4.1, z(24), 22, 0.14);            // lowered discharge flap
+    cyl(g, 'ss', [481.2, tb + 6.05, z(35)], [481.2, tb + 6.05, z(37.8)], 0.35, 'cyl8');
+    box(g, 'motor', 479.6, 482.8, tb + 4.4, tb + 7.7, z(37.8), z(39.6));
+    cyl(g, 'motor', [481.2, tb + 6.05, z(39.6)], [481.2, tb + 6.05, z(43.4)], 1.45);
+    // longitudinal screen rail at the 1/3 line (carries the repop. screen and actuators; no water in it)
+    box(g, 'ss', 0.5, 480, tb + 5.5, tb + 7.5, z(11), z(13));
+    // repopulation screen hardware at the 1/3 line: guide channels each 5'-0", one actuator per section, 24 VDC harness
+    for (const x of FRAMES) { const gx = Math.min(Math.max(x, 0.8), 479.2); box(g, 'ss', gx - 0.6, gx + 0.6, tb + 0.25, tb + 7.5, z(13.05), z(14.0)); }
+    for (let k = 0; k < 8; k++) {
+      const ax = k * 60 + 30;
+      box(g, 'ss', ax - 1.2, ax + 1.2, tb + 7.5, tb + 7.75, z(11), z(14.6));
+      cyl(g, 'motor', [ax, tb + 7.75, z(14.0)], [ax, tb + 8.9, z(14.0)], 0.5, 'cyl8');
+    }
+    cyl(g, 'wire', [3, tb + 7.62, z(11.4)], [474, tb + 7.62, z(11.4)], 0.12, 'cyl8');
+    for (const x of FRAMES) box(g, 'ss', fx(x) + 0.25, fx(x) + 1.25, tb + 5.15, tb + 5.5, z(0), z(13));
+    // LED fixtures: 3 bars per 5'-0" bay, lens 9" above the run floor
+    for (let k = 0; k < 8; k++) {
+      const x0 = k * 60 + 2, x1 = k * 60 + 58;
+      for (const d of [6, 19, 30]) {
+        box(gl, 'ledH', x0, x1, tb + LED + 0.25, tb + 10, z(d - 1.4), z(d + 1.4));
+        box(gl, 'ledL', x0 + 0.6, x1 - 0.6, tb + LED, tb + LED + 0.25, z(d - 1.05), z(d + 1.05));
+      }
+    }
+    for (const d of [6, 19, 30]) box(gl, 'frame', 0.5, 479.5, tb + 10, tb + 10.6, z(d - 0.5), z(d + 0.5));
+    box(gl, 'ledH', 1, 6, tb + 10, tb + 10.6, z(4), z(32));   // driver box at nose end
+  }
+}
+setRepeat('dwR', 479.5, 11.65, 8);
+setRepeat('dwH', 451.75, 23.65, 8);
+R.belt.map.repeat.set(446 / 2, 22 / 2);
+
+/* ---------- moving repopulation screen (dynamic) ---------- */
+const texMesh = canvasTex(64, 64, (g, w, h) => {
+  g.clearRect(0, 0, w, h); g.fillStyle = '#e6eaee';
+  for (let i = 0; i < w; i += 8) { g.fillRect(i, 0, 3, h); g.fillRect(0, i, w, 3); }
+});
+texMesh.repeat.set(58 / 0.5, 3 / 0.5);
+M('mesh', { color: '#ffffff', map: texMesh, metalness: 0.85, roughness: 0.35, alphaTest: 0.4, side: THREE.DoubleSide }, { cast: false });
+const SCR_H = 3, SCR_DOWN = 1.6, SCR_UP = 4.0;      // panel 3" tall; bottom 1.4" below water when down, 1" above when up
+const vplane = new THREE.PlaneGeometry(1, 1);
+const scrPanels = new THREE.InstancedMesh(vplane, R.mesh, 2 * TIERS * 8);
+const scrRails = new THREE.InstancedMesh(GEO.box, R.ss, 2 * 2 * TIERS * 8);
+const scrRods = new THREE.InstancedMesh(GEO.cyl8, R.ss, 2 * TIERS * 8);
+[scrPanels, scrRails, scrRods].forEach(m => { m.instanceMatrix.setUsage(THREE.DynamicDrawUsage); m.frustumCulled = false; m.castShadow = true; scene.add(m); });
+let screenLift = 0;                                  // 0 = down (holding), 1 = up (releasing)
+function updateScreens() {
+  const off = SCR_DOWN + (SCR_UP - SCR_DOWN) * screenLift, m = new THREE.Matrix4();
+  let i = 0;
+  for (let c = 0; c < 2; c++) for (let t = 0; t < TIERS; t++) for (let k = 0; k < 8; k++, i++) {
+    const tb = TB(t), on = t < tierN, x = k * 60 + 30, zc = Z(c, 13.5), y0 = tb + off;
+    m.compose(V(x, y0 + SCR_H / 2, zc), Q0, on ? V(58, SCR_H, 1) : V(0, 0, 0)); scrPanels.setMatrixAt(i, m);
+    m.compose(V(x, y0 + SCR_H, zc), Q0, on ? V(58.4, 0.45, 0.35) : V(0, 0, 0)); scrRails.setMatrixAt(2 * i, m);
+    m.compose(V(x, y0, zc), Q0, on ? V(58.4, 0.3, 0.3) : V(0, 0, 0)); scrRails.setMatrixAt(2 * i + 1, m);
+    const top = tb + 7.75, len = top - (y0 + SCR_H);
+    m.compose(V(x, (top + y0 + SCR_H) / 2, Z(c, 14.0)), Q0, on ? V(0.18, len, 0.18) : V(0, 0, 0)); scrRods.setMatrixAt(i, m);
+  }
+  [scrPanels, scrRails, scrRods].forEach(mm => { mm.instanceMatrix.needsUpdate = true; });
+}
+
+/* ---------- PROCESSING BAY (x 480 → 618) ---------- */
+const P = 'proc';
+// collection chutes behind each run column (clear polycarbonate, stainless frame)
+for (let c = 0; c < 2; c++) {
+  const za = Math.min(Z(c, 13.25), Z(c, 34.75)), zb = Math.max(Z(c, 13.25), Z(c, 34.75)), y0 = 5, y1 = TB(TIERS) - 0.25;
+  box(P, 'poly', 484, 484.15, y0, y1, za, zb); box(P, 'poly', 495.85, 496, y0, y1, za, zb);
+  box(P, 'poly', 484, 496, y0, y1, za, za + 0.15); box(P, 'poly', 484, 496, y0, y1, zb - 0.15, zb);
+  for (const [x, zz] of [[484, za], [495.25, za], [484, zb - 0.75], [495.25, zb - 0.75]]) box(P, 'ss', x, x + 0.75, y0, y1, zz, zz + 0.75);
+  for (let t = 0; t <= TIERS; t++) {
+    const y = TB(t) - 1;
+    box(P, 'ss', 484, 496, y, y + 0.5, za - 0.1, za + 0.4); box(P, 'ss', 484, 496, y, y + 0.5, zb - 0.4, zb + 0.1);
+    box(P, 'ss', 495.6, 496.1, y, y + 0.5, za, zb);
+  }
+}
+// low-profile central receiving bin with grated step-over for aisle access
+box(P, 'ss', 482, 528, 0, 0.5, -36, 36);
+box(P, 'ss', 482, 482.3, 0.5, 9, -36, 36); box(P, 'ss', 527.7, 528, 0.5, 9, -36, 36);
+box(P, 'ss', 482, 528, 0.5, 9, -36, -35.7); box(P, 'ss', 482, 528, 0.5, 9, 35.7, 36);
+box(P, 'ss', 482, 528, 0.5, 9, -11.6, -11.3); box(P, 'ss', 482, 528, 0.5, 9, 11.3, 11.6);
+box(P, 'ss', 482.5, 527.5, 9, 9.3, -36.2, -35.5); box(P, 'ss', 482.5, 527.5, 9, 9.3, 35.5, 36.2);
+quad(P, 'water', 482.3, 527.7, 5.5, -35.7, 35.7);
+quad(P, 'grate', 482.3, 527.7, 9.6, -11.3, 11.3);
+for (let x = 486; x < 528; x += 10) box(P, 'ss', x, x + 0.4, 8.2, 9.5, -11.3, 11.3);
+box(P, 'yellow', 482, 483.4, 8.8, 9.9, -11.6, 11.6); box(P, 'yellow', 526.6, 528, 8.8, 9.9, -11.6, 11.6);
+sph(P, 'biomass', [491, 5.4, -24], [8, 2.6, 10]); sph(P, 'biomass', [491, 5.4, 24], [8, 2.6, 10]);
+sph(P, 'biomass', [503, 5.2, 24], [6, 1.8, 7]);
+// transfer auger: bin → dewatering screen
+const AUG0 = [506, 3, 24], AUG1 = [546, 68, 24];
+cyl(P, 'ss', AUG0, AUG1, 3.4);
+{ const d = V(40, 65, 0).normalize(); cyl(P, 'motor', AUG1, [546 + d.x * 8, 68 + d.y * 8, 24], 2.7); }
+box(P, 'ss', 543, 550, 61, 67, 21, 27);
+cyl(P, 'frame', [532, 45, 24], [532, 0, 24], 0.8);
+box(P, 'frame', 529, 535, 0, 0.4, 21, 27);
+// vibratory dewatering screen on spring mounts
+for (const [x, zz] of [[549, 9], [549, 41], [590, 9], [590, 41]]) box(P, 'frame', x - 1, x + 1, 0, 46, zz - 1, zz + 1);
+box(P, 'frame', 548, 591, 44, 46, 8, 10); box(P, 'frame', 548, 591, 44, 46, 40, 42);
+box(P, 'frame', 548, 550, 44, 46, 8, 42); box(P, 'frame', 589, 591, 44, 46, 8, 42);
+for (const [x, zz] of [[552, 11], [552, 39], [587, 11], [587, 39]]) cyl(P, 'yellow', [x, 46, zz], [x, 49.5, zz], 1.2);
+plate(P, 'wedge', 552, 60, 590, 50, 25, 30, 0.3);
+plate(P, 'ss', 551, 62, 591, 52, 10, 0.25, 4.4); plate(P, 'ss', 551, 62, 591, 52, 40, 0.25, 4.4);
+plate(P, 'ss', 550, 51, 590, 49.5, 25, 30.5, 0.35);
+box(P, 'ss', 548, 557, 59, 67, 12, 38);
+plate(P, 'biomass', 557, 59.3, 587, 51.4, 25, 26, 0.7);
+cyl(P, 'motor', [568, 56, 40.3], [568, 56, 44.5], 2.2); cyl(P, 'motor', [568, 56, 9.7], [568, 56, 5.5], 2.2);
+plate(P, 'ss', 552, 47.5, 584, 42, 25, 32, 0.25);
+plate(P, 'ss', 590, 50.4, 595, 45, 25, 26, 0.2);
+// screw press over the tote
+box(P, 'ss', 590, 600, 39, 46, 18, 32);
+cyl(P, 'ss', [588, 33, 25], [592, 33, 25], 4.8); cyl(P, 'wedge', [592, 33, 25], [608, 33, 25], 4.2); cyl(P, 'ss', [608, 33, 25], [612, 33, 25], 4.8);
+box(P, 'motor', 578, 588, 28, 38, 20, 30); cyl(P, 'motor', [578, 33, 25], [567, 33, 25], 3.6);
+box(P, 'ss', 609, 614, 21.5, 29, 21, 29);
+box(P, 'frame', 584, 586, 0, 28, 23, 27); box(P, 'frame', 592, 594, 0, 28.8, 23, 27);
+// dewatered biomass tote on pallet (exits through rear doors)
+box(P, 'pallet', 596, 616, 0, 4.5, 6, 44);
+box(P, 'tote', 596, 616, 4.5, 26, 6, 6.5); box(P, 'tote', 596, 616, 4.5, 26, 43.5, 44);
+box(P, 'tote', 596, 596.5, 4.5, 26, 6, 44); box(P, 'tote', 615.5, 616, 4.5, 26, 6, 44);
+box(P, 'cake', 596.5, 615.5, 4.5, 19, 6.5, 43.5);
+// filtrate / make-up return tank, pump, cartridge filter, supply header
+box(P, 'tankPoly', 532, 572, 0, 40, -46, -22);
+box(P, 'tankWater', 532.6, 571.4, 0.6, 27, -45.4, -22.6);
+box(P, 'frame', 531.5, 572.5, 39.5, 40.5, -46.5, -21.5);
+pipeRun(P, 'pvc', [[584, 42, 14], [584, 3, 14], [584, 3, -18], [570, 3, -18], [570, 3, -22]], 0.9);
+box(P, 'frame', 574, 596, 0, 1.5, -44, -32);
+cyl(P, 'pump', [578, 7.5, -38], [584, 7.5, -38], 5); cyl(P, 'pump', [584, 7.5, -38], [594, 7.5, -38], 3.8);
+pipeRun(P, 'pvc', [[572, 7.5, -38], [578, 7.5, -38]], 1.1);
+pipeRun(P, 'pvc', [[581, 12, -38], [581, 22, -38], [602, 22, -38], [602, 26, -38]], 1.1);
+cyl(P, 'filter', [602, 26, -38], [602, 46, -38], 3.6);
+cyl(P, 'pump', [602, 46, -38], [602, 48.5, -38], 3.9);
+// control panel on far wall + conduit
+box(P, 'panel', 538, 566, 72, 98, 41.5, 48.6);
+box(P, 'frame', 551.9, 552.1, 72.5, 97.5, 41.4, 41.5);
+cyl(P, 'lampG', [544, 93, 41.5], [544, 93, 40.9], 0.7, 'cyl8');
+cyl(P, 'lampA', [547.5, 93, 41.5], [547.5, 93, 40.9], 0.7, 'cyl8');
+cyl(P, 'red', [560, 92, 41.5], [560, 92, 40.4], 1.4);
+
+/* ---------- TRAILER BODY ---------- */
+const S = 'shell';
+quad(S, 'floor', 0, L, 0.01, -HW, HW);
+R.floor.map.repeat.set(L / 48, 2 * HW / 6);
+box(S, 'alu', -4, 621.5, -5, 0, -51, 51);
+// nose wall (sandwich: liner / foam / skin, cut face visible at near side)
+box(S, 'white', -0.25, 0, -5, 103, -48.75, 48.75); box(S, 'foam', -3.5, -0.25, -5, 107, -50.5, 50.5); box(S, 'white', -4, -3.5, -5, 107, -51, 51);
+// far side wall
+box(S, 'white', 0, L, 0, 103, 48.75, 49); box(S, 'foam', 0, L, -5, 103, 49, 50.5); box(S, 'white', -4, 621.5, -10, 107, 50.5, 51);
+box(S, 'alu', 0, L, 0, 10, 48.4, 48.75);
+// near side wall removed: sill, top rail, cut section strip
+box(S, 'alu', -4, 621.5, -10, 2, -51, -48.75);
+box(S, 'alu', -4, 621.5, 104, 107, -51, -48.75);
+box(S, 'white', 0, L, 100, 104, -49, -48.75); box(S, 'foam', 0, L, 100, 104, -50.5, -49); box(S, 'white', 0, L, 100, 104, -51, -50.5);
+// rear frame + open doors
+box(S, 'alu', 618, 621.5, -10, 107, -51, -47.5); box(S, 'alu', 618, 621.5, -10, 107, 47.5, 51);
+box(S, 'alu', 618, 621.5, 101, 107, -51, 51); box(S, 'alu', 618, 621.5, -10, 0, -51, 51);
+for (const s of [-1, 1]) {
+  const zo = s * 51, zi = s * 48.5;
+  box(S, 'white', 621.5, 670, -2, 103, zo, zi);
+  for (const x of [636, 656]) {
+    cyl(S, 'ss', [x, -2, zo + s * 0.9], [x, 103, zo + s * 0.9], 0.55, 'cyl8');
+    box(S, 'ss', x - 0.8, x + 0.8, 40, 52, zo + s * 0.4, zo + s * 1.6);
+  }
+  for (const y of [5, 35, 65, 95]) box(S, 'ss', 619, 624, y, y + 4, zo + s * 0.2, zo + s * 0.9);
+}
+box(S, 'tail', 621.5, 622, -6, -2, -46, -40); box(S, 'tail', 621.5, 622, -6, -2, 40, 46);
+// reefer unit on the nose, evaporator + fabric air chute inside
+box(S, 'reefer', -26, -4, 8, 96, -40, 40);
+box(S, 'grille', -26.2, -26, 14, 52, -34, 34);
+for (const zc of [-17, 17]) {
+  cyl(S, 'chassis', [-26.1, 76, zc], [-26.6, 76, zc], 13, 'cylHi');
+  cyl(S, 'ss', [-26.5, 76, zc], [-27.2, 76, zc], 3);
+}
+box(S, 'ss', -26.4, -26, 56, 62, -36, 36);
+box(S, 'reefer', 0, 9, 86, 103, -8.5, 8.5);
+push(S, 'fabric', 'halfCyl', new THREE.Matrix4().compose(V(240, 103, 0), new THREE.Quaternion().setFromUnitVectors(Y, V(1, 0, 0)), V(7, 462, 7)));
+// roof (transparent) + bows
+box('roof', 'roof', -4, 621.5, 103, 107, -51, 51);
+for (let x = 12; x < L; x += 24) box('roof', 'aluNS', x, x + 1.5, 103, 104, -48.75, 48.75);
+
+/* ---------- CHASSIS ---------- */
+const C = 'chassis';
+for (const s of [-1, 1]) {
+  box(C, 'chassis', 20, 600, -19, -5, s * 20.75, s * 21.25);
+  box(C, 'chassis', 20, 600, -19, -18, s * 18, s * 24); box(C, 'chassis', 20, 600, -6, -5, s * 18, s * 24);
+  box(C, 'alu', -4, 621.5, -10, -5, s * 48.75, s * 51);
+}
+for (let x = 4; x < 614; x += 16) box(C, 'chassis', x, x + 2, -9, -5, -48, 48);
+box(C, 'chassis', 0, 60, -6.5, -5, -40, 40);
+cyl(C, 'ss', [36, -6.5, 0], [36, -9.5, 0], 1.4);
+for (const s of [-1, 1]) {
+  box(C, 'chassis', 118, 123, -36, -10, s * 19, s * 24);
+  box(C, 'ss', 118.6, 122.4, -47, -34, s * 19.6, s * 23.4);
+  box(C, 'chassis', 115, 126, -50, -47, s * 16, s * 27);
+}
+cyl(C, 'chassis', [120.5, -26, -21.5], [120.5, -26, 21.5], 0.8);
+box(C, 'chassis', 117, 124, -24, -16, 24, 28);
+box(C, 'alu', 150, 180, -26, -10, -48, -30);
+for (const s of [-1, 1]) box(C, 'chassis', 505, 600, -14, -10, s * 19, s * 25);
+for (const ax of [527, 576]) {
+  cyl(C, 'chassis', [ax, -29.5, -45], [ax, -29.5, 45], 2.5);
+  for (const s of [-1, 1]) {
+    cyl(C, 'tire', [ax, -29.5, s * 29.5], [ax, -29.5, s * 38.5], 20.5, 'cylHi');
+    cyl(C, 'tire', [ax, -29.5, s * 39.5], [ax, -29.5, s * 48.5], 20.5, 'cylHi');
+    cyl(C, 'rim', [ax, -29.5, s * 47.6], [ax, -29.5, s * 48.7], 11.5, 'cylHi');
+    cyl(C, 'chassis', [ax, -29.5, s * 48.6], [ax, -29.5, s * 50], 4.5);
+    box(C, 'chassis', ax - 16, ax + 6, -31, -27, s * 19.5, s * 24.5);
+    cyl(C, 'tire', [ax + 8, -24, s * 22], [ax + 8, -14, s * 22], 4);
+  }
+}
+for (const s of [-1, 1]) box(C, 'tire', 604, 604.6, -40, -12, s * 30, s * 48);
+box(C, 'chassis', 616, 620, -36, -31, -46, 46);
+for (const s of [-1, 1]) box(C, 'chassis', 612, 616, -33, -10, s * 20, s * 24);
+
+/* ---------- ground ---------- */
+{
+  const gm = new THREE.Mesh(new THREE.PlaneGeometry(6000, 6000).rotateX(-Math.PI / 2), R.ground);
+  R.ground.map.repeat.set(6000 / 120, 6000 / 120);
+  gm.position.set(309, GROUND, 0); gm.receiveShadow = true; scene.add(gm);
+  const grid = new THREE.GridHelper(4800, 400, 0x2c343b, 0x262c32);
+  grid.position.set(309, GROUND + 0.05, 0); grid.material.transparent = true; grid.material.opacity = 0.3; scene.add(grid);
+}
+
+/* ---------- WATER LOOP: nose-fed supply → runs → rear overflow → debris screen → tank → pump/filter ---------- */
+const W = 'plumb', RZ = 7.6, RX = 11;          // supply risers sit in the aisle just aft of the evaporator
+const SUPPLY = [[572, 7.5, -38], [581, 7.5, -38], [581, 22, -38], [602, 22, -38], [602, 26, -38]];
+box(W, 'panel', 603.2, 606, 50, 53.5, -39.5, -36.5);                         // EC / nitrate sensor
+box(W, 'motor', 599.5, 604.5, 55, 59, -40.5, -35.5);                       // motorised 3-way divert valve
+pipeRun(W, 'pvc', [[602, 57, -38], [612, 57, -38], [612, 2, -38], [623, 2, -38]], 1.0);
+cyl(W, 'yellow', [623, 2, -38], [626, 2, -38], 1.6);                      // cam-lock discharge coupling through rear sill
+pipeRun(W, 'supply', [[602, 48.5, -38], [602, 99, -38], [602, 99, RZ], [RX, 99, RZ], [RX, TB(0) + 6.5, RZ]], 1.1);
+pipeRun(W, 'supply', [[RX, 85, RZ], [RX, 85, -RZ]], 1.0);
+cyl(W, 'supply', [RX, TB(7) + 6.5, -RZ], [RX, TB(0) + 6.5, -RZ], 1.1);
+for (let c = 0; c < 2; c++) {
+  const zs = c ? RZ : -RZ;
+  for (let t = 0; t < TIERS; t++) {
+    const y = TB(t) + 6.5;
+    // lateral over the aisle-side wall → drop at the nose end → perforated inlet spreader across the run floor (passes under the screen)
+    pipeRun(W, 'supply', [[RX, y, zs], [RX, y, Z(c, 35)], [2, y, Z(c, 35)], [2, TB(t) + 0.75, Z(c, 35)]], 0.6);
+    cyl(W, 'supply', [2, TB(t) + 0.75, Z(c, 35)], [2, TB(t) + 0.75, Z(c, 1)], 0.4, 'cyl8');
+    box(W, 'yellow', RX - 0.3, RX + 0.3, y + 0.8, y + 1.3, zs + (c ? 2 : -2), zs + (c ? 6 : -6));   // isolation valve
+    // rear overflow weir in the repop zone → drain riser
+    cyl(W, 'pvc', [479.5, TB(t) + 3, Z(c, 6)], [487.5, TB(t) + 3, Z(c, 6)], 0.8);
+  }
+  const zd = Z(c, 6);
+  cyl(W, 'pvc', [487.5, TB(7) + 4, zd], [487.5, 3, zd], 1.3);
+}
+pipeRun(W, 'pvc', [[487.5, 3, Z(0, 6)], [529.5, 3, Z(0, 6)], [529.5, 54, Z(0, 6)], [536, 54, Z(0, 6)]], 1.3);
+pipeRun(W, 'pvc', [[487.5, 3, Z(1, 6)], [529.5, 3, Z(1, 6)], [529.5, 3, -24], [529.5, 54, -24], [536, 54, -24]], 1.3);
+pipeRun(W, 'pvc', [[528, 2.5, -30], [532, 2.5, -30]], 1);                    // receiving-bin drain
+// organic debris screen on top of the return tank (inclined wedge-wire, debris tray)
+box(W, 'ss', 534, 558, 40.5, 43, -45, -23);
+box(W, 'ss', 534, 538, 50, 58, -45, -23);
+plate(W, 'wedge', 538, 55, 557, 45, -34, 20, 0.3);
+plate(W, 'ss', 538, 57, 557, 47, -44.5, 0.25, 4); plate(W, 'ss', 538, 57, 557, 47, -23.5, 0.25, 4);
+for (const zz of [-44, -24]) box(W, 'ss', 556, 558, 40.5, 49, zz - 1, zz + 1);
+box(W, 'ss', 558, 566, 40.5, 47, -44, -24);
+box(W, 'debris', 558.5, 565.5, 41, 44.5, -43.5, -24.5);
+plate(W, 'debris', 540, 54.5, 555, 46.6, -34, 16, 0.5);
+
+// feed-water (waste-water nutrient stream) inlet → backflow preventer → Y-strainer → flow meter → solenoid → tank
+const FEED = [[626, 4, -28], [614, 4, -28], [614, 46, -28], [571, 46, -28], [571, 36, -28]];
+pipeRun(W, 'feed', FEED, 0.9);
+cyl(W, 'yellow', [623, 4, -28], [627, 4, -28], 1.6);                      // cam-lock inlet through rear sill
+box(W, 'bronze', 612, 616, 12, 22, -30.5, -25.5);                         // backflow preventer (double check)
+cyl(W, 'bronze', [614, 17, -25.5], [614, 17, -24], 0.5, 'cyl8');
+cyl(W, 'feed', [604, 46, -28], [600, 46, -28], 1.4);                      // Y-strainer body
+cyl(W, 'feed', [602, 46, -28], [600, 43.5, -28], 0.9);                    // strainer leg
+box(W, 'white', 590, 594, 44.5, 50.5, -29.5, -26.5);                       // paddlewheel flow meter + display
+box(W, 'motor', 580, 584, 46, 50.5, -30, -26);                             // solenoid valve coil
+for (const [y, z] of [[34, -24], [20, -24], [8, -24]]) cyl(W, 'white', [571.5, y, z], [571.5, y + 3, z], 0.6, 'cyl8');   // float switches
+for (let i = 0; i < 4; i++) cyl(W, 'probe', [568 - i * 3, 40, -44.5], [568 - i * 3, 22, -44.5], 0.35, 'cyl8');          // nitrate / EC / pH / DO probes
+box(W, 'panel', 559, 571, 40.5, 42, -46.5, -45);                          // probe mounting bar
+// pump-side hardware: check valve, gauges, suction strainer, unions
+cyl(W, 'pvc', [581, 14, -38], [581, 18, -38], 1.7);
+for (const [x, y] of [[581, 20], [602, 51]]) { cyl(W, 'ss', [x, y, -38], [x, y, -40.5], 0.25, 'cyl8'); cyl(W, 'white', [x, y, -40.5], [x, y, -41.3], 1.3); }
+cyl(W, 'pvc', [574, 7.5, -38], [576.5, 7.5, -38], 1.6); cyl(W, 'pvc', [575, 7.5, -38], [573.6, 4.6, -38], 1.0);
+// supply-main clevis hangers every 4'
+for (let x = 30; x < 600; x += 48) { cyl(W, 'ss', [x, 99, RZ], [x, 103, RZ], 0.2, 'cyl8'); cyl(W, 'ss', [x - 0.3, 99, RZ], [x + 0.3, 99, RZ], 1.45); }
+// riser drain valves + unions, overflow bulkheads
+for (const zs of [-RZ, RZ]) { box(W, 'yellow', RX + 1, RX + 4.5, TB(0) + 4, TB(0) + 4.5, zs - 0.3, zs + 0.3); cyl(W, 'supply', [RX, 60, zs], [RX, 62, zs], 1.5); }
+for (let c = 0; c < 2; c++) for (let t = 0; t < TIERS; t++) cyl(W, 'pvc', [479.4, TB(t) + 3, Z(c, 6)], [480.6, TB(t) + 3, Z(c, 6)], 1.3);
+
+/* ---------- ELECTRICAL: shore power → main disconnect → panel → cable trays → loads ---------- */
+const E = 'elec', CY = 102.35;
+box(E, 'panel', -9, -4, 30, 52, 40, 50);                                    // shore-power inlet + main disconnect (nose, exterior)
+cyl(E, 'red', [-9, 46, 45], [-10.2, 46, 45], 1.6);
+const conduit = (pts, mt = 'wire', r = 0.45) => pipeRun(E, mt, pts, r);
+conduit([[-4, 40, 48.5], [2, 40, 48.5], [2, CY, 48.5], [2, CY, 45]], 'wire', 0.6);
+for (const s2 of [-1, 1]) {
+  box(E, 'trayG', 0, 540, CY - 0.45, CY - 0.3, s2 * 43, s2 * 47);           // ladder cable tray, wall side
+  for (let x = 0; x < 540; x += 12) box(E, 'trayG', x, x + 0.6, CY - 0.45, CY + 0.3, s2 * 43, s2 * 47);
+  box(E, 'trayG', 0, 540, CY - 0.45, CY + 0.5, s2 * 46.8, s2 * 47);
+  box(E, 'trayG', 0, 540, CY - 0.45, CY + 0.5, s2 * 43, s2 * 43.2);
+}
+conduit([[2, CY, 45], [553, CY, 45], [553, 98, 45]], 'wire', 0.6);           // main feeder to panel
+conduit([[540, 98, 45], [540, CY, 45], [540, CY, -45]], 'wire', 0.55);       // panel → near-side tray
+for (let c = 0; c < 2; c++) {
+  const zw = Z(c, -0.75);
+  conduit([[540, CY, Z(c, -3)], [3, CY, Z(c, -3)], [3, CY, zw], [3, TB(0) + 10.3, zw]], 'wireLed', 0.5);   // LED home run + drop
+  const zm = c ? 4.75 : -4.75;
+  conduit([[540, CY, zm * 1.0 + (c ? 0 : 0)], [483, CY, zm], [483, TB(0) + 6, zm]], 'wire', 0.45);         // conveyor motor drop
+  for (let t = 0; t < TIERS; t++) {
+    conduit([[3, TB(t) + 10.3, zw], [3, TB(t) + 10.3, Z(c, 4)]], 'wireLed', 0.3);
+    conduit([[483, TB(t) + 6, zm], [481.2, TB(t) + 6, Z(c, 43.4)]], 'wire', 0.28);
+  }
+}
+conduit([[540, CY, -45], [598, CY, -45], [598, 10, -45], [590, 10, -42]], 'wire', 0.45);   // pump circuit
+// 24 VDC screen-actuator circuits: tray → drop at the nose → one branch per run onto the screen-rail harness → whip to each actuator
+for (let c = 0; c < 2; c++) {
+  const zw = Z(c, -0.75);
+  conduit([[540, CY, Z(c, -4.5)], [5, CY, Z(c, -4.5)], [5, CY, zw], [5, TB(0) + 7.62, zw]], 'wireDc', 0.4);
+  for (let t = 0; t < TIERS; t++) {
+    const y = TB(t) + 7.62;
+    conduit([[5, y, zw], [5, y, Z(c, 11.4)]], 'wireDc', 0.25);
+    box(E, 'panel', 4, 7, y - 0.9, y + 0.9, zw - 0.8, zw + 0.8);                 // junction box per run
+    for (let k = 0; k < 8; k++) cyl(E, 'wireDc', [k * 60 + 30, y, Z(c, 11.4)], [k * 60 + 30, TB(t) + 8.3, Z(c, 14)], 0.12, 'cyl8');
+  }
+}
+conduit([[540, CY, -30], [582, CY, -30], [582, 51, -30]], 'wireDc', 0.35);       // feed solenoid + flow meter
+conduit([[540, CY, -40], [565, CY, -40], [565, 42, -40]], 'wireDc', 0.35);       // sensor bus to probes
+conduit([[540, CY, -36], [600, CY, -36], [600, 60, -36]], 'wireDc', 0.35);       // divert valve actuator + EC sensor
+for (const [x, z] of [[2, -9.6], [478, 9.6], [612, 46]]) { box(E, 'yellow', x - 1.5, x + 1.5, 46, 52, z - 0.8, z + 0.8); cyl(E, 'red', [x, 50, z], [x, 50, z + (z < 0 ? 1.5 : -1.5)], 0.9); }   // e-stops
+conduit([[548, CY, 45], [548, CY, 24], [548, 76, 24]], 'wire', 0.4);                       // auger motor
+conduit([[560, 72, 46], [568, 62, 46], [568, 56, 45]], 'wire', 0.4);                       // screen vibrators
+conduit([[545, 72, 46], [545, 38, 46], [545, 38, 25], [567, 38, 25]], 'wire', 0.4);        // screw press
+
+/* ---------- build instanced meshes ---------- */
+const ORDER = { water: 1, tankWater: 1, dwR: 2, dwH: 2, poly: 4, tankPoly: 4, roof: 5 };
+for (const b of batches.values()) {
+  const mt = R[b.mt], im = new THREE.InstancedMesh(GEO[b.geo], mt, b.list.length);
+  b.list.forEach((m, i) => im.setMatrixAt(i, m));
+  im.instanceMatrix.needsUpdate = true;
+  im.computeBoundingSphere();
+  im.castShadow = mt.userData.cast !== false;
+  im.receiveShadow = true;
+  im.renderOrder = ORDER[b.mt] || 0;
+  G(b.g).add(im);
+}
+
+/* ---------- harvest flow particles ---------- */
+const NP = 12, particles = new THREE.InstancedMesh(new THREE.SphereGeometry(1, 10, 6), R.particle, 2 * TIERS * NP);
+particles.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+scene.add(particles);
+const pdata = [];
+for (let c = 0; c < 2; c++) for (let t = 0; t < TIERS; t++) for (let i = 0; i < NP; i++)
+  pdata.push({ c, t, ph: (i + rnd() * 0.6) / NP, d: 15 + rnd() * 18, s: 0.9 + rnd() * 0.6 });
+const PERIOD = 11;
+const _pm = new THREE.Matrix4(), _pq = new THREE.Quaternion(), _ps = V(1, 1, 1), _pp = V(0, 0, 0);
+function particlePos(p, time) {
+  const tb = TB(p.t), u = ((time / PERIOD + p.ph) % 1) * PERIOD;
+  const lerp = (a, b, k) => a + (b - a) * k;
+  if (u < 3.0) { const k = u / 3.0; return [lerp(430, 452, k), tb + WATER + 0.2]; }
+  if (u < 7.0) { const k = (u - 3) / 4; return [lerp(452, 481, k), lerp(tb + 2.2, tb + 7.6, k)]; }
+  if (u < 7.8) { const k = (u - 7) / 0.8; return [lerp(482.6, 488.6, k), lerp(tb + 7.3, tb + 4.6, k)]; }
+  const f = u - 7.8, y = tb + 4.6 - 0.5 * 180 * f * f;
+  if (y > 6.2) return [490 + f * 3, y];
+  return null;
+}
+let tierN = 8;
+function updateParticles(time) {
+  pdata.forEach((p, i) => {
+    const pos = p.t < tierN ? particlePos(p, time) : null;
+    if (!pos) _ps.set(0, 0, 0); else _ps.set(0.9 * p.s, 0.35 * p.s, 0.9 * p.s);
+    _pp.set(pos ? pos[0] : 0, pos ? pos[1] : -999, Z(p.c, p.d));
+    particles.setMatrixAt(i, _pm.compose(_pp, _pq, _ps));
+  });
+  particles.instanceMatrix.needsUpdate = true;
+}
+
+/* ---------- flow overlays (drawn through geometry) ---------- */
+const flows = [];
+function flow(kind, pts, o = {}) {
+  const P3 = pts.map(p => V(...p)), cum = [0];
+  for (let i = 1; i < P3.length; i++) cum.push(cum[i - 1] + P3[i].distanceTo(P3[i - 1]));
+  const len = cum[cum.length - 1];
+  flows.push({ kind, P3, cum, len, tier: o.tier ?? -1, speed: o.speed ?? 14, n: Math.max(2, Math.round(len / (o.gap ?? 18))) });
+}
+const WC = { supply: '#4fc3ff', ret: '#8fe3d0', drain: '#d9a441', feed: '#a77df0', dc24: '#c4e45a', elec: '#ff9a3c', led: '#ff6fa0' };
+// water
+flow('supply', [[556, 14, -36], ...SUPPLY, [602, 48.5, -38], [602, 99, -38], [602, 99, RZ], [RX, 99, RZ], [RX, TB(0) + 6.5, RZ]], { speed: 24 });
+flow('supply', [[RX, 85, RZ], [RX, 85, -RZ], [RX, TB(0) + 6.5, -RZ]], { speed: 24 });
+flow('supply', [[RX, 85, -RZ], [RX, TB(7) + 6.5, -RZ]], { speed: 24 });
+for (let c = 0; c < 2; c++) for (let t = 0; t < TIERS; t++) {
+  const tb = TB(t), zs = c ? RZ : -RZ;
+  flow('supply', [[RX, tb + 6.5, zs], [RX, tb + 6.5, Z(c, 35)], [2, tb + 6.5, Z(c, 35)], [2, tb + 0.75, Z(c, 35)], [2, tb + 0.75, Z(c, 1)]], { tier: t, speed: 24, gap: 8 });
+  // water moves through the run itself (below the floating mat, under the screen), to the rear weir
+  flow('ret', [[4, tb + 2.2, Z(c, 6)], [479, tb + 2.2, Z(c, 6)], [487.5, tb + 3, Z(c, 6)], [487.5, 3, Z(c, 6)]], { tier: t, speed: 9, gap: 40 });
+  flow('ret', [[4, tb + 2.2, Z(c, 26)], [445, tb + 2.2, Z(c, 26)], [468, tb + 1.0, Z(c, 26)], [474, tb + 1.0, Z(c, 6)], [479, tb + 2.6, Z(c, 6)]], { tier: t, speed: 9, gap: 40 });
+}
+flow('ret', [[487.5, 3, Z(0, 6)], [529.5, 3, Z(0, 6)], [529.5, 54, Z(0, 6)], [537, 55, Z(0, 6)], [556, 46, -34], [552, 20, -34]], { speed: 16 });
+flow('ret', [[487.5, 3, Z(1, 6)], [529.5, 3, Z(1, 6)], [529.5, 3, -24], [529.5, 54, -24], [537, 55, -24], [556, 46, -34], [552, 20, -34]], { speed: 16 });
+flow('feed', FEED, { speed: 14, gap: 8 });
+for (let c = 0; c < 2; c++) {
+  const zw = Z(c, -0.75);
+  flow('dc24', [[540, CY, Z(c, -4.5)], [5, CY, Z(c, -4.5)], [5, CY, zw], [5, TB(0) + 7.62, zw]], { speed: 50, gap: 34 });
+  for (let t = 0; t < TIERS; t++) flow('dc24', [[5, TB(t) + 7.62, zw], [5, TB(t) + 7.62, Z(c, 11.4)], [474, TB(t) + 7.62, Z(c, 11.4)]], { tier: t, speed: 40, gap: 40 });
+}
+flow('dc24', [[540, CY, -30], [582, CY, -30], [582, 51, -30]], { speed: 30, gap: 14 });
+flow('dc24', [[540, CY, -40], [565, CY, -40], [565, 42, -40]], { speed: 30, gap: 14 });
+flow('dc24', [[540, CY, -36], [600, CY, -36], [600, 60, -36]], { speed: 30, gap: 14 });
+flow('drain', [[602, 57, -38], [612, 57, -38], [612, 2, -38], [626, 2, -38]], { speed: 14, gap: 8 });
+flow('ret', [[584, 42, 14], [584, 3, 14], [584, 3, -18], [570, 3, -18], [570, 3, -22], [566, 12, -30]], { speed: 12 });
+// electrical
+flow('elec', [[-6, 40, 45], [2, 40, 48.5], [2, CY, 48.5], [2, CY, 45], [553, CY, 45], [553, 98, 45]], { speed: 60, gap: 30 });
+flow('elec', [[540, 98, 45], [540, CY, 45], [540, CY, -45], [598, CY, -45], [598, 10, -45], [590, 10, -42]], { speed: 40, gap: 24 });
+flow('elec', [[548, CY, 45], [548, CY, 24], [548, 76, 24]], { speed: 30 });
+flow('elec', [[560, 72, 46], [568, 62, 46], [568, 56, 45]], { speed: 20, gap: 10 });
+flow('elec', [[545, 72, 46], [545, 38, 46], [545, 38, 25], [567, 38, 25]], { speed: 20, gap: 12 });
+for (let c = 0; c < 2; c++) {
+  const zw = Z(c, -0.75), zm = c ? 4.75 : -4.75;
+  flow('led', [[540, CY, Z(c, -3)], [3, CY, Z(c, -3)], [3, CY, zw], [3, TB(0) + 10.3, zw]], { speed: 60, gap: 34 });
+  flow('elec', [[540, CY, zm], [483, CY, zm], [483, TB(0) + 6, zm]], { speed: 30 });
+  for (let t = 0; t < TIERS; t++) flow('led', [[3, TB(t) + 10.3, zw], [3, TB(t) + 10.3, Z(c, 4)]], { tier: t, speed: 8, gap: 6 });
+}
+const overlay = { water: new THREE.Group(), elec: new THREE.Group() };
+scene.add(overlay.water, overlay.elec);
+const kindGroup = k => (k === 'elec' || k === 'led' || k === 'dc24') ? 'elec' : 'water';
+const pMats = {}, pMeshes = {};
+for (const k of Object.keys(WC)) {
+  pMats[k] = new THREE.MeshBasicMaterial({ color: WC[k], depthTest: false, transparent: true, opacity: 0.95 });
+  const lm = new THREE.LineBasicMaterial({ color: WC[k], depthTest: false, transparent: true, opacity: 0.55 });
+  const list = flows.filter(f => f.kind === k);
+  list.forEach(f => { const ln = new THREE.Line(new THREE.BufferGeometry().setFromPoints(f.P3), lm); ln.renderOrder = 28; ln.userData.tier = f.tier; overlay[kindGroup(k)].add(ln); });
+  const n = list.reduce((a, f) => a + f.n, 0);
+  const im = new THREE.InstancedMesh(new THREE.SphereGeometry(1, 8, 6), pMats[k], n);
+  im.renderOrder = 29; im.frustumCulled = false; im.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+  overlay[kindGroup(k)].add(im); pMeshes[k] = { im, list };
+}
+const _fp = V(0, 0, 0), _fs = V(1, 1, 1);
+function updateFlows(time) {
+  for (const k in pMeshes) {
+    const { im, list } = pMeshes[k]; let i = 0;
+    const r = kindGroup(k) === 'elec' ? 0.6 : 0.75;
+    for (const f of list) {
+      const on = f.tier < 0 || f.tier < tierN;
+      for (let j = 0; j < f.n; j++, i++) {
+        let d = ((time * f.speed) + j * f.len / f.n) % f.len, s = 1;
+        while (s < f.cum.length - 1 && f.cum[s] < d) s++;
+        const a = f.P3[s - 1], b = f.P3[s], seg = f.cum[s] - f.cum[s - 1] || 1;
+        _fp.lerpVectors(a, b, (d - f.cum[s - 1]) / seg);
+        _fs.setScalar(on ? r : 0);
+        im.setMatrixAt(i, _pm.compose(_fp, _pq, _fs));
+      }
+    }
+    im.instanceMatrix.needsUpdate = true;
+  }
+  overlay.water.children.forEach(o => { if (o.isLine) o.visible = o.userData.tier < 0 || o.userData.tier < tierN; });
+  overlay.elec.children.forEach(o => { if (o.isLine) o.visible = o.userData.tier < 0 || o.userData.tier < tierN; });
+}
+
+/* ---------- lighting ---------- */
+scene.add(new THREE.HemisphereLight('#d5dee8', '#2a2724', 0.55));
+const sun = new THREE.DirectionalLight('#fff3e6', 1.85);
+sun.position.set(-160, 1100, -820); sun.target.position.set(309, 0, 0);
+sun.castShadow = true;
+sun.shadow.mapSize.set(4096, 4096);
+Object.assign(sun.shadow.camera, { left: -560, right: 560, top: 520, bottom: -520, near: 100, far: 2600 });
+sun.shadow.bias = -0.0003; sun.shadow.normalBias = 0.4;
+scene.add(sun, sun.target);
+const fill = new THREE.DirectionalLight('#cfe0ff', 0.45); fill.position.set(1200, 400, 900); scene.add(fill);
+
+/* ---------- annotations ---------- */
+const annot = { overall: new THREE.Group(), plan: new THREE.Group(), section: new THREE.Group(), callouts: new THREE.Group() };
+Object.values(annot).forEach(g => scene.add(g));
+const dimMat = new THREE.LineBasicMaterial({ color: '#ffc65c', depthTest: false, transparent: true, opacity: 0.95 });
+const leadMat = new THREE.LineBasicMaterial({ color: '#7fd4c1', depthTest: false, transparent: true, opacity: 0.85 });
+const labels = [];
+function cssObj(cls, html, pos) {
+  const el = document.createElement('div'); el.className = cls; el.innerHTML = html;
+  const o = new CSS2DObject(el); o.position.copy(pos); return o;
+}
+function dim(set, a, b, off, text, o = {}) {
+  const A = V(...a), B = V(...b), O = V(...off), A2 = A.clone().add(O), B2 = B.clone().add(O);
+  const on = O.clone().normalize(), tick = o.tick ?? 4;
+  const pts = [A2, B2,
+    A.clone().addScaledVector(on, 1.5), A2.clone().addScaledVector(on, 3),
+    B.clone().addScaledVector(on, 1.5), B2.clone().addScaledVector(on, 3)];
+  const td = B2.clone().sub(A2).normalize().add(on).normalize().multiplyScalar(tick);
+  for (const p of [A2, B2]) pts.push(p.clone().sub(td), p.clone().add(td));
+  const ls = new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(pts), dimMat);
+  ls.renderOrder = 20; set.add(ls);
+  const lab = cssObj('dim' + (o.sm ? ' sm' : ''), text, A2.clone().add(B2).multiplyScalar(0.5).add(V(...(o.lo || [0, 0, 0]))));
+  set.add(lab);
+}
+function callout(p, off, title, sub, o = {}) {
+  const geo = new THREE.BufferGeometry().setFromPoints([V(0, 0, 0), V(0, 0, 0)]);
+  const line = new THREE.Line(geo, leadMat); line.renderOrder = 21;
+  const dot = cssObj('dot', '', V());
+  const lab = cssObj('co', title + (sub ? `<small>${sub}</small>` : ''), V());
+  annot.callouts.add(line, dot, lab);
+  const c = { p, off, line, dot, lab, views: (o.v || '').split(' '), rel: !!o.rel, anchor: V() };
+  labels.push(c); placeCallout(c); return c;
+}
+function placeCallout(c) {
+  const base = typeof c.p === 'function' ? c.p(TB(tierN - 1)) : c.p;
+  const A = V(...base), B = A.clone().add(V(...c.off));
+  c.anchor.copy(A);
+  c.line.geometry.setFromPoints([A, B]); c.line.geometry.computeBoundingSphere();
+  c.dot.position.copy(A); c.lab.position.copy(B);
+}
+
+// overall dimensions
+const ov = annot.overall;
+dim(ov, [0, 107, -51], [L, 107, -51], [0, 34, 0], `51'-6" INTERIOR LENGTH`, { tick: 6 });
+dim(ov, [0, 107, -51], [RUN_L, 107, -51], [0, 16, 0], `40'-0" CULTIVATION · 16 RUNS`, { tick: 6 });
+dim(ov, [RUN_L, 107, -51], [L, 107, -51], [0, 16, 0], `11'-6" HARVEST / DEWATER`, { tick: 6 });
+dim(ov, [0, 0, -51], [60, 0, -51], [0, 0, -22], `5'-0" TYP · 9 FRAMES`, { tick: 4 });
+for (let k = 1; k < 8; k++) dim(ov, [k * 60, 0, -51], [(k + 1) * 60, 0, -51], [0, 0, -22], '', { tick: 4 });
+dim(ov, [L + 4, 0, -51], [L + 4, H, -51], [0, 0, -26], `8'-7" INT. HT`, { tick: 5 });
+dim(ov, [L + 2, 107, -HW], [L + 2, 107, HW], [0, 16, 0], `8'-1½" INT. WIDTH`, { tick: 5 });
+ov.children.filter(o => o.isCSS2DObject && !o.element.textContent).forEach(o => ov.remove(o));
+
+// plan dimensions
+const pl = annot.plan;
+dim(pl, [0, 0, -51], [L, 0, -51], [0, 0, -44], `51'-6" INTERIOR LENGTH`, { tick: 6 });
+dim(pl, [0, 0, -51], [RUN_L, 0, -51], [0, 0, -22], `40'-0" CULTIVATION`, { tick: 6 });
+dim(pl, [RUN_L, 0, -51], [L, 0, -51], [0, 0, -22], `11'-6" PROCESSING`, { tick: 6 });
+dim(pl, [-26, 0, -HW], [-26, 0, HW], [-26, 0, 0], `8'-1½"`, { tick: 4 });
+dim(pl, [0, 0, 51], [60, 0, 51], [0, 0, 16], `5'-0" TYP`, { tick: 4 });
+
+// section A–A dimensions (cut at 27'-6" from nose, looking toward the nose)
+const se = annot.section, sx = SECTION_X - 0.5, t7 = TB(7), t0 = TB(0);
+dim(se, [sx, 107, -HW], [sx, 107, HW], [0, 22, 0], `8'-1½" INTERIOR WIDTH`, { tick: 3 });
+dim(se, [sx, 0, HW], [sx, H, HW], [0, 0, 22], `8'-7" INT. HEIGHT`, { tick: 3 });
+dim(se, [sx, t7 + 9.6, Z(0, 0)], [sx, t7 + 9.6, Z(0, 12)], [0, 7, 0], `1'-0" REPOP ⅓`, { tick: 2, sm: 1, lo: [0, 6, 0] });
+dim(se, [sx, t7 + 9.6, Z(0, 12)], [sx, t7 + 9.6, Z(0, 36)], [0, 7, 0], `2'-0" HARVEST ⅔`, { tick: 2, sm: 1 });
+dim(se, [sx, t7 + 9.6, Z(1, 36)], [sx, t7 + 9.6, Z(1, 0)], [0, 7, 0], `3'-0" RUN`, { tick: 2, sm: 1 });
+dim(se, [sx, t0, Z(0, 36)], [sx, t0, Z(1, 36)], [0, -16, 0], `21½" AISLE`, { tick: 2, sm: 1 });
+dim(se, [sx, t0, Z(0, 0)], [sx, t0, Z(0, 36)], [0, -16, 0], `3'-0"`, { tick: 2, sm: 1 });
+dim(se, [sx, TB(5), Z(1, -1.5)], [sx, TB(6), Z(1, -1.5)], [0, 0, 9], `11¾" PITCH`, { tick: 2, sm: 1 });
+dim(se, [sx, TB(6), Z(1, -1.5)], [sx, TB(7), Z(1, -1.5)], [0, 0, 9], `11¾"`, { tick: 2, sm: 1 });
+dim(se, [sx, TB(2), Z(1, -1.5)], [sx, TB(2) + WALL, Z(1, -1.5)], [0, 0, 9], `5" WALL`, { tick: 1.5, sm: 1, lo: [0, 0, 13] });
+const t4 = TB(4), zr = Z(0, -1.5);
+dim(se, [sx, t4, zr], [sx, t4 + WATER, zr], [0, 0, -6], `3" WATER`, { tick: 1.5, sm: 1, lo: [0, -0.6, -15] });
+dim(se, [sx, t4 + WATER, zr], [sx, t4 + LED, zr], [0, 0, -6], `6" CLEAR`, { tick: 1.5, sm: 1, lo: [0, 0.6, -15] });
+dim(se, [sx, t4, zr], [sx, t4 + LED, zr], [0, 0, -34], `9" FLOOR TO LED`, { tick: 1.5, sm: 1, lo: [0, 0, -18] });
+se.add(cssObj('sect', 'Section A–A · 27\'-6" from nose · looking forward', V(sx, -30, 0)));
+
+// callouts — each one lists the camera views it belongs to
+callout([-15, 84, -40], [-40, 48, -60], 'Reefer unit', 'climate + heat rejection', { v: 'iso side nose' });
+callout([150, TB(7) + 9.1, Z(0, 19)], [-60, 70, -60], 'LED grow lights', '3 bars / run · 9" above run floor', { v: 'iso side nose' });
+callout([60, 60, Z(0, -1.5)], [-50, -95, -70], 'Support frame', 'posts + beams @ 5\'-0" o.c.', { v: 'iso nose' });
+callout([330, TB(0) + 3.1, Z(0, 30)], [0, -100, -80], 'Duckweed runs', '16 × 40\'-0" × 3\'-0" · 2 across × 8 tiers', { v: 'iso side nose' });
+callout([490, 70, Z(0, 24)], [-30, 80, -90], 'Collection chutes', 'clear PC · one per column', { v: 'iso side' });
+callout([490, 70, Z(0, 24)], [-10, 50, -40], 'Collection chutes', 'clear PC · one per column', { v: 'process' });
+callout([505, 9.6, 0], [10, -60, -90], 'Receiving bin', 'low-profile 9" H · grated step-over', { v: 'iso side' });
+callout([505, 9.6, 0], [6, -30, -40], 'Receiving bin', 'low-profile 9" H · grated step-over', { v: 'process' });
+callout([526, 35, 24], [-4, 60, -30], 'Transfer auger', 'bin → screen', { v: 'process' });
+callout([570, 56, 25], [10, 70, -20], 'Dewatering screen', 'vibratory wedge-wire', { v: 'iso process' });
+callout([600, 33, 25], [24, 26, -34], 'Screw press', 'final dewatering', { v: 'process' });
+callout([606, 19, 10], [34, -8, -34], 'Biomass tote', 'out through rear doors', { v: 'process' });
+callout([552, 40, -34], [50, -64, 10], 'Filtrate return tank', '≈165 gal', { v: 'iso' });
+callout([552, 40, -34], [20, -70, -50], 'Filtrate return tank', '≈165 gal', { v: 'process' });
+callout([590, 8, -38], [34, -26, -24], 'Pump + cartridge filter', null, { v: 'process' });
+callout([498, 99, 0], [24, 34, -24], 'Supply main', 'runs forward to nose risers', { v: 'process' });
+callout([552, 85, 41.5], [20, 34, -26], 'Control panel', 'VFDs · LED drivers', { v: 'process' });
+callout([200, 96.5, 0], [30, 60, -70], 'Reefer air chute', null, { v: 'nose' });
+callout([200, 50, -51], [-10, -100, -50], 'Near sidewall removed', 'shown cut for clarity', { v: 'iso' });
+callout([110, 104, -51], [0, 34, -40], 'Near sidewall removed', 'shown cut for clarity', { v: 'nose' });
+// callouts — water loop
+const WV = { v: 'water' };
+callout([RX, 60, RZ], [-40, 80, -70], 'Supply enters at nose', 'risers feed a front inlet in each run', WV);
+callout([300, 99, RZ], [0, 60, -90], 'Supply main', 'aisle ceiling, nose-bound', WV);
+callout([240, TB(7) + 3.3, Z(0, 6)], [-20, -150, -80], 'Flow front → rear', 'through the water, under the mat', WV);
+callout([487.5, 40, Z(0, 6)], [30, -90, -60], 'Rear overflow weirs', 'drain risers, one per column', WV);
+callout([546, 52, -34], [40, 70, -40], 'Organic debris screen', 'wedge-wire; removes coarse matter', WV);
+callout([562, 44, -34], [70, -40, -50], 'Debris tray', 'emptied at rear doors', WV);
+callout([552, 20, -34], [30, -80, -40], 'Return tank', '≈165 gal', WV);
+callout([600, 30, -38], [70, 10, -20], 'Pump + cartridge filter', 'back to supply main', WV);
+callout([604, 52, -38], [-10, 95, -90], 'EC / nitrate sensor + 3-way valve', 'diverts nutrient-spent water', WV);
+callout([624, 2, -38], [-30, -60, -110], 'Spent-water discharge', 'cam-lock outlet at rear', WV);
+callout([626, 4, -28], [40, -40, -70], 'Feed-water inlet', 'waste-water nutrient stream · cam-lock', WV);
+callout([614, 17, -28], [60, 30, -40], 'Backflow preventer → strainer', 'flow meter · float solenoid', WV);
+callout([566, 30, -44.5], [20, 60, -90], 'Nutrient monitoring', 'nitrate · EC · pH · DO · temp (no dosing)', WV);
+callout([2, TB(7) + 0.75, Z(0, 20)], [-30, -90, -90], 'Front inlet spreaders', 'one per run, under the screen', WV);
+// callouts — electrical
+const EV = { v: 'elec' };
+callout([-9, 46, 45], [-40, 60, -80], 'Shore power + main disconnect', 'nose, curb side', EV);
+callout([200, CY, 45], [0, 50, 40], 'Main feeder + cable tray', 'far wall, above racks', EV);
+callout([200, CY, -45], [0, 40, -60], 'Cable tray (near side)', null, EV);
+callout([3, TB(4) + 10.3, Z(0, -0.75)], [-30, -80, -80], 'LED driver drops', '1 per run, nose end', EV);
+callout([483, 60, -4.75], [20, 80, -80], 'Conveyor motor drops', '16 gearmotors at rear', EV);
+callout([552, 85, 41.5], [40, 50, -30], 'Control panel', 'VFDs · LED drivers · breakers', EV);
+callout([598, 40, -45], [60, -60, -40], 'Pump circuit', null, EV);
+callout([5, TB(5) + 7.62, Z(0, 6)], [-40, 90, -90], 'Screen actuator circuits', '24 VDC · drop + junction box per run', EV);
+callout([300, TB(7) + 7.62, Z(0, 11.4)], [20, 60, -40], 'Actuator harness', 'along each screen rail · whip per actuator', EV);
+callout([582, 60, -30], [40, 60, -60], 'Valve + sensor wiring', 'solenoid · divert valve · probes', EV);
+
+// callouts — plan view (labels placed in two rows outside the trailer)
+const at = (a, l, title, sub) => callout(a, [l[0] - a[0], l[1] - a[1], l[2] - a[2]], title, sub, { v: 'plan' });
+at([240, TB(7) + 3.1, Z(0, 30)], [240, 110, -112], 'Duckweed runs', '2 across × 8 tiers · near column');
+at([240, TB(7) + 3.1, Z(1, 30)], [240, 110, 96], 'Duckweed runs', 'far column');
+at([60, 96.5, 0], [60, 110, 96], 'Reefer air chute', null);
+at([490, 99, Z(0, 24)], [430, 110, -112], 'Collection chutes', 'one per column');
+at([505, 9.6, 0], [455, 110, 96], 'Receiving bin', 'grated step-over');
+at([570, 62, 25], [560, 110, 96], 'Dewatering screen', null);
+at([606, 19, 25], [665, 110, 96], 'Biomass tote', null);
+at([552, 40, -34], [555, 110, -112], 'Filtrate tank', '≈165 gal');
+at([590, 8, -38], [670, 110, -112], 'Pump + filter', null);
+
+// callouts — harvest-end detail (follow the top visible tier, near column)
+const SV = { v: 'screen', rel: 1 };
+callout(tb => [262, tb + 4.6, Z(0, 13.5)], [-4, 14, 10], 'Moving repop. screen', 'SS mesh gate · one per 5\' section', SV);
+callout(tb => [240.6, tb + 6, Z(0, 13.5)], [8, 12, 4], 'Guide channel', 'at each 5\'-0" frame', SV);
+callout(tb => [270, tb + 8.6, Z(0, 14)], [-6, 12, -6], 'Linear actuator', '24 VDC · 2.4" stroke', SV);
+callout(tb => [150, tb + 7.62, Z(0, 11.4)], [-10, 10, -14], 'Actuator harness', '24 VDC from nose junction box', SV);
+callout(tb => [250, tb + 3.1, Z(0, 5)], [4, -9, -10], 'Repopulation zone ⅓', 'mat held while gate is down', SV);
+callout(tb => [280, tb + 3.1, Z(0, 26)], [-6, -10, 8], 'Harvest zone ⅔', 'reseeded when gate lifts', SV);
+callout(tb => [300, tb + 7.5, Z(0, 12)], [10, 12, 14], 'Screen rail', 'carries screen + actuators', SV);
+const HV = { v: 'harvest', rel: 1 };
+callout(tb => [424, tb + 3.1, Z(0, 5)], [-6, 24, -4], 'Repopulation zone', '⅓ width retained', HV);
+callout(tb => [446, tb + 7.5, Z(0, 12)], [-14, 22, 12], 'Screen rail + screen', 'splits width ⅓ : ⅔', HV);
+callout(tb => [436, tb + 3.1, Z(0, 28)], [-16, 12, 34], 'Harvest section ⅔', 'conveyor belt under the mat', HV);
+callout(tb => [468, tb + 4.6, Z(0, 26)], [8, 22, 30], 'Cleated incline', 'lifts mat clear of water', HV);
+callout(tb => [486.5, tb + 5.2, Z(0, 24)], [24, 16, 10], 'Discharge flap', 'lowered · drops to chute', HV);
+callout(tb => [481.2, tb + 6, Z(0, 41.5)], [10, 30, 34], 'Belt drive', 'gearmotor on head shaft', HV);
+callout(tb => [404, tb + 1.4, Z(0, 21)], [-26, -12, -26], 'Submerged SS grid', 'ribs every 5\'-0"', HV);
+callout(tb => [490, tb - 6, Z(0, 26)], [26, -10, -8], 'Collection chute', 'to receiving bin', HV);
+callout(tb => [440, tb + LED, Z(0, 6)], [-34, 14, -18], 'LED bar', '9" above run floor', HV);
+
+/* ---------- views ---------- */
+const VIEWS = {
+  iso: { dir: [0.62, 0.34, -0.71], tgt: [318, 18, 0], fit: [600, 250], fov: 32, dims: 'overall', tiers: 8 },
+  side: { dir: [0, 0.05, -1], tgt: [320, 26, 0], fit: [760, 200], fov: 28, dims: 'overall', tiers: 8 },
+  plan: { dir: [0, 1, -0.02], tgt: [318, 0, 0], fit: [820, 270], fov: 28, dims: 'plan', tiers: 8 },
+  section: { dir: [1, 0.035, 0], tgt: [SECTION_X, 46, -26], fit: [250, 200], fov: 13, dims: 'section', tiers: 8, section: true },
+  screen: { pos: [238, 74, -84], tgt: [272, 35, -33], fov: 40, dims: 'none', tiers: 3, peek: true },
+  harvest: { pos: [505, 84, -110], tgt: [466, 34, -26], fov: 40, dims: 'none', tiers: 3 },
+  process: { pos: [590, 182, -250], tgt: [560, 30, 4], fov: 40, dims: 'none', tiers: 8 },
+  water: { dir: [0.62, 0.34, -0.71], tgt: [318, 18, 0], fit: [600, 250], fov: 32, dims: 'none', tiers: 8, water: true },
+  elec: { dir: [0.62, 0.34, -0.71], tgt: [318, 18, 0], fit: [600, 250], fov: 32, dims: 'none', tiers: 8, elec: true },
+  nose: { dir: [-0.62, 0.3, -0.72], tgt: [90, 30, 0], fit: [420, 260], fov: 34, dims: 'none', tiers: 8 },
+};
+const clipPlane = new THREE.Plane(V(-1, 0, 0), SECTION_X);
+let current = 'iso', dimsMode = 'overall', sectionOn = false, tween = null;
+function viewPose(v) {
+  const tgt = V(...v.tgt);
+  if (v.pos) return { pos: V(...v.pos), tgt, fov: v.fov };
+  const t = Math.tan(THREE.MathUtils.degToRad(v.fov / 2)), a = camera.aspect;
+  const dist = Math.max(v.fit[1] / (2 * t), v.fit[0] / (2 * t * a)) * 1.08;
+  return { pos: tgt.clone().addScaledVector(V(...v.dir).normalize(), dist), tgt, fov: v.fov };
+}
+function setView(name, instant = false) {
+  const v = VIEWS[name]; current = name;
+  document.querySelectorAll('[data-view]').forEach(b => b.setAttribute('aria-pressed', b.dataset.view === name));
+  dimsMode = v.dims; sectionOn = !!v.section;
+  renderer.clippingPlanes = sectionOn ? [clipPlane] : [];
+  setTiers(v.tiers);
+  $('tWater').checked = !!v.water; $('tElec').checked = !!v.elec;
+  const to = viewPose(v);
+  if (instant || reduceMotion) { camera.position.copy(to.pos); controls.target.copy(to.tgt); camera.fov = to.fov; camera.updateProjectionMatrix(); tween = null; }
+  else tween = { t0: performance.now(), dur: 1100, fromP: camera.position.clone(), fromT: controls.target.clone(), fromF: camera.fov, to };
+  applyVisibility();
+}
+const tiersInput = document.getElementById('tiers'), tiersOut = document.getElementById('tiersOut');
+function setTiers(n) {
+  tierN = n; tiersInput.value = n; tiersOut.textContent = n === 1 ? '1' : `1–${n}`;
+  const peek = VIEWS[current]?.peek;
+  for (let t = 0; t < TIERS; t++) { G('t' + t).visible = t < n; G('l' + t).visible = t < (peek ? n - 1 : n); }
+  labels.forEach(c => c.rel && placeCallout(c));
+}
+const $ = id => document.getElementById(id);
+// CSS2D labels ignore parent visibility, so toggle every child
+function showSet(g, on) { g.visible = on; g.children.forEach(o => { if (o.isCSS2DObject) o.visible = on; }); }
+function applyVisibility() {
+  G('shell').visible = G('chassis').visible = $('tShell').checked;
+  G('roof').visible = $('tRoof').checked && !sectionOn;
+  const on = $('tLed').checked;
+  R.ledL.emissiveIntensity = on ? 6 : 0; R.ledL.color.set(on ? '#ffffff' : '#cfd3d6');
+  R.dwR.emissiveIntensity = R.dwH.emissiveIntensity = on ? 0.35 : 0.05;
+  showSet(annot.overall, $('tDims').checked && dimsMode === 'overall');
+  showSet(annot.section, $('tDims').checked && dimsMode === 'section');
+  showSet(annot.plan, $('tDims').checked && dimsMode === 'plan');
+  annot.callouts.visible = $('tCallouts').checked && !sectionOn;
+  overlay.water.visible = $('tWater').checked;
+  overlay.elec.visible = $('tElec').checked;
+}
+['tShell', 'tRoof', 'tLed', 'tDims', 'tCallouts', 'tAnim', 'tWater', 'tElec'].forEach(id => $(id).addEventListener('change', applyVisibility));
+tiersInput.addEventListener('input', () => setTiers(+tiersInput.value));
+document.querySelectorAll('[data-view]').forEach(b => b.addEventListener('click', () => setView(b.dataset.view)));
+if (reduceMotion) $('tAnim').checked = false;
+for (const [t, pnl, o, op] of [['tabData', 'data', 'tabBom', 'bom'], ['tabBom', 'bom', 'tabData', 'data']])
+  $(t).addEventListener('click', () => { $(t).setAttribute('aria-selected', 'true'); $(o).setAttribute('aria-selected', 'false'); $(pnl).hidden = false; $(op).hidden = true; });
+if (innerWidth < 720) { $('tCallouts').checked = false; $('tDims').checked = false; }
+
+/* ---------- post-processing ---------- */
+const composer = new EffectComposer(renderer);
+composer.addPass(new RenderPass(scene, camera));
+const bloom = new UnrealBloomPass(new THREE.Vector2(256, 256), 0.32, 0.15, 3.6);
+composer.addPass(bloom);
+composer.addPass(new OutputPass());
+
+function resize() {
+  const w = host.clientWidth, h = host.clientHeight;
+  renderer.setSize(w, h); composer.setSize(w, h); labelRenderer.setSize(w, h);
+  camera.aspect = w / h; camera.updateProjectionMatrix();
+}
+addEventListener('resize', resize);
+new ResizeObserver(resize).observe(host);
+resize();
+setView(location.hash.slice(1) in VIEWS ? location.hash.slice(1) : 'iso', true);
+document.getElementById('loading').remove();
+
+/* ---------- label declutter: push overlapping callouts apart, keep them inside the viewport, draw 2D leaders ---------- */
+const svg = document.getElementById('leaders'), NS = 'http://www.w3.org/2000/svg', pool = [];
+function declutter() {
+  const vr = host.getBoundingClientRect(), live = labels.filter(c => c.lab.visible);
+  const items = live.map(c => {
+    const r = c.lab.element.getBoundingClientRect(), sh = c.shift || [0, 0];
+    return { c, x0: r.left - sh[0], x1: r.right - sh[0], y0: r.top - sh[1], y1: r.bottom - sh[1] };
+  }).sort((a, b) => a.y0 - b.y0);
+  const done = [], pad = 4;
+  for (const it of items) {
+    let dx = 0, dy = 0;
+    const w = it.x1 - it.x0, h = it.y1 - it.y0;
+    if (it.x0 < vr.left + pad) dx = vr.left + pad - it.x0;
+    if (it.x1 > vr.right - pad) dx = vr.right - pad - it.x1;
+    if (it.y0 < vr.top + pad) dy = vr.top + pad - it.y0;
+    for (let guard = 0; guard < 30; guard++) {
+      const hit = done.find(d => it.x0 + dx < d.x1 + pad && it.x1 + dx > d.x0 - pad && it.y0 + dy < d.y1 + pad && it.y1 + dy > d.y0 - pad);
+      if (!hit) break;
+      dy = hit.y1 + pad - it.y0;
+    }
+    if (it.y1 + dy > vr.bottom - pad) dy = vr.bottom - pad - it.y1;
+    it.c.shift = [dx, dy];
+    it.c.lab.element.style.translate = `${dx}px ${dy}px`;
+    done.push({ x0: it.x0 + dx, x1: it.x1 + dx, y0: it.y0 + dy, y1: it.y1 + dy, w, h });
+  }
+  let i = 0;
+  for (const it of items) {
+    const d = it.c.dot.element.getBoundingClientRect(), px = (d.left + d.right) / 2 - vr.left, py = (d.top + d.bottom) / 2 - vr.top;
+    const [dx, dy] = it.c.shift, l = it.x0 + dx - vr.left, r = it.x1 + dx - vr.left, t = it.y0 + dy - vr.top, b = it.y1 + dy - vr.top;
+    const qx = Math.min(Math.max(px, l), r), qy = Math.min(Math.max(py, t), b);
+    let ln = pool[i];
+    if (!ln) { ln = document.createElementNS(NS, 'line'); svg.appendChild(ln); pool.push(ln); }
+    ln.setAttribute('x1', px); ln.setAttribute('y1', py); ln.setAttribute('x2', qx); ln.setAttribute('y2', qy); ln.style.display = '';
+    i++;
+  }
+  for (; i < pool.length; i++) pool[i].style.display = 'none';
+}
+
+/* ---------- loop ---------- */
+const clock = new THREE.Clock();
+let simTime = 4;
+const ease = k => k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2;
+function frame() {
+  const dt = Math.min(clock.getDelta(), 0.05);
+  if ($('tAnim').checked) { simTime += dt; R.belt.map.offset.x -= dt * 2.2 / 2; }
+  updateParticles(simTime);
+  updateFlows(simTime);
+  const mode = $('scrMode').value;
+  let target = mode === 'up' ? 1 : 0;
+  if (mode === 'auto') { const u = simTime % 16; target = u < 8 ? 0 : 1; }
+  screenLift += (target - screenLift) * Math.min(1, dt * 2.2);
+  updateScreens();
+  $('scrOut').textContent = screenLift < 0.05 ? 'down · holding' : screenLift > 0.95 ? 'up · releasing' : 'moving…';
+  if (tween) {
+    const k = Math.min((performance.now() - tween.t0) / tween.dur, 1), e = ease(k);
+    camera.position.lerpVectors(tween.fromP, tween.to.pos, e);
+    controls.target.lerpVectors(tween.fromT, tween.to.tgt, e);
+    camera.fov = tween.fromF + (tween.to.fov - tween.fromF) * e; camera.updateProjectionMatrix();
+    if (k >= 1) tween = null;
+  }
+  controls.update();
+  for (const c of labels) {
+    const hiddenBySection = sectionOn && c.anchor.x > SECTION_X;
+    const vis = annot.callouts.visible && !hiddenBySection && c.views.includes(current);
+    c.line.visible = false; c.dot.visible = c.lab.visible = vis;
+  }
+  composer.render();
+  labelRenderer.render(scene, camera);
+  declutter();
+  requestAnimationFrame(frame);
+}
+frame();
+</script>

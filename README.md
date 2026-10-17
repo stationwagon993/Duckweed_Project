@@ -1,4 +1,23 @@
-# Duckweed Cultivation Trailer
+# Duckweed Treatment Pod (DW-200) and Cultivation Trailer
+
+**Rev C, full system design:** a transportable, year-round wastewater treatment pod (two LED grow trailers in series, lead → polish, plus a 40' process module) that removes N, P and some organic matter, harvests and dries the duckweed without losing nutrients, and sells it as a ≈ 5-2-3 fertilizer.
+
+- [`SYSTEM_DESIGN.md`](SYSTEM_DESIGN.md): the design for all five goals (treatment, enclosed year-round growing, harvest and concentration, product, modular commercial deployment), with materials, logistics, controls, permitting, economics and risks
+- [`site.html`](site.html): interactive 3D site rendering (views: Site iso, Plan, Trailer cutaway, Process module, Harvest route)
+- [`pfd.svg`](pfd.svg): process flow diagram and stream table
+- [`model/mass_balance.py`](model/mass_balance.py): sizing, nutrient, energy and cost model; every number in the design comes from it. `model/pfd.py` regenerates the PFD
+
+![Site rendering](render-site-iso.png)
+![Process flow diagram](pfd.svg)
+
+| | |
+|---|---|
+| ![Plan](render-site-plan.png) | ![Process module](render-site-pm.png) |
+| ![Trailer cutaway](render-site-trailer.png) | ![Harvest route](render-site-harvest.png) |
+
+---
+
+## Grow trailer interior model (Rev B, `index.html`)
 
 Interactive 3D engineering model (Three.js) of a 16-run duckweed cultivation and harvest system inside a 53' reefer trailer (51'-6" × 8'-1½" × 8'-7" interior).
 
