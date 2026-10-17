@@ -1,0 +1,1874 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Duckweed Cultivation Container</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+/* Dashboard: header with page tabs (3D render · bill of materials · calculations). Render page = views/layers | 3D viewport | design data. One dark CAD look. */
+:root{
+  color-scheme: dark;
+  --bg:#101418; --panel:#141a1f; --panel2:#1a2128; --line:#2a333c; --fg:#e6ecf0; --muted:#93a3b0;
+  --dim:#ffc65c; --lead:#7fd4c1; --accent:#7fd4c1; --warn:#ff9d6b; --good:#8fd694; --bad:#ff8a7a;
+  --f-ui:"Barlow Semi Condensed","Arial Narrow",Arial,sans-serif;
+  --f-data:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-ui);overflow:hidden}
+#app{height:100%;display:grid;grid-template-rows:auto minmax(0,1fr)}
+.top{display:flex;flex-wrap:wrap;gap:10px 20px;align-items:center;justify-content:space-between;padding:10px 16px;border-bottom:1px solid var(--line);background:var(--panel)}
+.tb{display:flex;flex-direction:column;gap:2px;min-width:0}
+.tb .name{font-size:21px;font-weight:700;letter-spacing:.01em}
+.tb .v{font-family:var(--f-data);font-size:11.5px;color:var(--muted)}
+.pages{display:flex;gap:4px;flex-wrap:wrap}
+.pages button{font:600 14px/1 var(--f-ui);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);background:transparent;border:1px solid var(--line);padding:10px 16px;cursor:pointer;border-radius:3px}
+.pages button:hover{color:var(--fg)}
+.pages button[aria-selected="true"]{color:var(--bg);background:var(--accent);border-color:var(--accent)}
+.tools{display:flex;gap:6px}
+.btn{font:600 12px/1 var(--f-ui);letter-spacing:.08em;text-transform:uppercase;color:var(--fg);background:var(--panel2);border:1px solid var(--line);padding:8px 10px;cursor:pointer;border-radius:3px}
+.btn:hover{border-color:var(--muted)}
+.btn[aria-pressed="true"]{background:var(--dim);color:var(--bg);border-color:var(--dim)}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--dim);outline-offset:2px}
+.page{min-height:0}
+.page[hidden]{display:none!important}
+/* ---- render page ---- */
+#page-render{display:grid;grid-template-columns:262px minmax(0,1fr) 340px}
+#page-render.wide{grid-template-columns:minmax(0,1fr)}
+#page-render.wide .side{display:none}
+.side{min-height:0;overflow:auto;background:var(--panel)}
+.left{border-right:1px solid var(--line)}
+.right{border-left:1px solid var(--line)}
+.h{font-weight:700;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);padding:14px 14px 6px}
+.vgrid{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:0 14px}
+.vgrid button{font:600 12.5px/1.1 var(--f-ui);letter-spacing:.04em;color:var(--muted);background:transparent;border:1px solid var(--line);padding:8px 6px;cursor:pointer;text-align:left;border-radius:3px}
+.vgrid button:hover{color:var(--fg)}
+.vgrid button[aria-pressed="true"]{color:var(--bg);background:var(--accent);border-color:var(--accent)}
+.layers{padding:0 14px 14px;display:grid;gap:7px;font-size:14px}
+.layers label{display:flex;align-items:center;gap:8px;cursor:pointer}
+.layers input[type=checkbox]{accent-color:var(--accent);width:15px;height:15px}
+.range{display:grid;gap:4px;margin-top:4px;padding-top:9px;border-top:1px solid var(--line)}
+.range .row{display:flex;justify-content:space-between;align-items:center;font-size:13px;gap:8px}
+.range output{font-family:var(--f-data);font-size:12px;color:var(--dim)}
+.range input[type=range]{width:100%;accent-color:var(--accent)}
+select{font:500 13px var(--f-ui);background:var(--bg);color:var(--fg);border:1px solid var(--line);padding:5px;border-radius:3px}
+.hint{color:var(--muted);font-size:12.5px;line-height:1.35;padding:0 14px 12px}
+.legend{display:grid;gap:4px;font-size:12.5px;color:var(--muted);padding:2px 0 0 0}
+.legend span{display:flex;align-items:center;gap:7px}
+.legend[hidden]{display:none}
+.legend i{display:inline-block;width:18px;height:4px;border-radius:2px;background:var(--c)}
+#viewport{position:relative;min-width:0;min-height:0;overflow:hidden}
+#gl,#labels{position:absolute;inset:0}
+#labels{pointer-events:none}
+#leaders{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+#leaders line{stroke:var(--lead);stroke-width:1;opacity:.85}
+#caption{position:absolute;left:12px;right:12px;bottom:12px;background:rgba(12,15,18,.86);border:1px solid var(--line);border-left:3px solid var(--accent);padding:9px 12px;font-size:15px;line-height:1.3;max-width:760px;pointer-events:none}
+.vpbar{position:absolute;top:10px;right:10px;display:flex;gap:6px;z-index:3}
+#toast{position:absolute;top:52px;right:10px;background:rgba(12,15,18,.92);border:1px solid var(--dim);color:var(--fg);padding:8px 10px;font-size:13px;z-index:3;max-width:300px}
+#loading{position:absolute;inset:0;display:grid;place-items:center;color:var(--muted);font:500 13px var(--f-data);letter-spacing:.1em;z-index:1;text-align:center;padding:20px;line-height:1.6}
+.pane table{border-collapse:collapse;width:100%;font-size:13px}
+.pane td,.pane th{padding:5px 12px;border-top:1px solid var(--line);vertical-align:top;text-align:left}
+#data td:first-child{color:var(--muted);white-space:nowrap}
+#data td:last-child{font-family:var(--f-data);font-size:11.5px;font-variant-numeric:tabular-nums;text-align:right}
+.note{padding:10px 14px;font-size:13px;line-height:1.42;color:var(--muted)}
+.note b{color:var(--warn);font-weight:600}
+/* annotations */
+.dim{font:500 11px/1 var(--f-data);color:var(--dim);background:rgba(12,15,18,.86);border:1px solid rgba(255,198,92,.5);padding:3px 5px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.dim.sm{font-size:10px;padding:2px 4px}
+.co{font:600 11.5px/1.15 var(--f-ui);letter-spacing:.06em;text-transform:uppercase;color:var(--fg);background:rgba(12,15,18,.88);border-left:2px solid var(--lead);padding:4px 7px;white-space:nowrap}
+.co small{display:block;font:400 10px/1.2 var(--f-data);letter-spacing:0;text-transform:none;color:var(--muted);margin-top:2px}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--lead);box-shadow:0 0 0 2px rgba(12,15,18,.8)}
+.sect{font:700 13px/1 var(--f-ui);letter-spacing:.14em;color:var(--dim);text-transform:uppercase;white-space:nowrap;background:rgba(12,15,18,.7);padding:4px 8px}
+/* ---- document pages (BOM, calculations) ---- */
+.doc{overflow:auto;padding:22px 24px 40px}
+.doc .inner{max-width:1180px;margin:0 auto}
+.doc h2{font-size:24px;margin:0 0 4px}
+.doc .lead{color:var(--muted);font-size:15px;line-height:1.45;margin:0 0 18px;max-width:820px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin:0 0 20px}
+.kpi{background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:12px 14px}
+.kpi .k{font-size:11.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.kpi .v{font:600 24px/1.15 var(--f-data);margin-top:4px;font-variant-numeric:tabular-nums}
+.kpi .s{font-size:12.5px;color:var(--muted);margin-top:2px}
+.kpi.good .v{color:var(--good)} .kpi.bad .v{color:var(--bad)}
+table.grid{border-collapse:collapse;width:100%;font-size:14px;background:var(--panel);border:1px solid var(--line)}
+table.grid th,table.grid td{padding:7px 10px;border-top:1px solid var(--line);text-align:left;vertical-align:top}
+table.grid th{font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);font-weight:600;position:sticky;top:0;background:var(--panel)}
+table.grid td.n,table.grid th.n{text-align:right;font-family:var(--f-data);font-size:12.5px;white-space:nowrap;font-variant-numeric:tabular-nums}
+table.grid td:first-child:not(.n){min-width:9.5em}
+.copyout{align-self:center;color:var(--good);font-size:13px}
+#copyBox{width:100%;height:120px;font:12px var(--f-data);background:var(--panel);color:var(--fg);border:1px solid var(--line)}
+table.grid td small{display:block;color:var(--muted);font-size:12.5px;line-height:1.3;margin-top:2px}
+table.grid tr.grp td{background:var(--panel2);color:var(--lead);font-weight:700;letter-spacing:.08em;text-transform:uppercase;font-size:12px}
+table.grid tr.sub td{color:var(--muted);font-weight:600}
+table.grid tr.tot td{font-weight:700;font-size:15px;border-top:2px solid var(--muted)}
+.bar{display:flex;gap:10px;align-items:center;margin:0 0 12px;flex-wrap:wrap}
+.calc{display:grid;grid-template-columns:340px minmax(0,1fr);gap:20px;align-items:start}
+.form{background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:6px 14px 14px;position:sticky;top:0}
+.form fieldset{border:0;border-top:1px solid var(--line);margin:10px 0 0;padding:10px 0 0}
+.form legend{font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--lead);font-weight:700;padding:0 6px 0 0}
+.fld{display:grid;grid-template-columns:1fr 104px;gap:8px;align-items:center;margin:7px 0;font-size:14px}
+.fld input[type=number],.fld select{width:100%;font:500 13px var(--f-data);background:var(--bg);color:var(--fg);border:1px solid var(--line);padding:5px 6px;border-radius:3px}
+.fld small{display:block;color:var(--muted);font-size:12px}
+.chk{display:flex;gap:8px;align-items:center;font-size:14px;margin:8px 0}
+.chk input{accent-color:var(--accent);width:16px;height:16px}
+.res h3{font-size:15px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:22px 0 8px}
+.res h3:first-child{margin-top:0}
+.cmp{background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:14px}
+.cmp .row{display:grid;grid-template-columns:200px minmax(0,1fr) 110px;gap:10px;align-items:center;margin:8px 0;font-size:14px}
+.cmp .track{height:16px;background:var(--panel2);border-radius:2px;position:relative;overflow:hidden}
+.cmp .fillb{position:absolute;left:0;top:0;bottom:0;background:#6b7782;border-radius:2px}
+.cmp .fillb.acc{background:var(--accent)}
+.cmp .val{font-family:var(--f-data);font-size:13px;text-align:right}
+.cmp .cap{font-size:12.5px;color:var(--muted);margin-top:6px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media (max-width:1100px){ #page-render{grid-template-columns:230px minmax(0,1fr) 290px} .calc{grid-template-columns:300px minmax(0,1fr)} }
+@media (max-width:900px){
+  body{overflow:auto} #app{height:auto;display:block}
+  #page-render,#page-render.wide{display:flex;flex-direction:column}
+  #viewport{height:64vh;order:-1}
+  .side{overflow:visible} .left,.right{border:0;border-top:1px solid var(--line)}
+  #page-render.wide .side{display:block} #panels{display:none}
+  .co{font-size:10px}.co small{display:none}
+  .calc,.two{grid-template-columns:1fr} .form{position:static}
+  .doc{padding:16px}
+  .cmp .row{grid-template-columns:120px minmax(0,1fr) 80px}
+  #caption{font-size:13px}
+}
+@media print{ body{overflow:visible;background:#fff;color:#000} .top .tools,.pages{display:none} }
+</style>
+</head>
+<body>
+<div id="app">
+  <header class="top">
+    <div class="tb">
+      <span class="name">Duckweed Cultivation Container</span>
+      <span class="v" id="subtitle"></span>
+    </div>
+    <nav class="pages" role="tablist" aria-label="Dashboard">
+      <button type="button" role="tab" id="tab-render" aria-controls="page-render" aria-selected="true">3D render</button>
+      <button type="button" role="tab" id="tab-bom" aria-controls="page-bom" aria-selected="false">Bill of materials</button>
+      <button type="button" role="tab" id="tab-calc" aria-controls="page-calc" aria-selected="false">Calculations</button>
+    </nav>
+    <div class="tools">
+      <button type="button" class="btn" id="fs" title="Full screen (F)">Full screen</button>
+    </div>
+  </header>
+
+  <main class="page" id="page-render" role="tabpanel" aria-labelledby="tab-render">
+    <aside class="side left" aria-label="Views and layers">
+      <div class="h">Overview</div>
+      <div class="vgrid">
+        <button type="button" data-view="iso" aria-pressed="true">3D overview</button>
+        <button type="button" data-view="side">Side elevation</button>
+        <button type="button" data-view="plan">Plan</button>
+        <button type="button" data-view="section">Cross-section</button>
+        <button type="button" data-view="front">Front end</button>
+        <button type="button" data-view="process">Processing bay</button>
+      </div>
+      <div class="h">Systems</div>
+      <div class="vgrid">
+        <button type="button" data-view="water">Water loop</button>
+        <button type="button" data-view="elec">Electrical</button>
+        <button type="button" data-view="screen">Moving screen</button>
+        <button type="button" data-view="harvest">Harvest end</button>
+      </div>
+      <div class="h">Moving screen</div>
+      <div class="layers">
+        <div class="range" style="margin:0;padding:0;border:0">
+          <div class="row"><label for="scrMode">Screen position</label><output id="scrOut">down · holding mat</output></div>
+          <select id="scrMode"><option value="auto">Auto cycle (hold, then release)</option><option value="down">Down: hold the mat</option><option value="up">Up: release the mat</option></select>
+        </div>
+      </div>
+      <div class="h">Display</div>
+      <div class="layers">
+        <label><input type="checkbox" id="tWater"> Water flows</label>
+        <div class="legend legend-water" hidden>
+          <span><i style="--c:#4fc3ff"></i>Supply to runs</span><span><i style="--c:#8fe3d0"></i>In-run flow and return</span>
+          <span><i style="--c:#a77df0"></i>Feed water in</span><span><i style="--c:#d9a441"></i>Spent water out</span>
+        </div>
+        <label><input type="checkbox" id="tElec"> Electrical circuits</label>
+        <div class="legend legend-elec" hidden>
+          <span><i style="--c:#ff9a3c"></i>AC power</span><span><i style="--c:#ff6fa0"></i>LED circuits</span><span><i style="--c:#c4e45a"></i>24 VDC actuators and sensors</span>
+        </div>
+        <label><input type="checkbox" id="tShell" checked> Container shell</label>
+        <label><input type="checkbox" id="tRoof"> Roof (transparent)</label>
+        <label><input type="checkbox" id="tLed" checked> Grow lights on</label>
+        <label><input type="checkbox" id="tDims" checked> Dimensions</label>
+        <label><input type="checkbox" id="tCallouts" checked> Labels</label>
+        <label><input type="checkbox" id="tAnim" checked> Animate</label>
+        <div class="range">
+          <div class="row"><label for="tiers">Tiers shown</label><output id="tiersOut" for="tiers">1–8</output></div>
+          <input type="range" id="tiers" min="1" max="8" step="1" value="8">
+        </div>
+        <div class="range">
+          <div class="row"><label for="mode">Look</label><select id="mode"><option value="photo">Photoreal</option><option value="eng">Engineering</option></select></div>
+          <div class="row"><label for="quality">Quality</label><select id="quality"><option value="high">High</option><option value="fast">Fast</option></select></div>
+        </div>
+      </div>
+      <div class="hint">Drag to orbit · scroll to zoom · right-drag to pan.<br>Use <b>Play tour</b> to step through every view.</div>
+    </aside>
+    <div id="viewport">
+      <div id="loading">LOADING 3D MODEL…</div>
+      <div id="gl"></div>
+      <svg id="leaders" aria-hidden="true"></svg>
+      <div id="labels"></div>
+      <div class="vpbar">
+        <button type="button" class="btn" id="tour" aria-pressed="false">Play tour</button>
+        <button type="button" class="btn" id="panels" aria-pressed="false">Hide panels</button>
+      </div>
+      <div id="toast" hidden></div>
+      <div id="caption"></div>
+    </div>
+    <aside class="side right pane" aria-label="Design data">
+      <div class="h">Design data</div>
+      <table id="data"></table>
+      <div class="note" id="dataNote"></div>
+    </aside>
+  </main>
+
+  <main class="page doc" id="page-bom" role="tabpanel" aria-labelledby="tab-bom" hidden>
+    <div class="inner">
+      <h2>Bill of materials</h2>
+      <p class="lead">Off-the-shelf products for every role in the container, with planning prices. Models are representative: confirm size, rating, wet-location suitability, price and lead time with the supplier before ordering. Prices are 2026 USD estimates, not quotes.</p>
+      <div class="kpis" id="bomKpis"></div>
+      <div class="bar">
+        <button type="button" class="btn" id="csv">Download CSV</button>
+        <button type="button" class="btn" id="copy">Copy for spreadsheet</button><span id="copyOut" class="copyout" role="status"></span>
+      </div>
+      <table class="grid" id="bom"></table>
+    </div>
+  </main>
+
+  <main class="page doc" id="page-calc" role="tabpanel" aria-labelledby="tab-calc" hidden>
+    <div class="inner">
+      <h2>Calculations</h2>
+      <p class="lead">Yield, nutrient removal, energy, cost and payback for one container. Change any input and every result updates. Capital cost comes from the bill of materials.</p>
+      <div class="calc">
+        <form class="form" id="calcForm" autocomplete="off"></form>
+        <div class="res" id="calcRes"></div>
+      </div>
+    </div>
+  </main>
+</div>
+<script>
+/* Dashboard shell: page tabs, design data, bill of materials and calculations. Plain script, so these work even if the 3D model cannot load. */
+(function () {
+  'use strict';
+  const D = window.DW_DESIGN = {
+    intLengthIn: 473.5, intWidthIn: 92.5, intHeightIn: 106,     // 40' high cube, steel to steel
+    runLengthIn: 372, runWidthIn: 36, bays: 6, runs: 16, tiers: 8, waterIn: 3,
+  };
+  const FTIN = window.DW_FTIN = x => {
+    const q = Math.round(x * 4) / 4, f = Math.floor(q / 12), i = q - f * 12, w = Math.floor(i), fr = i - w;
+    return `${f}'-${w}${fr === 0.25 ? '¼' : fr === 0.5 ? '½' : fr === 0.75 ? '¾' : ''}"`;
+  };
+  const $ = id => document.getElementById(id);
+  const fmt0 = v => Math.round(v).toLocaleString('en-US');
+  const usd = v => (v < 0 ? '−$' : '$') + fmt0(Math.abs(v));
+  const usd2 = v => (v < 0 ? '−$' : '$') + Math.abs(v).toFixed(2);
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+  const procIn = D.intLengthIn - D.runLengthIn;
+  const runFt2 = D.runLengthIn * D.runWidthIn / 144;
+  const areaFt2 = runFt2 * D.runs, areaM2 = areaFt2 * 0.092903;
+  const waterFt3 = areaFt2 * D.waterIn / 12;
+  $('subtitle').textContent = `40' high cube · ${FTIN(D.intLengthIn)} × ${FTIN(D.intWidthIn)} × ${FTIN(D.intHeightIn)} interior · ${D.runs} runs, 2 across × ${D.tiers} tiers · ${FTIN(procIn)} processing bay`;
+
+  /* ---------- page tabs ---------- */
+  const PAGES = ['render', 'bom', 'calc'];
+  function showPage(p) {
+    PAGES.forEach(k => { $('tab-' + k).setAttribute('aria-selected', String(k === p)); $('page-' + k).hidden = k !== p; });
+    if (p === 'render') window.dispatchEvent(new Event('dw:render-shown'));
+  }
+  PAGES.forEach(k => $('tab-' + k).addEventListener('click', () => showPage(k)));
+  $('tab-render').parentElement.addEventListener('keydown', e => {
+    if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+    const i = PAGES.findIndex(k => $('tab-' + k).getAttribute('aria-selected') === 'true');
+    const n = PAGES[(i + (e.key === 'ArrowRight' ? 1 : PAGES.length - 1)) % PAGES.length];
+    showPage(n); $('tab-' + n).focus();
+  });
+  $('fs').addEventListener('click', () => {
+    try { if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen(); } catch (e) { /* not allowed here */ }
+  });
+  document.addEventListener('fullscreenchange', () => { $('fs').textContent = document.fullscreenElement ? 'Exit full screen' : 'Full screen'; });
+  if (!document.fullscreenEnabled) $('fs').hidden = true;
+  $('panels').addEventListener('click', () => {
+    const w = $('page-render').classList.toggle('wide');
+    $('panels').textContent = w ? 'Show panels' : 'Hide panels'; $('panels').setAttribute('aria-pressed', String(w));
+    window.dispatchEvent(new Event('dw:render-shown'));
+  });
+  window.DW_RENDER_FAIL = msg => { const l = $('loading'); if (l) l.innerHTML = esc(msg); };
+  setTimeout(() => { if (!window.DW_RENDER_READY) window.DW_RENDER_FAIL('The 3D model could not load. It needs an internet connection to fetch the 3D library. The bill of materials and calculations tabs still work.'); }, 30000);
+
+  /* ---------- design data (render page) ---------- */
+  const aisle = D.intWidthIn - 3.5 - 2 * D.runWidthIn;
+  const DATA = [
+    ['Container', `40' high cube, ${FTIN(D.intLengthIn)} interior`],
+    ['Runs', `${D.runs} = 2 across × ${D.tiers} tiers`],
+    ['Run size', `${FTIN(D.runLengthIn)} L × 3'-0" W`],
+    ['Wall / water', '5" wall · 3" depth'],
+    ['Tier pitch', '11¾" floor to floor'],
+    ['LED plane', '9" above run floor · 6" over water'],
+    ['Width split', `1'-0" repop. | 2'-0" harvest`],
+    ['Repop. screen', `${D.bays} SS mesh gates per run · 2.4" travel`],
+    ['Supports', `${D.bays + 1} frames per run @ ${FTIN(D.runLengthIn / D.bays)}`],
+    ['Aisle', `${aisle}" between trays · ${aisle - 3}" between posts`],
+    ['Growing area', `${fmt0(areaFt2)} ft² (${areaM2.toFixed(0)} m²)`],
+    ['Harvest / repop.', `${fmt0(areaFt2 * 2 / 3)} ft² / ${fmt0(areaFt2 / 3)} ft²`],
+    ['LED fixtures', `${D.bays * 3 * D.runs} × ${FTIN(D.runLengthIn / D.bays - 4)} bars`],
+    ['Water in runs', `${fmt0(waterFt3)} ft³ ≈ ${fmt0(waterFt3 * 7.48)} gal`],
+    ['Water weight', `≈ ${fmt0(waterFt3 * 62.4)} lb`],
+    ['Processing bay', `${FTIN(procIn)} × ${FTIN(D.intWidthIn)}`],
+  ];
+  $('data').innerHTML = DATA.map(([k, v]) => `<tr><td>${k}</td><td>${v}</td></tr>`).join('');
+  $('dataNote').innerHTML = `<b>Water loop.</b> Feed water (the waste-water stream that carries the nutrients) enters by cam-lock at the door sill, through a backflow preventer, strainer, flow meter and solenoid into the return tank. The pump sends water through a filter to the supply main, forward to the front risers, and into an inlet spreader in each run. Water flows front to back under the mat, spills over the weirs, passes the debris screen and returns to the tank. When nutrients run low, the 3-way valve sends spent water out at the door sill.<br><br><b>Aisle.</b> Two 3'-0" runs leave a ${aisle}" aisle (${aisle - 3}" between posts), which is tight for daily access. Narrower runs or a single side aisle would widen it.`;
+
+  /* ---------- bill of materials ---------- */
+  const NBAR = D.bays * 3 * D.runs, NSCR = D.bays * D.runs, NFR = (D.bays + 1) * 2 * 2;
+  const BOM = [
+    ['Container and climate', [
+      ['40\' high-cube shipping container, one trip', 'Any ISO 40\' HC (CW grade or better) · Check floor and door seals', 1, '', 5500],
+      ['Insulation and wall liner', 'Closed-cell spray foam on roof and ends, FRP-faced panels on side walls · Wet-room finish', 1, 'lot', 9000],
+      ['Floor sealing and trench drain', 'Epoxy over marine ply, trench drain at the door end to the return tank', 1, 'lot', 2500],
+      ['Ducted cold-climate heat pump, 2 ton', 'Mitsubishi Hyper-Heat or equivalent · Heats and cools; LED heat covers most of winter', 1, '', 5500],
+      ['Dehumidifier ~200 pt/day', 'Quest 225 or equivalent · Condensate returns to the tank', 1, '', 2400],
+      ['Heat-recovery ventilator ~300 cfm', 'Sensible core with economizer bypass', 1, '', 1800],
+      ['Fabric air chute Ø10"', 'FabricAir, custom length · Spreads air down the aisle', 1, '', 600],
+    ]],
+    ['Rack and screen mechanics', [
+      ['Rack frame extrusion', '80/20 1515 series 1.5" T-slot + gussets · Verify deflection with full trays', 1800, 'ft', 6],
+      ['Leveling feet', '80/20 15-series leveling mount · One per post', NFR, '', 18],
+      [`Run trays, ${FTIN(D.runLengthIn)} × 3'-0" × 5"`, 'Fabricated HDPE trays, welded corners', D.runs, '', 450],
+      ['Submerged support grid', '316 SS flat bar + rod, laser-cut · Ribs at each frame', D.runs, 'sets', 180],
+      ['Screen rail (2×2 tube)', '304 SS rectangular tube · Carries screens, actuators, harness', Math.ceil(D.runs * D.runLengthIn / 12), 'ft', 14],
+      ['Screen guide channels', '304 SS U-channel, 1" × ½" · At each frame', (D.bays + 1) * D.runs, '', 12],
+      ['Repop. screen mesh panels', '316 SS woven wire cloth, 1/16" opening · 58" × 3" framed', NSCR, '', 35],
+      ['Screen actuators', 'Progressive Automations PA-14, 24 VDC, 3" stroke · Or gang one per run to cut the count to 16', NSCR, '', 110],
+    ]],
+    ['Conveyors', [
+      ['Modular belt, 22" wide', 'Intralox Series 900 Flush Grid or open-mesh PP · ≈64 ft loop per run', D.runs * 64, 'ft', 20],
+      ['Sprockets and shafts', 'Head + tail per run, 1" 316 SS shaft', D.runs * 2, '', 140],
+      ['Wet-duty bearings', 'Thermoplastic flange bearings, SS insert', D.runs * 4, '', 28],
+      ['Gearmotors', 'Oriental Motor BLE2 brushless, 60 W, with driver · Speed set by PLC', D.runs, '', 420],
+      ['Cleats and side guides', 'Flights + 304 SS formed skirts · Cleated incline at the harvest end', D.runs, 'sets', 150],
+      ['Discharge flaps', '304 SS sheet + SS piano hinge', D.runs, '', 60],
+    ]],
+    ['Lighting', [
+      ['LED top-lights, ~58"', 'Linear horticultural bar, ~23 W, 3.0 µmol/J class · 9" above run floor', NBAR, '', 38],
+      ['LED drivers', 'Mean Well XLG-240 series, dimmable · Two per run, front end', D.runs * 2, '', 65],
+    ]],
+    ['Water loop', [
+      ['Feed-water inlet coupling', '1½" cam-lock, type A · Waste-water stream in', 1, '', 35],
+      ['Backflow preventer', 'Watts 007 double check', 1, '', 320],
+      ['Feed Y-strainer', 'PVC Y-strainer, 1"', 1, '', 60],
+      ['Flow meters', 'GF Signet 2536 paddlewheel + 9900 transmitter · Feed line + supply main', 2, '', 900],
+      ['Feed solenoid valve', 'ASCO 8210, 1", NC, 24 VDC', 1, '', 280],
+      ['Tank level floats', 'Low / refill / high', 3, '', 45],
+      ['Return tank ≈130 gal', 'Rectangular poly tank', 1, '', 650],
+      ['Organic debris screen', 'Wedge-wire panel in a fabricated box, debris tray', 1, '', 1800],
+      ['Supply pump', 'Grundfos CM5 horizontal multistage, 1 hp, 10–20 gpm (+1 spare)', 2, '', 1400],
+      ['Suction strainer, check valve, gauges', '1½" strainer, swing check, two 0–60 psi gauges', 1, 'set', 250],
+      ['Cartridge filter', 'Pentek Big Blue 20", 50 µm', 1, '', 220],
+      ['Nutrient monitoring', 'Hach Nitratax sc + SC200; EC, pH, DO and temperature probes · Monitor only', 1, 'set', 6500],
+      ['Spent-water divert valve', 'Belimo 3-way ball valve + 24 V actuator', 1, '', 650],
+      ['Discharge coupling', '1½" cam-lock, type C · Door sill', 1, '', 35],
+      ['Pipe and fittings', 'Sch 80 PVC, 1½" main, ¾" laterals', 1, 'lot', 1800],
+      ['Isolation valves', 'True-union ball valves: 16 × ¾", 6 × 1½"', 1, 'set', 780],
+      ['Inlet spreaders + overflow bulkheads', 'Drilled ¾" PVC spreader + ¾" bulkhead per run', D.runs, 'sets', 45],
+      ['Pipe hangers', 'Clevis hangers + ⅜" all-thread', 24, '', 15],
+    ]],
+    ['Harvest and dewatering', [
+      ['Collection chutes', '¼" polycarbonate + 304 SS angle · One per column', 2, '', 650],
+      ['Receiving bin + step grating', 'Fabricated 304 SS, molded FRP grating', 1, '', 1800],
+      ['Transfer auger', 'Flexible screw conveyor, 2.5"', 1, '', 4500],
+      ['Vibratory dewatering screen', '24" vibratory separator, wedge-wire deck', 1, '', 6500],
+      ['Screw press', 'Small dewatering screw press (Vincent CP-4 class) · Used units cost less', 1, '', 18000],
+      ['Press-cake totes', '48 × 40 plastic bulk container on pallet', 2, '', 250],
+    ]],
+    ['Electrical and controls', [
+      ['Shore-power inlet', '60 A switch-rated inlet · Front end', 1, '', 450],
+      ['Main disconnect', 'Fusible safety switch, 60 A, NEMA 4X', 1, '', 380],
+      ['Breaker panel + GFCI breakers', 'Wet-location circuits on GFCI', 1, 'lot', 1600],
+      ['Control enclosure', 'NEMA 4X, 36 × 24 × 12', 1, '', 900],
+      ['PLC + I/O', 'AutomationDirect Productivity1000 · Screens, valves, sensors, conveyors', 1, '', 1800],
+      ['HMI', 'AutomationDirect C-more 7"', 1, '', 900],
+      ['VFDs', 'AutomationDirect GS20 · Pump, auger, screen, press', 4, '', 280],
+      ['24 VDC supplies', 'Mean Well SDR-960-24', 2, '', 250],
+      ['Actuator relays', 'Reversing relay per run', D.runs, '', 35],
+      ['Cable tray', 'Wire-mesh tray, 2" × 4" · Both walls above the racks', 85, 'ft', 12],
+      ['Conduit and cable', 'Liquid-tight flex, SOOW, 18/2 actuator cable · Wet-location rated', 1, 'lot', 2200],
+      ['E-stops', '40 mm mushroom · Front, harvest end, doors', 3, '', 70],
+    ]],
+  ];
+  const OPTIONS = [['Compact heat-pump dryer (optional)', 'Dries press cake to a shelf-stable ~90% solids product · Needed to sell bagged fertilizer', 1, '', 12000]];
+  let n = 0, total = 0;
+  const groupTotals = [];
+  const rows = ['<thead><tr><th>#</th><th>Item / product</th><th class="n">Qty</th><th class="n">Unit</th><th class="n">Extended</th></tr></thead><tbody>'];
+  const csv = [['Group', 'Item', 'Product / note', 'Qty', 'Unit', 'Unit cost USD', 'Extended USD']];
+  for (const [g, items] of BOM) {
+    rows.push(`<tr class="grp"><td colspan="5">${esc(g)}</td></tr>`);
+    let gt = 0;
+    for (const [item, prod, q, u, c] of items) {
+      const ext = q * c; gt += ext; n++;
+      rows.push(`<tr><td class="n">${n}</td><td>${esc(item)}<small>${esc(prod)}</small></td><td class="n">${fmt0(q)}${u ? ' ' + u : ''}</td><td class="n">${usd(c)}</td><td class="n">${usd(ext)}</td></tr>`);
+      csv.push([g, item, prod, q, u, c, ext]);
+    }
+    rows.push(`<tr class="sub"><td></td><td>Subtotal, ${esc(g.toLowerCase())}</td><td></td><td></td><td class="n">${usd(gt)}</td></tr>`);
+    groupTotals.push([g, gt]); total += gt;
+  }
+  rows.push(`<tr class="tot"><td></td><td>Equipment total</td><td></td><td></td><td class="n">${usd(total)}</td></tr>`);
+  rows.push(`<tr class="grp"><td colspan="5">Not included in the total</td></tr>`);
+  for (const [item, prod, q, u, c] of OPTIONS) {
+    rows.push(`<tr><td class="n">–</td><td>${esc(item)}<small>${esc(prod)}</small></td><td class="n">${q}</td><td class="n">${usd(c)}</td><td class="n">${usd(q * c)}</td></tr>`);
+    csv.push(['Option', item, prod, q, u, c, q * c]);
+  }
+  rows.push('</tbody>');
+  $('bom').innerHTML = rows.join('');
+  const EQUIP = total, DRYER = OPTIONS[0][4];
+  $('csv').addEventListener('click', () => {
+    const body = csv.map(r => r.map(v => /[",\n]/.test(String(v)) ? `"${String(v).replace(/"/g, '""')}"` : v).join(',')).join('\n');
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([body], { type: 'text/csv' })); a.download = 'duckweed-container-bom.csv';
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  });
+  // tab-separated text pastes straight into Excel or Google Sheets
+  $('copy').addEventListener('click', () => {
+    const tsv = csv.map(r => r.map(v => String(v).replace(/[\t\n]/g, ' ')).join('\t')).join('\n'), out = $('copyOut');
+    const fallback = () => {
+      let box = $('copyBox');
+      if (!box) { box = document.createElement('textarea'); box.id = 'copyBox'; box.readOnly = true; $('bom').before(box); }
+      box.value = tsv; box.select(); out.textContent = 'Copy blocked here. The table is selected below: press Ctrl+C or ⌘C.';
+    };
+    try { navigator.clipboard.writeText(tsv).then(() => { out.textContent = `Copied ${csv.length - 1} rows. Paste into a spreadsheet.`; }, fallback); } catch (e) { fallback(); }
+  });
+  if (window.DW_ARTIFACT) $('csv').hidden = true;   // the hosted viewer blocks file downloads
+
+  /* ---------- calculations ---------- */
+  const PRICES = [['0.45', 'Bulk soil amendment ($0.45/kg)'], ['2.50', 'Bagged fertilizer, wholesale ($2.50/kg)'], ['6.00', 'Small retail packs ($6.00/kg)'], ['custom', 'Custom price']];
+  const F = [
+    ['Energy', [
+      ['power', 'Electricity price', '$/kWh', 0.11, 0.01, 0, 1],
+      ['ppfd', 'Light at the mat', 'µmol/m²/s', 130, 5, 50, 400],
+      ['photo', 'Photoperiod', 'h/day', 20, 0.5, 8, 24],
+      ['eff', 'LED efficacy', 'µmol/J', 3.0, 0.1, 1.5, 4.5],
+      ['other', 'Pumps, HVAC, conveyors, controls', 'kWh/day', 59, 1, 0, 500],
+    ]],
+    ['Growth', [
+      ['lue', 'Growth per unit light', 'g dry/mol', 0.75, 0.05, 0.2, 1.5, 'Design 0.75 · good operation 0.95'],
+      ['days', 'Operating days', 'per year', 350, 5, 100, 365],
+      ['tnIn', 'Feed-water nitrogen', 'mg/L', 120, 5, 5, 2000],
+      ['tnOut', 'Treated-water nitrogen', 'mg/L', 10, 1, 0, 500],
+    ]],
+    ['Revenue', [
+      ['priceSel', 'Product market', '', '0.45', null],
+      ['price', 'Product value', '$/kg dry', 0.45, 0.05, 0, 100],
+      ['treat', 'Treatment value', '$/gal treated', 0.03, 0.005, 0, 2, 'Avoided hauling or land application'],
+    ]],
+    ['Running costs', [
+      ['laborH', 'Labor', 'h/year', 450, 10, 0, 5000],
+      ['rate', 'Labor rate', '$/h', 25, 1, 0, 200],
+      ['maint', 'Maintenance', '% of equipment/yr', 3, 0.5, 0, 20],
+      ['cons', 'Consumables and lab tests', '$/yr', 3000, 100, 0, 100000],
+      ['ins', 'Insurance', '$/yr', 1500, 100, 0, 100000],
+    ]],
+    ['Build cost', [
+      ['dryer', 'Add heat-pump dryer', 'bool', false],
+      ['inst', 'Fabrication and installation', '% of equipment', 20, 1, 0, 100],
+      ['site', 'Site pad, power hookup, water lines', '$', 11000, 500, 0, 500000],
+      ['eng', 'Engineering and permits', '$', 15000, 500, 0, 500000],
+      ['cont', 'Contingency', '%', 20, 1, 0, 100],
+      ['rate8', 'Finance rate', '%/yr', 8, 0.5, 0, 30],
+      ['life', 'Equipment life', 'years', 15, 1, 1, 40],
+    ]],
+  ];
+  const form = $('calcForm'), html = [];
+  for (const [legend, fields] of F) {
+    html.push(`<fieldset><legend>${legend}</legend>`);
+    for (const [id, label, unit, def, step, min, max, help] of fields) {
+      if (unit === 'bool') { html.push(`<label class="chk"><input type="checkbox" id="c-${id}"${def ? ' checked' : ''}> ${label}</label>`); continue; }
+      if (id === 'priceSel') { html.push(`<div class="fld"><label for="c-${id}">${label}</label><select id="c-${id}">${PRICES.map(([v, t]) => `<option value="${v}"${v === def ? ' selected' : ''}>${t}</option>`).join('')}</select></div>`); continue; }
+      html.push(`<div class="fld"><label for="c-${id}">${label}<small>${unit}${help ? ' · ' + help : ''}</small></label><input type="number" id="c-${id}" value="${def}" step="${step}" min="${min}" max="${max}" inputmode="decimal"></div>`);
+    }
+    html.push('</fieldset>');
+  }
+  html.push('<div class="bar" style="margin-top:12px"><button type="button" class="btn" id="calcReset">Reset to design values</button></div>');
+  form.innerHTML = html.join('');
+  form.addEventListener('submit', e => e.preventDefault());
+  const num = id => { const el = $('c-' + id), v = parseFloat(el.value); const mn = parseFloat(el.min), mx = parseFloat(el.max); return isFinite(v) ? Math.min(Math.max(v, isFinite(mn) ? mn : v), isFinite(mx) ? mx : v) : parseFloat(el.defaultValue); };
+  $('c-priceSel').addEventListener('change', () => { const v = $('c-priceSel').value; if (v !== 'custom') $('c-price').value = v; calc(); });
+  $('c-price').addEventListener('input', () => { const v = num('price').toFixed(2); $('c-priceSel').value = PRICES.some(p => p[0] === v) ? v : 'custom'; });
+  $('calcReset').addEventListener('click', () => { form.querySelectorAll('input[type=number]').forEach(i => { i.value = i.defaultValue; }); $('c-dryer').checked = false; $('c-priceSel').value = '0.45'; calc(); });
+  form.addEventListener('input', calc);
+  form.addEventListener('change', calc);
+
+  function tbl(rowsIn, head) {
+    return `<table class="grid">${head ? `<thead><tr>${head.map((h, i) => `<th${i ? ' class="n"' : ''}>${h}</th>`).join('')}</tr></thead>` : ''}<tbody>${rowsIn.map(r => `<tr${r[2] ? ` class="${r[2]}"` : ''}><td>${r[0]}</td><td class="n">${r[1]}</td></tr>`).join('')}</tbody></table>`;
+  }
+  function calc() {
+    const v = {}; F.forEach(([, fs]) => fs.forEach(f => { if (f[2] !== 'bool' && f[0] !== 'priceSel') v[f[0]] = num(f[0]); }));
+    const dryer = $('c-dryer').checked;
+    const dli = v.ppfd * v.photo * 3600 / 1e6;
+    const ledKw = areaM2 * v.ppfd / 0.9 / v.eff / 1000;
+    const gm2 = v.lue * dli, dwDay = gm2 * areaM2 / 1000, dwYr = dwDay * v.days;
+    const nDay = dwDay * 0.055 * 1000, pYr = dwYr * 0.009, nYr = dwYr * 0.055;
+    const dTN = Math.max(v.tnIn - v.tnOut, 0.1), m3Day = nDay / dTN, galDay = m3Day * 264.17;
+    const dryKwh = dryer ? (dwDay / 0.20 - dwDay / 0.90) / 2.5 : 0;           // press cake ~20% solids → 90%, SMER 2.5 kg/kWh
+    const ledKwh = ledKw * v.photo, kwhDay = ledKwh + v.other + dryKwh;
+    const equip = EQUIP + (dryer ? DRYER : 0), inst = equip * v.inst / 100, sub = equip + inst + v.site + v.eng, cont = sub * v.cont / 100, capex = sub + cont;
+    const i = v.rate8 / 100, crf = i > 0 ? i / (1 - Math.pow(1 + i, -v.life)) : 1 / v.life, capChg = capex * crf;
+    const opex = { 'Electricity': kwhDay * 365 * v.power, 'Labor': v.laborH * v.rate, 'Maintenance': equip * v.maint / 100, 'Consumables and lab tests': v.cons, 'Insurance': v.ins };
+    const opexT = Object.values(opex).reduce((a, b) => a + b, 0);
+    const rev = dwYr * v.price, treat = galDay * v.days * v.treat, inc = rev + treat, net = inc - opexT;
+    const perKgRun = dwYr > 0 ? opexT / dwYr : 0, perKgAll = dwYr > 0 ? (opexT + capChg) / dwYr : 0;
+    const be = dwYr > 0 ? (opexT + capChg - treat) / dwYr : 0;
+    const pay = net > 0 ? capex / net : null;
+    const kpi = (k, val, s, cls = '') => `<div class="kpi ${cls}"><div class="k">${k}</div><div class="v">${val}</div><div class="s">${s}</div></div>`;
+    const out = [];
+    out.push('<div class="kpis">' +
+      kpi('Build cost', usd(capex), `${usd(equip)} equipment`) +
+      kpi('Running cost', usd(opexT) + '/yr', `${fmt0(kwhDay)} kWh/day`) +
+      kpi('Dry product', fmt0(dwYr) + ' kg/yr', `${(dwDay * 1000).toFixed(0)} g/day · ${gm2.toFixed(1)} g/m²/day`) +
+      kpi('Income', usd(inc) + '/yr', `${usd(rev)} product · ${usd(treat)} treatment`) +
+      kpi('Net per year', usd(net), pay ? `pays back in ${pay.toFixed(1)} years` : 'does not cover running costs', net > 0 ? 'good' : 'bad') +
+      kpi('Break-even price', usd2(be) + '/kg', `vs ${usd2(v.price)}/kg assumed`, be <= v.price ? 'good' : 'bad') +
+      '</div>');
+    const mx = Math.max(perKgAll, perKgRun, v.price, be, 0.01);
+    const bar = (label, val, acc) => `<div class="row"><span>${label}</span><div class="track"><div class="fillb${acc ? ' acc' : ''}" style="width:${Math.max(0.5, val / mx * 100).toFixed(1)}%"></div></div><span class="val">${usd2(val)}/kg</span></div>`;
+    out.push('<h3>Cost per kg of dry product</h3><div class="cmp">' + bar('Product value', v.price, true) + bar('Running cost only', perKgRun) + bar('All-in, with capital', perKgAll) + bar('Break-even price', Math.max(be, 0)) +
+      `<div class="cap">Capital is spread at ${v.rate8}% over ${v.life} years (${usd(capChg)}/yr). Treatment value is credited in the break-even price.</div></div>`);
+    if (!dryer && v.price > 0.45) out.push(`<p class="note" style="padding:10px 0 0"><b>Note:</b> without the dryer the line ends at wet press cake, which spoils within days. Bagged or retail prices assume a dried product, so tick "Add heat-pump dryer" for those markets.</p>`);
+    out.push('<div class="two"><div><h3>Production and treatment</h3>' + tbl([
+      ['Growing area', `${fmt0(areaFt2)} ft² (${areaM2.toFixed(0)} m²)`],
+      ['Daily light integral', `${dli.toFixed(1)} mol/m²/day`],
+      ['Growth rate', `${gm2.toFixed(1)} g dry/m²/day`],
+      ['Dry biomass', `${dwDay.toFixed(2)} kg/day · ${fmt0(dwYr)} kg/yr`],
+      ['Fresh biomass harvested', `${fmt0(dwDay / 0.06)} kg/day`],
+      ['Nitrogen captured', `${fmt0(nDay)} g/day · ${nYr.toFixed(0)} kg/yr`],
+      ['Phosphorus captured', `${pYr.toFixed(1)} kg/yr`],
+      ['Water treated', `${fmt0(galDay)} gal/day (${m3Day.toFixed(2)} m³/day) at ${v.tnIn} → ${v.tnOut} mg/L N`],
+    ]) + '</div><div><h3>Energy</h3>' + tbl([
+      ['LED lighting', `${ledKw.toFixed(1)} kW × ${v.photo} h = ${fmt0(ledKwh)} kWh/day`],
+      ['Pumps, HVAC, conveyors, controls', `${fmt0(v.other)} kWh/day`],
+      ['Dryer', dryer ? `${dryKwh.toFixed(1)} kWh/day` : 'not included'],
+      ['Total', `${fmt0(kwhDay)} kWh/day · ${fmt0(kwhDay * 365 / 1000)} MWh/yr`, 'tot'],
+      ['Electricity per kg dry product', dwYr > 0 ? `${fmt0(kwhDay * 365 / dwYr)} kWh/kg` : '–'],
+    ]) + '</div></div>');
+    out.push('<div class="two"><div><h3>Build cost</h3>' + tbl([
+      ['Equipment (bill of materials)', usd(EQUIP)],
+      ...(dryer ? [['Heat-pump dryer', usd(DRYER)]] : []),
+      [`Fabrication and installation (${v.inst}%)`, usd(inst)],
+      ['Site pad, power hookup, water lines', usd(v.site)],
+      ['Engineering and permits', usd(v.eng)],
+      [`Contingency (${v.cont}%)`, usd(cont)],
+      ['Total build cost', usd(capex), 'tot'],
+    ]) + '</div><div><h3>Running cost and income per year</h3>' + tbl([
+      ...Object.entries(opex).map(([k, val]) => [k, usd(val)]),
+      ['Total running cost', usd(opexT), 'tot'],
+      [`Product (${fmt0(dwYr)} kg × ${usd2(v.price)})`, usd(rev)],
+      [`Treatment (${fmt0(galDay * v.days)} gal × $${v.treat})`, usd(treat)],
+      ['Net before capital', usd(net), 'tot'],
+    ]) + '</div></div>');
+    out.push(`<p class="note" style="padding:14px 0 0">Assumptions: tissue nitrogen 5.5% and phosphorus 0.9% of dry weight, 90% of LED light lands on the runs, living duckweed is about 6% dry matter. These are planning figures, not measured results; a growth trial on the actual water is the way to confirm them.</p>`);
+    $('calcRes').innerHTML = out.join('');
+  }
+  calc();
+})();
+</script>
+<script type="importmap">
+{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+import { GTAOPass } from 'three/addons/postprocessing/GTAOPass.js';
+import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
+import { Sky } from 'three/addons/objects/Sky.js';
+import { RectAreaLightUniformsLib } from 'three/addons/lights/RectAreaLightUniformsLib.js';
+
+/* ---------- units: inches. X = length (0 at the front wall → L at the cargo doors), Y = up (0 = container floor), Z = width (near side −) ---------- */
+const V = (x, y, z) => new THREE.Vector3(x, y, z);
+const D = window.DW_DESIGN;                                  // shared with the BOM / calculations tabs
+const L = D.intLengthIn, HW = D.intWidthIn / 2, H = D.intHeightIn;
+const RUN_L = D.runLengthIn, NB = D.bays, BAY = RUN_L / NB, PANEL = BAY - 4;
+const WALL = 5, WATER = 3, LED = 9, PITCH = 11.75, BASE = 8, TIERS = 8;
+const GROUND = -13, SECTION_X = 2 * BAY + 31;
+const COLW = HW - 1.75;                                      // wall-side edge of each run column
+const COLS = [{ w: -COLW, s: 1 }, { w: COLW, s: -1 }];      // direction toward the aisle
+const AISLE = Math.round((2 * COLW - 72) * 4) / 4;
+const Z = (c, d) => COLS[c].w + COLS[c].s * d;               // d = inches from wall-side tray edge (0..36)
+const TB = t => BASE + t * PITCH;                            // top of run floor for tier t
+const FRAMES = Array.from({ length: NB + 1 }, (_, k) => k * BAY);
+const BRACED = [0, Math.floor(NB / 2), NB - 1];
+const fx = x => Math.min(Math.max(x - 0.75, 0), RUN_L - 1.5);
+const B = RUN_L, CONV_END = RUN_L - 28, HEAD_X = RUN_L + 1.2;
+const FTIN = window.DW_FTIN;
+const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+/* ---------- renderer ---------- */
+const host = document.getElementById('gl');
+let renderer;
+try { renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance', preserveDrawingBuffer: true }); }
+catch (e) { window.DW_RENDER_FAIL('This browser could not start 3D graphics (WebGL). The bill of materials and calculations tabs still work.'); throw e; }
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.0;
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+host.appendChild(renderer.domElement);
+const labelRenderer = new CSS2DRenderer({ element: document.getElementById('labels') });
+
+const scene = new THREE.Scene();
+const BG = new THREE.Color('#151a1f');
+scene.background = BG;
+scene.fog = new THREE.Fog(BG, 1500, 3800);
+const pmrem = new THREE.PMREMGenerator(renderer);
+const envStudio = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+scene.environment = envStudio;
+
+const camera = new THREE.PerspectiveCamera(32, 1, 2, 12000);
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.dampingFactor = 0.08;
+controls.maxPolarAngle = Math.PI * 0.495;
+controls.minDistance = 30;
+controls.maxDistance = 4000;
+
+/* ---------- procedural textures ---------- */
+function canvasTex(w, h, draw, repeat = [1, 1], srgb = true) {
+  const c = document.createElement('canvas'); c.width = w; c.height = h;
+  draw(c.getContext('2d'), w, h);
+  const t = new THREE.CanvasTexture(c);
+  t.wrapS = t.wrapT = THREE.RepeatWrapping;
+  t.repeat.set(repeat[0], repeat[1]);
+  if (srgb) t.colorSpace = THREE.SRGBColorSpace;
+  t.anisotropy = renderer.capabilities.getMaxAnisotropy();
+  return t;
+}
+function normalFromHeight(src, strength = 2) {
+  const w = src.width, h = src.height, d = src.getContext('2d').getImageData(0, 0, w, h).data;
+  const out = document.createElement('canvas'); out.width = w; out.height = h;
+  const og = out.getContext('2d'), od = og.createImageData(w, h);
+  const H = (x, y) => d[(((y + h) % h) * w + ((x + w) % w)) * 4] / 255;
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    const dx = (H(x + 1, y) - H(x - 1, y)) * strength, dy = (H(x, y + 1) - H(x, y - 1)) * strength;
+    const l = Math.hypot(dx, dy, 1), i = (y * w + x) * 4;
+    od.data[i] = (-dx / l * 0.5 + 0.5) * 255; od.data[i + 1] = (dy / l * 0.5 + 0.5) * 255; od.data[i + 2] = (1 / l * 0.5 + 0.5) * 255; od.data[i + 3] = 255;
+  }
+  og.putImageData(od, 0, 0);
+  const t = new THREE.CanvasTexture(out); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = renderer.capabilities.getMaxAnisotropy();
+  return t;
+}
+function heightCanvas(w, h, draw) { const c = document.createElement('canvas'); c.width = w; c.height = h; draw(c.getContext('2d'), w, h); return c; }
+function linTex(c) { const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = renderer.capabilities.getMaxAnisotropy(); return t; }
+let seed = 7;
+const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+function drawDuckweedUnused(n) {
+  return (g, w, h) => {
+    g.clearRect(0, 0, w, h);
+    for (let i = 0; i < n; i++) {
+      const cx = rnd() * w, cy = rnd() * h, k = 1 + Math.floor(rnd() * 3.4);
+      for (let j = 0; j < k; j++) {
+        const a = rnd() * Math.PI * 2, rx = 7 + rnd() * 5, ry = 4.5 + rnd() * 3;
+        const x = cx + Math.cos(a) * rx * 0.9, y = cy + Math.sin(a) * rx * 0.9;
+        const hue = 88 + rnd() * 26, sat = 50 + rnd() * 22, lit = 26 + rnd() * 18;
+        for (const ox of [-w, 0, w]) for (const oy of [-h, 0, h]) {
+          if (Math.abs(x + ox - w / 2) > w / 2 + 16 || Math.abs(y + oy - h / 2) > h / 2 + 16) continue;
+          g.save(); g.translate(x + ox, y + oy); g.rotate(a);
+          g.fillStyle = `hsl(${hue},${sat}%,${lit}%)`;
+          g.beginPath(); g.ellipse(0, 0, rx, ry, 0, 0, Math.PI * 2); g.fill();
+          g.fillStyle = `hsla(${hue + 6},${sat + 10}%,${lit + 16}%,.55)`;
+          g.beginPath(); g.ellipse(-rx * 0.2, -ry * 0.25, rx * 0.45, ry * 0.35, 0, 0, Math.PI * 2); g.fill();
+          g.restore();
+        }
+      }
+    }
+  };
+}
+function duckweedSet(n) {
+  const S = 1024, col = document.createElement('canvas'), hc = document.createElement('canvas');
+  col.width = hc.width = col.height = hc.height = S;
+  const g = col.getContext('2d'), hg = hc.getContext('2d');
+  hg.fillStyle = '#000'; hg.fillRect(0, 0, S, S);
+  for (let i = 0; i < n; i++) {
+    const cx = rnd() * S, cy = rnd() * S, k = 1 + Math.floor(rnd() * 3.4);
+    for (let j = 0; j < k; j++) {
+      const a = rnd() * Math.PI * 2, rx = 13 + rnd() * 9, ry = 8.5 + rnd() * 5.5;
+      const x = cx + Math.cos(a) * rx * 0.9, y = cy + Math.sin(a) * rx * 0.9;
+      const hue = 86 + rnd() * 28, sat = 48 + rnd() * 24, lit = 24 + rnd() * 18;
+      for (const ox of [-S, 0, S]) for (const oy of [-S, 0, S]) {
+        if (Math.abs(x + ox - S / 2) > S / 2 + 30 || Math.abs(y + oy - S / 2) > S / 2 + 30) continue;
+        for (const [ctx, isH] of [[g, 0], [hg, 1]]) {
+          ctx.save(); ctx.translate(x + ox, y + oy); ctx.rotate(a);
+          if (isH) {
+            const gr = ctx.createRadialGradient(-rx * 0.15, 0, 1, 0, 0, rx);
+            gr.addColorStop(0, '#fff'); gr.addColorStop(0.75, '#999'); gr.addColorStop(1, '#333');
+            ctx.fillStyle = gr; ctx.scale(1, ry / rx); ctx.beginPath(); ctx.arc(0, 0, rx, 0, Math.PI * 2); ctx.fill();
+          } else {
+            ctx.fillStyle = `hsl(${hue},${sat}%,${lit}%)`;
+            ctx.beginPath(); ctx.ellipse(0, 0, rx, ry, 0, 0, Math.PI * 2); ctx.fill();
+            ctx.strokeStyle = `hsla(${hue - 10},${sat}%,${lit - 10}%,.6)`; ctx.lineWidth = 1.2; ctx.stroke();
+            ctx.fillStyle = `hsla(${hue + 8},${sat + 10}%,${lit + 18}%,.45)`;
+            ctx.beginPath(); ctx.ellipse(-rx * 0.2, -ry * 0.2, rx * 0.5, ry * 0.4, 0, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = `hsla(${hue - 20},40%,${lit - 8}%,.5)`;               // node / budding pocket
+            ctx.beginPath(); ctx.arc(rx * 0.55, 0, 1.6, 0, Math.PI * 2); ctx.fill();
+          }
+          ctx.restore();
+        }
+      }
+    }
+  }
+  const map = new THREE.CanvasTexture(col); map.colorSpace = THREE.SRGBColorSpace; map.wrapS = map.wrapT = THREE.RepeatWrapping; map.anisotropy = renderer.capabilities.getMaxAnisotropy();
+  return { map, normal: normalFromHeight(hc, 3) };
+}
+const dwDense = duckweedSet(5600), dwSparse = duckweedSet(2400);
+const texDense = dwDense.map, texSparse = dwSparse.map;
+// generic surface detail
+const noiseH = (S, amp, blobs) => heightCanvas(S, S, (g, w, h) => {
+  g.fillStyle = '#808080'; g.fillRect(0, 0, w, h);
+  for (let i = 0; i < blobs; i++) { const v = 128 + (rnd() - 0.5) * amp; g.fillStyle = `rgba(${v},${v},${v},.5)`; g.beginPath(); g.arc(rnd() * w, rnd() * h, 1 + rnd() * 2.5, 0, 7); g.fill(); }
+});
+const nOrangePeel = normalFromHeight(noiseH(256, 120, 9000), 1.2);
+const brushedRough = linTex(heightCanvas(512, 64, (g, w, h) => {
+  g.fillStyle = '#5a5a5a'; g.fillRect(0, 0, w, h);
+  for (let i = 0; i < 1400; i++) { const v = 60 + rnd() * 90; g.fillStyle = `rgba(${v},${v},${v},.35)`; g.fillRect(rnd() * w, rnd() * h, 40 + rnd() * 200, 1); }
+}));
+const ripple = normalFromHeight(heightCanvas(256, 256, (g, w, h) => {
+  g.fillStyle = '#808080'; g.fillRect(0, 0, w, h); g.filter = 'blur(4px)';
+  for (let i = 0; i < 260; i++) { const v = 128 + (rnd() - 0.5) * 140; g.fillStyle = `rgb(${v},${v},${v})`; g.beginPath(); g.ellipse(rnd() * w, rnd() * h, 6 + rnd() * 16, 3 + rnd() * 8, rnd() * 3, 0, 7); g.fill(); }
+}), 1.5);
+ripple.repeat.set(30, 3);
+const treadN = normalFromHeight(heightCanvas(256, 64, (g, w, h) => {
+  g.fillStyle = '#fff'; g.fillRect(0, 0, w, h); g.fillStyle = '#000';
+  for (const y of [12, 26, 38, 52]) g.fillRect(0, y, w, 3);
+  for (let x = 0; x < w; x += 8) { g.fillRect(x, 0, 2, 12); g.fillRect(x + 4, 52, 2, 12); }
+}), 4);
+treadN.repeat.set(10, 1);
+const texBelt = canvasTex(128, 128, (g, w, h) => {
+  g.fillStyle = '#7c8996'; g.fillRect(0, 0, w, h);
+  g.fillStyle = '#26303a';
+  for (let y = 0; y < 8; y++) for (let x = 0; x < 8; x++) g.fillRect(x * 16 + (y % 2) * 8 + 2, y * 16 + 4, 10, 7);
+  g.fillStyle = 'rgba(255,255,255,.12)'; for (let y = 0; y < 8; y++) g.fillRect(0, y * 16, w, 2);
+});
+const texFloor = canvasTex(64, 256, (g, w, h) => {
+  g.fillStyle = '#9ba3aa'; g.fillRect(0, 0, w, h);
+  for (let y = 0; y < h; y += 64) { g.fillStyle = '#4d555c'; g.fillRect(0, y, w, 9); g.fillStyle = '#c4cbd1'; g.fillRect(0, y + 9, w, 3); }
+  for (let i = 0; i < 160; i++) { g.fillStyle = `rgba(0,0,0,${rnd() * 0.06})`; g.fillRect(rnd() * w, rnd() * h, rnd() * 30, 1); }
+});
+const texGround = canvasTex(1024, 1024, (g, w, h) => {
+  g.fillStyle = '#8d8a84'; g.fillRect(0, 0, w, h);
+  for (let i = 0; i < 260; i++) { const v = 110 + rnd() * 60; g.fillStyle = `rgba(${v},${v - 3},${v - 8},.08)`; g.beginPath(); g.arc(rnd() * w, rnd() * h, 20 + rnd() * 120, 0, 7); g.fill(); }
+  for (let i = 0; i < 40000; i++) { const v = 90 + rnd() * 90; g.fillStyle = `rgba(${v},${v},${v - 4},.25)`; g.fillRect(rnd() * w, rnd() * h, 1.5, 1.5); }
+  for (let i = 0; i < 6; i++) { g.fillStyle = 'rgba(30,26,22,.10)'; g.beginPath(); g.ellipse(rnd() * w, rnd() * h, 30 + rnd() * 60, 18 + rnd() * 40, rnd() * 3, 0, 7); g.fill(); }
+  g.strokeStyle = 'rgba(40,38,36,.85)'; g.lineWidth = 3; g.strokeRect(1, 1, w - 2, h - 2);
+  g.strokeStyle = 'rgba(50,48,45,.5)'; g.lineWidth = 1;
+  for (let k = 0; k < 3; k++) { g.beginPath(); let x = rnd() * w, y = rnd() * h; g.moveTo(x, y); for (let i = 0; i < 14; i++) { x += (rnd() - 0.5) * 50; y += (rnd() - 0.3) * 40; g.lineTo(x, y); } g.stroke(); }
+});
+const nGround = normalFromHeight(noiseH(512, 160, 30000), 1.5);
+const texGrate = canvasTex(128, 128, (g, w, h) => {
+  g.clearRect(0, 0, w, h); g.fillStyle = '#d7dadd';
+  for (let x = 0; x < w; x += 16) g.fillRect(x, 0, 5, h);
+  for (let y = 0; y < h; y += 32) g.fillRect(0, y, w, 3);
+});
+const texWedge = canvasTex(128, 128, (g, w, h) => {
+  g.fillStyle = '#3d4246'; g.fillRect(0, 0, w, h); g.fillStyle = '#c9ced2';
+  for (let y = 0; y < h; y += 4) g.fillRect(0, y, w, 3);
+});
+const texGrille = canvasTex(128, 128, (g, w, h) => {
+  g.fillStyle = '#1b1e21'; g.fillRect(0, 0, w, h); g.fillStyle = '#3c4247';
+  for (let y = 0; y < h; y += 8) g.fillRect(0, y, w, 4);
+});
+
+/* ---------- materials ---------- */
+const R = {};
+function M(name, p, o = {}) {
+  const m = new THREE.MeshStandardMaterial(p); m.name = name; m.userData = o; m.envMapIntensity = o.env ?? 0.85; R[name] = m; return m;
+}
+M('hdpe', { color: '#e3e6e2', roughness: 0.48, normalMap: nOrangePeel, normalScale: new THREE.Vector2(0.12, 0.12) });
+M('ss', { color: '#c9cdd1', metalness: 1, roughness: 1, roughnessMap: brushedRough });
+R.ss.userData.roughBase = 0.38;
+M('frame', { color: '#41474d', metalness: 0.35, roughness: 0.5, normalMap: nOrangePeel, normalScale: new THREE.Vector2(0.25, 0.25) });
+M('grid', { color: '#b8bec3', metalness: 0.95, roughness: 0.32 });
+M('belt', { color: '#ffffff', map: texBelt, roughness: 0.55, side: THREE.DoubleSide });
+M('beltS', { color: '#55616d', roughness: 0.55 });
+M('cleat', { color: '#27313a', roughness: 0.6 });
+R.water = new THREE.MeshPhysicalMaterial({ color: '#1e4a42', roughness: 0.03, ior: 1.33, specularIntensity: 1, normalMap: ripple, normalScale: new THREE.Vector2(0.25, 0.25), transparent: true, opacity: 0.62, depthWrite: false }); R.water.userData = { cast: false }; R.water.envMapIntensity = 1.4;
+R.dwR = new THREE.MeshPhysicalMaterial({ color: '#ffffff', map: texDense, normalMap: dwDense.normal, normalScale: new THREE.Vector2(0.9, 0.9), emissive: '#3c8a1c', emissiveMap: texDense, emissiveIntensity: 0.35, roughness: 0.42, clearcoat: 0.35, clearcoatRoughness: 0.25, sheen: 0.4, sheenColor: new THREE.Color('#b8ff7a'), transparent: true, depthWrite: false, alphaTest: 0.02 }); R.dwR.userData = { cast: false };
+R.dwH = new THREE.MeshPhysicalMaterial({ color: '#ffffff', map: texSparse, normalMap: dwSparse.normal, normalScale: new THREE.Vector2(0.9, 0.9), emissive: '#3c8a1c', emissiveMap: texSparse, emissiveIntensity: 0.35, roughness: 0.42, clearcoat: 0.35, clearcoatRoughness: 0.25, sheen: 0.4, sheenColor: new THREE.Color('#b8ff7a'), transparent: true, depthWrite: false, alphaTest: 0.02 }); R.dwH.userData = { cast: false };
+M('ledH', { color: '#1c1f23', metalness: 0.6, roughness: 0.4 });
+M('ledL', { color: '#ffffff', emissive: '#ffd8ee', emissiveIntensity: 6, roughness: 0.3 }, { cast: false });
+M('nozzle', { color: '#2f6fb0', roughness: 0.5 }, { cast: false });
+R.poly = new THREE.MeshPhysicalMaterial({ color: '#d8ebf5', roughness: 0.04, clearcoat: 1, transparent: true, opacity: 0.16, depthWrite: false, side: THREE.DoubleSide }); R.poly.userData = { cast: false }; R.poly.envMapIntensity = 1.5;
+M('biomass', { color: '#4f8f2a', roughness: 0.55, emissive: '#1d3d0c', emissiveIntensity: 0.4 });
+M('cake', { color: '#355a1d', roughness: 0.9 });
+M('tankPoly', { color: '#e8eef0', roughness: 0.4, transparent: true, opacity: 0.5, depthWrite: false }, { cast: false });
+M('tankWater', { color: '#4b8088', roughness: 0.1, transparent: true, opacity: 0.55, depthWrite: false }, { cast: false });
+M('pump', { color: '#2a5ea8', metalness: 0.3, roughness: 0.4 });
+M('filter', { color: '#e9ecee', roughness: 0.45 });
+M('motor', { color: '#5b636b', metalness: 0.5, roughness: 0.45 });
+M('yellow', { color: '#e0b21a', roughness: 0.5 });
+M('pvc', { color: '#6b737b', roughness: 0.5 });
+M('tire', { color: '#1a1b1c', roughness: 0.88, normalMap: treadN, normalScale: new THREE.Vector2(1, 1) });
+M('rim', { color: '#b9bec4', metalness: 1, roughness: 0.28 });
+M('chassis', { color: '#25292d', metalness: 0.4, roughness: 0.6 });
+M('white', { color: '#edefef', roughness: 0.42, normalMap: nOrangePeel, normalScale: new THREE.Vector2(0.08, 0.08) });
+M('foam', { color: '#e3cf7f', roughness: 0.95 });
+M('alu', { color: '#b5bcc3', metalness: 0.9, roughness: 0.35 });
+M('aluNS', { color: '#b5bcc3', metalness: 0.9, roughness: 0.35 }, { cast: false });
+M('floor', { color: '#ffffff', map: texFloor, metalness: 0.6, roughness: 0.45 }, { cast: false });
+M('roof', { color: '#dfe9f2', roughness: 0.2, transparent: true, opacity: 0.05, depthWrite: false }, { cast: false, env: 0.25 });
+M('reefer', { color: '#30353a', metalness: 0.3, roughness: 0.5 });
+M('grille', { color: '#ffffff', map: texGrille, roughness: 0.7 });
+M('grate', { color: '#ffffff', map: texGrate, metalness: 0.8, roughness: 0.4, alphaTest: 0.5, side: THREE.DoubleSide });
+M('wedge', { color: '#ffffff', map: texWedge, metalness: 0.85, roughness: 0.35 });
+M('panel', { color: '#c9cdd0', roughness: 0.45, metalness: 0.2 });
+M('lampG', { color: '#0f2', emissive: '#22ff66', emissiveIntensity: 4 }, { cast: false });
+M('lampA', { color: '#fa0', emissive: '#ffaa22', emissiveIntensity: 4 }, { cast: false });
+M('red', { color: '#c4161c', roughness: 0.4, emissive: '#400', emissiveIntensity: 1 });
+M('tote', { color: '#d5dada', roughness: 0.6 });
+M('pallet', { color: '#8a6a45', roughness: 0.9 });
+M('fabric', { color: '#d4dbe2', roughness: 0.95, side: THREE.DoubleSide });
+M('ground', { color: '#ffffff', map: texGround, normalMap: nGround, normalScale: new THREE.Vector2(0.6, 0.6), roughness: 0.92 }, { cast: false });
+M('tail', { color: '#f22', emissive: '#ff1a1a', emissiveIntensity: 2.5 }, { cast: false });
+M('particle', { color: '#5aa632', roughness: 0.5, emissive: '#245010', emissiveIntensity: 0.5 }, { cast: false });
+M('supply', { color: '#3b78c2', roughness: 0.45 });
+M('wire', { color: '#e8742a', roughness: 0.5 });
+M('wireLed', { color: '#e0507f', roughness: 0.5 });
+M('trayG', { color: '#9aa1a8', metalness: 0.8, roughness: 0.4 });
+M('feed', { color: '#7a55c9', roughness: 0.45 });
+M('bronze', { color: '#9b7a3c', metalness: 0.8, roughness: 0.4 });
+M('probe', { color: '#20262c', roughness: 0.4 });
+M('wireDc', { color: '#9cc23a', roughness: 0.5 });
+M('tapeR', { color: '#c8141c', roughness: 0.25, metalness: 0.1 });
+M('tapeW', { color: '#f2f2ee', roughness: 0.2, metalness: 0.15 });
+M('amber', { color: '#ffa31a', emissive: '#ff8a00', emissiveIntensity: 1.5 }, { cast: false });
+M('debris', { color: '#5a4a2c', roughness: 0.95 });
+const setRepeat = (name, w, h, tile) => { R[name].map.repeat.set(w / tile, h / tile); };
+
+/* ---------- geometry batching (everything becomes InstancedMesh) ---------- */
+const plane = new THREE.PlaneGeometry(1, 1); plane.rotateX(-Math.PI / 2);
+const halfCyl = new THREE.CylinderGeometry(1, 1, 1, 28, 1, true, 0, Math.PI);
+const GEO = {
+  box: new THREE.BoxGeometry(1, 1, 1),
+  cyl: new THREE.CylinderGeometry(1, 1, 1, 20),
+  cylHi: new THREE.CylinderGeometry(1, 1, 1, 44),
+  cyl8: new THREE.CylinderGeometry(1, 1, 1, 8),
+  sph: new THREE.SphereGeometry(1, 20, 12),
+  plane, halfCyl,
+};
+const groups = {};
+const G = name => {
+  if (!groups[name]) { groups[name] = new THREE.Group(); scene.add(groups[name]); }
+  return groups[name];
+};
+const batches = new Map();
+function push(g, mt, geo, m) {
+  const k = g + '|' + mt + '|' + geo;
+  let b = batches.get(k);
+  if (!b) batches.set(k, b = { g, mt, geo, list: [] });
+  b.list.push(m);
+}
+const Q0 = new THREE.Quaternion(), Y = V(0, 1, 0);
+function box(g, mt, x0, x1, y0, y1, z0, z1) {
+  const ax = Math.min(x0, x1), bx = Math.max(x0, x1), ay = Math.min(y0, y1), by = Math.max(y0, y1), az = Math.min(z0, z1), bz = Math.max(z0, z1);
+  push(g, mt, 'box', new THREE.Matrix4().compose(V((ax + bx) / 2, (ay + by) / 2, (az + bz) / 2), Q0, V(bx - ax || 0.01, by - ay || 0.01, bz - az || 0.01)));
+}
+function quad(g, mt, x0, x1, y, z0, z1) {
+  push(g, mt, 'plane', new THREE.Matrix4().compose(V((x0 + x1) / 2, y, (z0 + z1) / 2), Q0, V(Math.abs(x1 - x0), 1, Math.abs(z1 - z0))));
+}
+function cyl(g, mt, a, b, r, geo = 'cyl') {
+  const A = V(...a), B = V(...b), d = B.clone().sub(A), len = d.length();
+  const q = new THREE.Quaternion().setFromUnitVectors(Y, d.normalize());
+  push(g, mt, geo, new THREE.Matrix4().compose(A.clone().add(B).multiplyScalar(0.5), q, V(r, len, r)));
+}
+function sph(g, mt, c, s) { push(g, mt, 'sph', new THREE.Matrix4().compose(V(...c), Q0, V(...s))); }
+// sloped plate in the X–Y plane: from (x0,y0) to (x1,y1), centered at z = zc, width along Z, thickness normal to slope
+function plate(g, mt, x0, y0, x1, y1, zc, width, thick) {
+  const len = Math.hypot(x1 - x0, y1 - y0), q = new THREE.Quaternion().setFromAxisAngle(V(0, 0, 1), Math.atan2(y1 - y0, x1 - x0));
+  push(g, mt, 'box', new THREE.Matrix4().compose(V((x0 + x1) / 2, (y0 + y1) / 2, zc), q, V(len, thick, width)));
+}
+function pipeRun(g, mt, pts, r) {
+  for (let i = 0; i < pts.length - 1; i++) cyl(g, mt, pts[i], pts[i + 1], r);
+  for (let i = 1; i < pts.length - 1; i++) sph(g, mt, pts[i], [r * 1.25, r * 1.25, r * 1.25]);
+}
+
+/* ---------- container-specific materials ---------- */
+const texWood = canvasTex(256, 256, (g, w, h) => {
+  g.fillStyle = '#8a6a48'; g.fillRect(0, 0, w, h);
+  for (let x = 0; x < w; x += 32) { g.fillStyle = 'rgba(40,26,14,.55)'; g.fillRect(x, 0, 2, h); }
+  for (let i = 0; i < 900; i++) { const v = 90 + rnd() * 70; g.fillStyle = `rgba(${v},${v * 0.75},${v * 0.5},.18)`; g.fillRect(rnd() * w, rnd() * h, 1 + rnd() * 2, 10 + rnd() * 60); }
+});
+M('wood', { color: '#ffffff', map: texWood, roughness: 0.8 }, { cast: false });
+M('paint', { color: '#2f5e4e', roughness: 0.55, metalness: 0.35, normalMap: nOrangePeel, normalScale: new THREE.Vector2(0.15, 0.15) });
+M('paintIn', { color: '#dfe3e0', roughness: 0.6, metalness: 0.1, normalMap: nOrangePeel, normalScale: new THREE.Vector2(0.1, 0.1) });
+M('casting', { color: '#3a3f42', roughness: 0.7, metalness: 0.5 });
+M('concrete', { color: '#a7a49d', roughness: 0.95, normalMap: nGround, normalScale: new THREE.Vector2(0.5, 0.5) });
+M('hpUnit', { color: '#eceeee', roughness: 0.45, metalness: 0.2 });
+M('lineset', { color: '#2b2b2b', roughness: 0.7 });
+M('ledStrip', { color: '#e8e8e8', roughness: 0.4 });
+
+/* ---------- RACK + RUNS ---------- */
+for (let c = 0; c < 2; c++) {
+  // posts at every frame, wall side and aisle side
+  for (const x of FRAMES) for (const d of [-1.5, 36]) {
+    box('rack', 'frame', fx(x), fx(x) + 1.5, 0.4, TB(TIERS) - 0.25, Z(c, d), Z(c, d + 1.5));
+    box('rack', 'frame', fx(x) - 1, fx(x) + 2.5, 0, 0.4, Z(c, d - 0.5), Z(c, d + 2));
+  }
+  for (const x of FRAMES) box('rack', 'frame', fx(x), fx(x) + 1.5, TB(TIERS) - 1.75, TB(TIERS) - 0.25, Z(c, -1.5), Z(c, 37.5));
+  for (const d of [-1.5, 36]) box('rack', 'frame', 0, RUN_L, TB(TIERS) - 1.75, TB(TIERS) - 0.25, Z(c, d), Z(c, d + 1.5));
+  // X-bracing on the wall side
+  for (const k of BRACED) {
+    const x0 = k * BAY + 1.5, x1 = (k + 1) * BAY - 1.5, zz = Z(c, -0.75);
+    cyl('rack', 'frame', [x0, 3, zz], [x1, TB(TIERS) - 3, zz], 0.3, 'cyl8');
+    cyl('rack', 'frame', [x0, TB(TIERS) - 3, zz], [x1, 3, zz], 0.3, 'cyl8');
+  }
+  for (let t = 0; t < TIERS; t++) {
+    const tb = TB(t), g = 't' + t, gl = 'l' + t, z = d => Z(c, d);
+    for (const x of FRAMES) box(g, 'frame', fx(x), fx(x) + 1.5, tb - 1.75, tb - 0.25, z(-1.5), z(37.5));
+    box(g, 'frame', 0, RUN_L, tb - 1.75, tb - 0.25, z(0), z(1.5));
+    box(g, 'frame', 0, RUN_L, tb - 1.75, tb - 0.25, z(34.5), z(36));
+    // tray: floor, 5" walls, end walls, stainless caps
+    box(g, 'hdpe', 0, RUN_L, tb - 0.25, tb, z(0), z(36));
+    box(g, 'hdpe', 0, RUN_L, tb, tb + WALL, z(0), z(0.25));
+    box(g, 'hdpe', 0, RUN_L, tb, tb + WALL, z(35.75), z(36));
+    box(g, 'hdpe', 0, 0.25, tb, tb + WALL, z(0.25), z(35.75));
+    box(g, 'hdpe', RUN_L - 0.25, RUN_L, tb, tb + WALL, z(0.25), z(35.75));
+    box(g, 'ss', 0, RUN_L, tb + WALL, tb + WALL + 0.15, z(-0.1), z(0.4));
+    box(g, 'ss', 0, RUN_L, tb + WALL, tb + WALL + 0.15, z(35.6), z(36.1));
+    // submerged stainless grid: ribs at each frame, longitudinal bars, cross rods
+    for (const x of FRAMES.slice(1, -1)) box(g, 'grid', x - 0.4, x + 0.4, tb, tb + 1.5, z(0.25), z(35.75));
+    for (const d of [3, 6, 9, 15, 19, 23, 27, 31, 34]) box(g, 'grid', 0.5, CONV_END - 2, tb + 1.2, tb + 1.5, z(d - 0.15), z(d + 0.15));
+    for (let x = 12; x < CONV_END - 2; x += 12) if (FRAMES.every(f => Math.abs(f - x) > 3)) cyl(g, 'grid', [x, tb + 1.0, z(0.3)], [x, tb + 1.0, z(35.7)], 0.15, 'cyl8');
+    // water + duckweed mats (repop 1/3 at wall side, harvest 2/3 at aisle side)
+    quad(g, 'water', 0.25, RUN_L - 0.25, tb + WATER, z(0.25), z(35.75));
+    quad(g, 'dwR', 0.25, RUN_L - 0.25, tb + WATER + 0.06, z(0.25), z(11.9));
+    quad(g, 'dwH', 0.25, CONV_END, tb + WATER + 0.06, z(12.1), z(35.75));
+    // harvest conveyor under the 2/3 section: belt, tail pulley, cleated incline, head pulley, discharge flap, drive
+    quad(g, 'belt', 6, CONV_END, tb + 1.75, z(13), z(35));
+    cyl(g, 'ss', [4.5, tb + 0.95, z(13)], [4.5, tb + 0.95, z(35)], 0.8);
+    plate(g, 'beltS', CONV_END, tb + 1.62, HEAD_X, tb + 6.88, z(24), 22, 0.25);
+    for (const d of [12.6, 35.4]) plate(g, 'ss', CONV_END - 4, tb + 2.6, HEAD_X + 0.4, tb + 8.6, z(d), 0.14, 3.2);
+    {
+      const ang = Math.atan2(5.26, HEAD_X - CONV_END), ux = Math.cos(ang), uy = Math.sin(ang), nx = -uy, ny = ux;
+      for (let s = 2; s < HEAD_X - CONV_END - 0.5; s += 3.2) {
+        const cx = CONV_END + ux * s + nx * 0.55, cy = tb + 1.62 + uy * s + ny * 0.55;
+        plate(g, 'cleat', cx - ux * 0.12, cy - uy * 0.12, cx + ux * 0.12, cy + uy * 0.12, z(24), 21.6, 0.85);
+      }
+    }
+    cyl(g, 'ss', [HEAD_X, tb + 6.05, z(12.8)], [HEAD_X, tb + 6.05, z(35.2)], 0.9);
+    box(g, 'ss', HEAD_X - 1.4, HEAD_X + 1.2, tb + 4.6, tb + 7.2, z(12.3), z(12.7));
+    box(g, 'ss', HEAD_X - 1.4, HEAD_X + 1.2, tb + 4.6, tb + 7.2, z(35.3), z(35.7));
+    cyl(g, 'ss', [HEAD_X + 1.2, tb + 6.9, z(13)], [HEAD_X + 1.2, tb + 6.9, z(35)], 0.3, 'cyl8');
+    plate(g, 'ss', HEAD_X + 1.2, tb + 6.85, HEAD_X + 7.4, tb + 4.1, z(24), 22, 0.14);            // lowered discharge flap
+    cyl(g, 'ss', [HEAD_X, tb + 6.05, z(35)], [HEAD_X, tb + 6.05, z(37.8)], 0.35, 'cyl8');
+    box(g, 'motor', HEAD_X - 1.6, HEAD_X + 1.6, tb + 4.4, tb + 7.7, z(37.8), z(39.4));
+    cyl(g, 'motor', [HEAD_X, tb + 6.05, z(39.4)], [HEAD_X, tb + 6.05, z(42.6)], 1.45);
+    // longitudinal screen rail at the 1/3 line (carries the repop. screen and actuators)
+    box(g, 'ss', 0.5, RUN_L, tb + 5.5, tb + 7.5, z(11), z(13));
+    // guide channels at each frame, one actuator per section, 24 VDC harness
+    for (const x of FRAMES) { const gx = Math.min(Math.max(x, 0.8), RUN_L - 0.8); box(g, 'ss', gx - 0.6, gx + 0.6, tb + 0.25, tb + 7.5, z(13.05), z(14.0)); }
+    for (let k = 0; k < NB; k++) {
+      const ax = k * BAY + BAY / 2;
+      box(g, 'ss', ax - 1.2, ax + 1.2, tb + 7.5, tb + 7.75, z(11), z(14.6));
+      cyl(g, 'motor', [ax, tb + 7.75, z(14.0)], [ax, tb + 8.9, z(14.0)], 0.5, 'cyl8');
+    }
+    cyl(g, 'wire', [3, tb + 7.62, z(11.4)], [RUN_L - 6, tb + 7.62, z(11.4)], 0.12, 'cyl8');
+    for (const x of FRAMES) box(g, 'ss', fx(x) + 0.25, fx(x) + 1.25, tb + 5.15, tb + 5.5, z(0), z(13));
+    // LED fixtures: 3 bars per bay, lens 9" above the run floor
+    for (let k = 0; k < NB; k++) {
+      const x0 = k * BAY + 2, x1 = (k + 1) * BAY - 2;
+      for (const d of [6, 19, 30]) {
+        box(gl, 'ledH', x0, x1, tb + LED + 0.25, tb + 10, z(d - 1.4), z(d + 1.4));
+        box(gl, 'ledL', x0 + 0.6, x1 - 0.6, tb + LED, tb + LED + 0.25, z(d - 1.05), z(d + 1.05));
+      }
+    }
+    for (const d of [6, 19, 30]) box(gl, 'frame', 0.5, RUN_L - 0.5, tb + 10, tb + 10.6, z(d - 0.5), z(d + 0.5));
+    box(gl, 'ledH', 1, 6, tb + 10, tb + 10.6, z(4), z(32));   // driver box at the front end
+  }
+}
+setRepeat('dwR', RUN_L - 0.5, 11.65, 10);
+setRepeat('dwH', CONV_END - 0.25, 23.65, 10);
+dwDense.normal.repeat.copy(R.dwR.map.repeat); dwSparse.normal.repeat.copy(R.dwH.map.repeat);
+R.belt.map.repeat.set((CONV_END - 6) / 2, 22 / 2);
+
+/* ---------- moving repopulation screen (dynamic) ---------- */
+const texMesh = canvasTex(64, 64, (g, w, h) => {
+  g.clearRect(0, 0, w, h); g.fillStyle = '#e6eaee';
+  for (let i = 0; i < w; i += 8) { g.fillRect(i, 0, 3, h); g.fillRect(0, i, w, 3); }
+});
+texMesh.repeat.set(PANEL / 0.5, 3 / 0.5);
+M('mesh', { color: '#ffffff', map: texMesh, metalness: 0.85, roughness: 0.35, alphaTest: 0.4, side: THREE.DoubleSide }, { cast: false });
+const SCR_H = 3, SCR_DOWN = 1.6, SCR_UP = 4.0;      // panel 3" tall; bottom 1.4" below water when down, 1" above when up
+const vplane = new THREE.PlaneGeometry(1, 1);
+const NSCR = 2 * TIERS * NB;
+const scrPanels = new THREE.InstancedMesh(vplane, R.mesh, NSCR);
+const scrRails = new THREE.InstancedMesh(GEO.box, R.ss, 2 * NSCR);
+const scrRods = new THREE.InstancedMesh(GEO.cyl8, R.ss, NSCR);
+[scrPanels, scrRails, scrRods].forEach(m => { m.instanceMatrix.setUsage(THREE.DynamicDrawUsage); m.frustumCulled = false; m.castShadow = true; scene.add(m); });
+let screenLift = 0, lastLift = -1;                   // 0 = down (holding), 1 = up (releasing)
+function updateScreens() {
+  if (Math.abs(screenLift - lastLift) < 1e-4 && lastTierN === tierN) return;
+  lastLift = screenLift; lastTierN = tierN;
+  const off = SCR_DOWN + (SCR_UP - SCR_DOWN) * screenLift, m = new THREE.Matrix4();
+  let i = 0;
+  for (let c = 0; c < 2; c++) for (let t = 0; t < TIERS; t++) for (let k = 0; k < NB; k++, i++) {
+    const tb = TB(t), on = t < tierN, x = k * BAY + BAY / 2, zc = Z(c, 13.5), y0 = tb + off;
+    m.compose(V(x, y0 + SCR_H / 2, zc), Q0, on ? V(PANEL, SCR_H, 1) : V(0, 0, 0)); scrPanels.setMatrixAt(i, m);
+    m.compose(V(x, y0 + SCR_H, zc), Q0, on ? V(PANEL + 0.4, 0.45, 0.35) : V(0, 0, 0)); scrRails.setMatrixAt(2 * i, m);
+    m.compose(V(x, y0, zc), Q0, on ? V(PANEL + 0.4, 0.3, 0.3) : V(0, 0, 0)); scrRails.setMatrixAt(2 * i + 1, m);
+    const top = tb + 7.75, len = top - (y0 + SCR_H);
+    m.compose(V(x, (top + y0 + SCR_H) / 2, Z(c, 14.0)), Q0, on ? V(0.18, len, 0.18) : V(0, 0, 0)); scrRods.setMatrixAt(i, m);
+  }
+  [scrPanels, scrRails, scrRods].forEach(mm => { mm.instanceMatrix.needsUpdate = true; });
+}
+let lastTierN = -1;
+
+/* ---------- PROCESSING BAY (x = B → L, door end) ---------- */
+const P = 'proc';
+// collection chutes behind each run column (clear polycarbonate, stainless frame)
+for (let c = 0; c < 2; c++) {
+  const za = Math.min(Z(c, 13.25), Z(c, 34.75)), zb = Math.max(Z(c, 13.25), Z(c, 34.75)), y0 = 5, y1 = TB(TIERS) - 0.25;
+  box(P, 'poly', B + 4, B + 4.15, y0, y1, za, zb); box(P, 'poly', B + 15.85, B + 16, y0, y1, za, zb);
+  box(P, 'poly', B + 4, B + 16, y0, y1, za, za + 0.15); box(P, 'poly', B + 4, B + 16, y0, y1, zb - 0.15, zb);
+  for (const [x, zz] of [[B + 4, za], [B + 15.25, za], [B + 4, zb - 0.75], [B + 15.25, zb - 0.75]]) box(P, 'ss', x, x + 0.75, y0, y1, zz, zz + 0.75);
+  for (let t = 0; t <= TIERS; t++) {
+    const y = TB(t) - 1;
+    box(P, 'ss', B + 4, B + 16, y, y + 0.5, za - 0.1, za + 0.4); box(P, 'ss', B + 4, B + 16, y, y + 0.5, zb - 0.4, zb + 0.1);
+    box(P, 'ss', B + 15.6, B + 16.1, y, y + 0.5, za, zb);
+  }
+}
+// low-profile central receiving bin with grated step-over for aisle access
+const BIN1 = B + 38;
+box(P, 'ss', B + 2, BIN1, 0, 0.5, -36, 36);
+box(P, 'ss', B + 2, B + 2.3, 0.5, 9, -36, 36); box(P, 'ss', BIN1 - 0.3, BIN1, 0.5, 9, -36, 36);
+box(P, 'ss', B + 2, BIN1, 0.5, 9, -36, -35.7); box(P, 'ss', B + 2, BIN1, 0.5, 9, 35.7, 36);
+box(P, 'ss', B + 2, BIN1, 0.5, 9, -11.6, -11.3); box(P, 'ss', B + 2, BIN1, 0.5, 9, 11.3, 11.6);
+box(P, 'ss', B + 2.5, BIN1 - 0.5, 9, 9.3, -36.2, -35.5); box(P, 'ss', B + 2.5, BIN1 - 0.5, 9, 9.3, 35.5, 36.2);
+quad(P, 'water', B + 2.3, BIN1 - 0.3, 5.5, -35.7, 35.7);
+quad(P, 'grate', B + 2.3, BIN1 - 0.3, 9.6, -11.3, 11.3);
+for (let x = B + 6; x < BIN1; x += 10) box(P, 'ss', x, x + 0.4, 8.2, 9.5, -11.3, 11.3);
+box(P, 'yellow', B + 2, B + 3.4, 8.8, 9.9, -11.6, 11.6); box(P, 'yellow', BIN1 - 1.4, BIN1, 8.8, 9.9, -11.6, 11.6);
+sph(P, 'biomass', [B + 11, 5.4, -24], [8, 2.6, 10]); sph(P, 'biomass', [B + 11, 5.4, 24], [8, 2.6, 10]);
+sph(P, 'biomass', [B + 23, 5.2, 24], [6, 1.8, 7]);
+// transfer auger: bin → dewatering screen
+const AUG0 = [B + 28, 3, 24], AUG1 = [B + 50, 66, 24];
+cyl(P, 'ss', AUG0, AUG1, 3.4);
+{ const d = V(AUG1[0] - AUG0[0], AUG1[1] - AUG0[1], 0).normalize(); cyl(P, 'motor', AUG1, [AUG1[0] + d.x * 8, AUG1[1] + d.y * 8, 24], 2.7); }
+box(P, 'ss', B + 47, B + 54, 59, 65, 21, 27);
+cyl(P, 'frame', [B + 44.5, 56, 24], [B + 44.5, 0, 24], 0.8);
+box(P, 'frame', B + 42.5, B + 46.5, 0, 0.4, 22, 26);
+// vibratory dewatering screen on spring mounts
+const SX0 = B + 50, SX1 = B + 80;
+for (const [x, zz] of [[SX0, 9], [SX0, 41], [SX1, 9], [SX1, 41]]) box(P, 'frame', x - 1, x + 1, 0, 46, zz - 1, zz + 1);
+box(P, 'frame', SX0 - 1, SX1 + 1, 44, 46, 8, 10); box(P, 'frame', SX0 - 1, SX1 + 1, 44, 46, 40, 42);
+box(P, 'frame', SX0 - 1, SX0 + 1, 44, 46, 8, 42); box(P, 'frame', SX1 - 1, SX1 + 1, 44, 46, 8, 42);
+for (const [x, zz] of [[SX0 + 3, 11], [SX0 + 3, 39], [SX1 - 3, 11], [SX1 - 3, 39]]) cyl(P, 'yellow', [x, 46, zz], [x, 49.5, zz], 1.2);
+plate(P, 'wedge', SX0 + 3, 60, SX1, 50, 25, 30, 0.3);
+plate(P, 'ss', SX0 + 2, 62, SX1 + 1, 52, 10, 0.25, 4.4); plate(P, 'ss', SX0 + 2, 62, SX1 + 1, 52, 40, 0.25, 4.4);
+plate(P, 'ss', SX0, 51, SX1, 49.5, 25, 30.5, 0.35);
+box(P, 'ss', SX0 - 1, SX0 + 7, 59, 67, 12, 38);
+plate(P, 'biomass', SX0 + 7, 59.3, SX1 - 3, 51.4, 25, 26, 0.7);
+cyl(P, 'motor', [SX0 + 16, 56, 40.3], [SX0 + 16, 56, 44.5], 2.2); cyl(P, 'motor', [SX0 + 16, 56, 9.7], [SX0 + 16, 56, 5.5], 2.2);
+plate(P, 'ss', SX0 + 3, 47.5, SX1 - 4, 42, 25, 32, 0.25);
+plate(P, 'ss', SX1, 50.4, SX1 + 6, 44.5, 25, 22, 0.2);                  // discharge lip to the press hopper
+// screw press (axis across the bay) on a gantry over the tote
+const PRX = B + 88;
+box(P, 'ss', PRX - 5, PRX + 5, 38, 45, 18, 30);                            // feed hopper
+cyl(P, 'ss', [PRX, 33, 32], [PRX, 33, 28], 4.8); cyl(P, 'wedge', [PRX, 33, 28], [PRX, 33, 12], 4.2); cyl(P, 'ss', [PRX, 33, 12], [PRX, 33, 8], 4.8);
+box(P, 'motor', PRX - 5, PRX + 5, 28, 38, 33, 41); cyl(P, 'motor', [PRX, 33, 41], [PRX, 33, 44.5], 3.4);
+box(P, 'ss', PRX - 4, PRX + 4, 24, 29, 4, 9);                             // cake discharge cone
+for (const x of [B + 79, B + 97]) for (const zz of [1.5, 45]) box(P, 'frame', x - 1, x + 1, 0, 29, zz - 1, zz + 1);
+for (const x of [B + 79, B + 97]) box(P, 'frame', x - 1, x + 1, 27.5, 29, 0.5, 46);
+box(P, 'frame', B + 79, B + 97, 27.5, 28.5, 33, 41);
+// dewatered press cake tote on pallet (exits through the doors)
+box(P, 'pallet', B + 80, B + 96, 0, 4.5, 3.5, 43);
+box(P, 'tote', B + 80, B + 96, 4.5, 23, 3.5, 4); box(P, 'tote', B + 80, B + 96, 4.5, 23, 42.5, 43);
+box(P, 'tote', B + 80, B + 80.5, 4.5, 23, 3.5, 43); box(P, 'tote', B + 95.5, B + 96, 4.5, 23, 3.5, 43);
+box(P, 'cake', B + 80.5, B + 95.5, 4.5, 17, 4, 42.5);
+// filtrate / make-up return tank, pump, cartridge filter
+const TK0 = B + 42, TK1 = B + 72;
+box(P, 'tankPoly', TK0, TK1, 0, 44, -45.5, -22);
+box(P, 'tankWater', TK0 + 0.6, TK1 - 0.6, 0.6, 30, -44.9, -22.6);
+box(P, 'frame', TK0 - 0.5, TK1 + 0.5, 43.5, 44.5, -46, -21.5);
+pipeRun(P, 'pvc', [[SX1 - 3, 42, 14], [SX1 - 3, 3, 14], [SX1 - 3, 3, -18], [TK1 - 2, 3, -18], [TK1 - 2, 3, -22]], 0.9);   // screen filtrate → tank
+box(P, 'frame', B + 74, B + 93, 0, 1.5, -44, -32);
+cyl(P, 'pump', [B + 76, 7.5, -38], [B + 82, 7.5, -38], 5); cyl(P, 'pump', [B + 82, 7.5, -38], [B + 91, 7.5, -38], 3.8);
+pipeRun(P, 'pvc', [[TK1, 7.5, -38], [B + 76, 7.5, -38]], 1.1);
+const FLX = B + 96;
+pipeRun(P, 'pvc', [[B + 79, 12, -38], [B + 79, 22, -38], [FLX, 22, -38], [FLX, 26, -38]], 1.1);
+cyl(P, 'filter', [FLX, 26, -38], [FLX, 46, -38], 3.6);
+cyl(P, 'pump', [FLX, 46, -38], [FLX, 48.5, -38], 3.9);
+// control panel on far wall
+const PNX = B + 31;
+box(P, 'panel', PNX - 13, PNX + 13, 70, 96, 39.5, 46);
+box(P, 'frame', PNX - 0.1, PNX + 0.1, 70.5, 95.5, 39.4, 39.5);
+cyl(P, 'lampG', [PNX - 8, 91, 39.5], [PNX - 8, 91, 38.9], 0.7, 'cyl8');
+cyl(P, 'lampA', [PNX - 4.5, 91, 39.5], [PNX - 4.5, 91, 38.9], 0.7, 'cyl8');
+cyl(P, 'red', [PNX + 8, 90, 39.5], [PNX + 8, 90, 38.4], 1.4);
+box(P, 'probe', PNX + 2, PNX + 10, 76, 82, 39.3, 39.5);                    // HMI screen
+
+/* ---------- CONTAINER BODY (40' high cube, near side wall cut away) ---------- */
+const S = 'shell';
+const XF = -2, XD = L + 4.5, ZO = HW + 1.75, YT = H + 2;            // outside faces: front, door end, side, roof top
+quad(S, 'wood', 0, L, 0.01, -HW, HW);
+R.wood.map.repeat.set(L / 96, 2 * HW / 48);
+box(S, 'casting', XF, XD, -6, 0, -ZO, ZO);                          // floor structure + bottom side rails
+// front end wall (corrugated), inside lining
+box(S, 'paint', XF, 0, 0, H, -HW, HW);
+for (let z = -HW + 6; z < HW - 6; z += 13) box(S, 'paint', XF - 1.4, XF, 2, H - 2, z, z + 6.5);
+box(S, 'paintIn', 0, 0.2, 0, H, -HW, HW);
+// far side wall: corrugated skin with trapezoidal ribs
+box(S, 'paint', XF, XD, 0, H, HW, HW + 0.6);
+for (let x = 4; x < L - 4; x += 11) box(S, 'paint', x, x + 6.5, 1, H - 1, HW + 0.6, ZO);
+box(S, 'paintIn', 0, L, 0, H, HW - 0.2, HW);
+// near side wall removed: bottom rail, top rail and cut strip remain
+box(S, 'paint', XF, XD, -6, 1.5, -ZO, -HW);
+box(S, 'paint', XF, XD, H - 3, YT, -ZO, -HW);
+// roof rails (roof itself is a separate transparent layer)
+box(S, 'paint', XF, XD, H, YT, HW, ZO);
+// corner posts + ISO corner castings (all four corners)
+for (const x of [XF - 0.5, XD - 5]) for (const s of [-1, 1]) {
+  box(S, 'paint', x, x + 5.5, -6, YT, s * (HW - 0.2), s * (ZO + 0.3));
+  for (const y of [-6.5, YT - 4.5]) box(S, 'casting', x - 0.5, x + 6.5, y, y + 4.5, s * (ZO - 6), s * (ZO + 0.5));
+}
+// door end: frame + both leaf doors swung open 90 degrees
+box(S, 'paint', L, XD, H - 4, YT, -ZO, ZO);                          // header
+box(S, 'paint', L, XD, -6, 0, -ZO, ZO);                              // sill
+for (const s of [1]) {                                              // near-side leaf omitted with the cut-away wall
+  box(S, 'paint', XD, XD + 46, 0.5, H - 4.5, s * (ZO - 1.8), s * ZO);
+  for (let x = XD + 3; x < XD + 42; x += 10) box(S, 'paint', x, x + 5, 3, H - 7, s * ZO, s * (ZO + 0.8));
+  for (const x of [XD + 9, XD + 31]) {                               // locking bars + cam keepers on the inner face
+    cyl(S, 'ss', [x, -2, s * (ZO - 2.4)], [x, H - 1, s * (ZO - 2.4)], 0.55, 'cyl8');
+    box(S, 'ss', x - 1.4, x + 1.4, 42, 50, s * (ZO - 3.4), s * (ZO - 1.8));
+  }
+}
+// ventilation grilles near the roof line on the far wall
+for (const x of [60, L - 70]) box(S, 'grille', x, x + 10, H - 12, H - 6, ZO, ZO + 0.4);
+// container sits on four concrete blocks under the corner castings
+for (const x of [XF - 4, XD - 10]) for (const s of [-1, 1]) box(S, 'concrete', x, x + 14, GROUND, -6.5, s * (ZO - 10), s * (ZO + 3));
+// heat pump: outdoor unit on a pad at the front, line set through the front wall, ducted air handler + fabric chute inside
+box(S, 'concrete', -44, -8, GROUND, GROUND + 4, -30, 18);
+box(S, 'hpUnit', -40, -12, GROUND + 4, GROUND + 40, -26, 14);
+box(S, 'grille', -40.2, -40, GROUND + 9, GROUND + 37, -24, 12);
+for (const zc of [-15, 3]) cyl(S, 'chassis', [-40.1, GROUND + 23, zc], [-40.6, GROUND + 23, zc], 8.5, 'cylHi');
+pipeRun(S, 'lineset', [[-12, GROUND + 30, 10], [-6, GROUND + 30, 10], [-6, 100, 10], [0, 100, 10]], 0.9);
+box(S, 'hpUnit', 1, 28, 98.5, H - 0.5, -9, 9);                       // ducted indoor unit at the ceiling
+push(S, 'fabric', 'halfCyl', new THREE.Matrix4().compose(V(28 + (B - 40) / 2, H - 0.4, 0), new THREE.Quaternion().setFromUnitVectors(Y, V(1, 0, 0)), V(5, B - 40, 5)));
+// roof (transparent) + roof bows
+box('roof', 'roof', XF, XD, H, YT, -ZO, ZO);
+for (let x = 12; x < L; x += 24) box('roof', 'aluNS', x, x + 1.5, H - 1, H, -HW, HW);
+
+/* ---------- ground ---------- */
+let gridHelper;
+{
+  const gm = new THREE.Mesh(new THREE.PlaneGeometry(20000, 20000).rotateX(-Math.PI / 2), R.ground);
+  R.ground.map.repeat.set(20000 / 240, 20000 / 240); nGround.repeat.set(20000 / 60, 20000 / 60);
+  gm.position.set(L / 2, GROUND, 0); gm.receiveShadow = true; scene.add(gm);
+  const grid = new THREE.GridHelper(4800, 400, 0x2c343b, 0x262c32); gridHelper = grid;
+  grid.position.set(L / 2, GROUND + 0.05, 0); grid.material.transparent = true; grid.material.opacity = 0.3; scene.add(grid);
+}
+
+/* ---------- WATER LOOP: front-fed supply → runs → overflow at harvest end → debris screen → tank → pump/filter ---------- */
+const W = 'plumb', RZ = 2.5, RX = 34, YM = 98;   // supply main runs down the aisle ceiling to risers at the front
+const SUPPLY = [[TK1, 7.5, -38], [B + 79, 7.5, -38], [B + 79, 22, -38], [FLX, 22, -38], [FLX, 26, -38]];
+box(W, 'panel', FLX + 1.2, FLX + 4, 50, 53.5, -39.5, -36.5);                       // EC / nitrate sensor
+box(W, 'motor', FLX - 2.5, FLX + 2.5, 55, 59, -40.5, -35.5);                       // motorised 3-way divert valve
+const DIS = [[FLX, 57, -38], [L - 2, 57, -38], [L - 2, 2, -38], [XD + 2, 2, -38]];
+pipeRun(W, 'pvc', DIS, 1.0);
+cyl(W, 'yellow', [XD - 1, 2, -38], [XD + 2, 2, -38], 1.6);                        // cam-lock discharge coupling at the door sill
+pipeRun(W, 'supply', [[FLX, 48.5, -38], [FLX, YM, -38], [FLX, YM, RZ], [RX, YM, RZ], [RX, TB(0) + 6.5, RZ]], 1.1);
+pipeRun(W, 'supply', [[RX, 84, RZ], [RX, 84, -RZ]], 1.0);
+cyl(W, 'supply', [RX, TB(7) + 6.5, -RZ], [RX, TB(0) + 6.5, -RZ], 1.1);
+for (let c = 0; c < 2; c++) {
+  const zs = c ? RZ : -RZ;
+  for (let t = 0; t < TIERS; t++) {
+    const y = TB(t) + 6.5;
+    // lateral over the aisle-side wall → drop at the front end → perforated inlet spreader across the run floor (passes under the screen)
+    pipeRun(W, 'supply', [[RX, y, zs], [RX, y, Z(c, 35)], [2, y, Z(c, 35)], [2, TB(t) + 0.75, Z(c, 35)]], 0.6);
+    cyl(W, 'supply', [2, TB(t) + 0.75, Z(c, 35)], [2, TB(t) + 0.75, Z(c, 1)], 0.4, 'cyl8');
+    box(W, 'yellow', RX - 0.3, RX + 0.3, y + 0.8, y + 1.3, zs + (c ? 1 : -1), zs + (c ? 4 : -4));   // isolation valve
+    // overflow weir in the repop zone at the harvest end → drain riser
+    cyl(W, 'pvc', [RUN_L - 0.5, TB(t) + 3, Z(c, 6)], [B + 7.5, TB(t) + 3, Z(c, 6)], 0.8);
+  }
+  cyl(W, 'pvc', [B + 7.5, TB(7) + 4, Z(c, 6)], [B + 7.5, 3, Z(c, 6)], 1.3);
+}
+const DRN0 = [[B + 7.5, 3, Z(0, 6)], [B + 39.4, 3, Z(0, 6)], [B + 39.4, 54, Z(0, 6)], [TK0 + 2, 54, Z(0, 6)]];
+const DRN1 = [[B + 7.5, 3, Z(1, 6)], [B + 40.6, 3, Z(1, 6)], [B + 40.6, 3, -24], [B + 40.6, 54, -24], [TK0 + 2, 54, -24]];
+pipeRun(W, 'pvc', DRN0, 1.3);
+pipeRun(W, 'pvc', DRN1, 1.3);
+pipeRun(W, 'pvc', [[BIN1, 2.5, -30], [TK0 + 1, 2.5, -30]], 1);                    // receiving-bin drain
+// organic debris screen on top of the return tank (inclined wedge-wire, debris tray)
+box(W, 'ss', TK0, TK0 + 20, 44.5, 47, -45, -23);
+box(W, 'ss', TK0, TK0 + 4, 50, 58, -45, -23);
+plate(W, 'wedge', TK0 + 4, 55, TK0 + 19, 46, -34, 20, 0.3);
+plate(W, 'ss', TK0 + 4, 57, TK0 + 19, 48, -44.5, 0.25, 4); plate(W, 'ss', TK0 + 4, 57, TK0 + 19, 48, -23.5, 0.25, 4);
+for (const zz of [-44, -24]) box(W, 'ss', TK0 + 18, TK0 + 20, 44.5, 50, zz - 1, zz + 1);
+box(W, 'ss', TK0 + 20, TK1 - 1, 44.5, 50, -44, -24);
+box(W, 'debris', TK0 + 20.5, TK1 - 1.5, 45, 48, -43.5, -24.5);
+plate(W, 'debris', TK0 + 6, 54.5, TK0 + 18, 47.6, -34, 16, 0.5);
+
+// feed-water (waste-water nutrient stream) inlet → backflow preventer → Y-strainer → flow meter → solenoid → tank
+const FDX = L - 4;
+const FEED = [[XD + 2, 4, -28], [FDX, 4, -28], [FDX, 52, -28], [TK1 - 3, 52, -28], [TK1 - 3, 52, -22.9], [TK1 - 3, 38, -22.9]];
+pipeRun(W, 'feed', FEED, 0.9);
+cyl(W, 'yellow', [XD - 1, 4, -28], [XD + 2, 4, -28], 1.6);                         // cam-lock inlet at the door sill
+box(W, 'bronze', FDX - 2, FDX + 2, 12, 22, -30.5, -25.5);                         // backflow preventer (double check)
+cyl(W, 'bronze', [FDX, 17, -25.5], [FDX, 17, -24], 0.5, 'cyl8');
+cyl(W, 'feed', [B + 92, 52, -28], [B + 88, 52, -28], 1.4);                        // Y-strainer body
+cyl(W, 'feed', [B + 90, 52, -28], [B + 88, 49.5, -28], 0.9);
+box(W, 'white', B + 82, B + 86, 50.5, 56.5, -29.5, -26.5);                        // paddlewheel flow meter + display
+box(W, 'motor', B + 75.5, B + 79, 52, 56.5, -30, -26);                            // solenoid valve coil
+for (const y of [36, 22, 10]) cyl(W, 'white', [TK1 - 0.5, y, -24], [TK1 - 0.5, y + 3, -24], 0.6, 'cyl8');   // float switches
+for (let i = 0; i < 4; i++) cyl(W, 'probe', [TK1 - 4 - i * 3, 44, -44.5], [TK1 - 4 - i * 3, 24, -44.5], 0.35, 'cyl8');   // nitrate / EC / pH / DO probes
+// pump-side hardware: check valve, gauges, suction strainer
+cyl(W, 'pvc', [B + 79, 14, -38], [B + 79, 18, -38], 1.7);
+for (const [x, y] of [[B + 79, 20], [FLX, 51]]) { cyl(W, 'ss', [x, y, -38], [x, y, -40.5], 0.25, 'cyl8'); cyl(W, 'white', [x, y, -40.5], [x, y, -41.3], 1.3); }
+cyl(W, 'pvc', [TK1 + 1, 7.5, -38], [TK1 + 3.5, 7.5, -38], 1.6);
+// supply-main clevis hangers every 4'
+for (let x = RX + 24; x < FLX - 6; x += 48) { cyl(W, 'ss', [x, YM, RZ], [x, H, RZ], 0.2, 'cyl8'); cyl(W, 'ss', [x - 0.3, YM, RZ], [x + 0.3, YM, RZ], 1.45); }
+for (let c = 0; c < 2; c++) for (let t = 0; t < TIERS; t++) cyl(W, 'pvc', [RUN_L - 0.6, TB(t) + 3, Z(c, 6)], [RUN_L + 0.6, TB(t) + 3, Z(c, 6)], 1.3);
+
+/* ---------- ELECTRICAL: shore power → main disconnect → panel → cable trays → loads ---------- */
+const E = 'elec', CY = 102.6, TRAY_END = B + 50, HOME = B + 20;
+box(E, 'panel', XF - 6, XF, 30, 52, 30, 42);                                       // shore-power inlet + main disconnect (front end, exterior)
+cyl(E, 'red', [XF - 6, 46, 36], [XF - 7.2, 46, 36], 1.6);
+const conduit = (pts, mt = 'wire', r = 0.45) => pipeRun(E, mt, pts, r);
+conduit([[XF, 40, 40], [2, 40, 40], [2, CY, 40], [2, CY, 44.2]], 'wire', 0.6);
+for (const s2 of [-1, 1]) {
+  box(E, 'trayG', 0, TRAY_END, CY - 0.45, CY - 0.3, s2 * 42.2, s2 * 46);           // wire-mesh cable tray, wall side
+  for (let x = 0; x < TRAY_END; x += 12) box(E, 'trayG', x, x + 0.6, CY - 0.45, CY + 0.3, s2 * 42.2, s2 * 46);
+  box(E, 'trayG', 0, TRAY_END, CY - 0.45, CY + 0.5, s2 * 45.8, s2 * 46);
+  box(E, 'trayG', 0, TRAY_END, CY - 0.45, CY + 0.5, s2 * 42.2, s2 * 42.4);
+}
+const FEEDER = [[2, CY, 44.2], [PNX, CY, 44.2], [PNX, 96, 44.2]];
+conduit(FEEDER, 'wire', 0.6);                                                       // main feeder to panel
+conduit([[HOME, 96, 44.2], [HOME, CY, 44.2], [HOME, CY, -44.2]], 'wire', 0.55);   // panel → near-side tray
+const zLED = c => (c ? 1 : -1) * 43.2, zDC = c => (c ? 1 : -1) * 44.9, zM = c => (c ? 1 : -1) * 4.75;
+for (let c = 0; c < 2; c++) {
+  const zw = Z(c, -0.75);
+  conduit([[HOME, CY, zLED(c)], [3, CY, zLED(c)], [3, CY, zw], [3, TB(0) + 10.3, zw]], 'wireLed', 0.5);   // LED home run + drop
+  conduit([[HOME, CY, zM(c)], [B + 3, CY, zM(c)], [B + 3, TB(0) + 6, zM(c)]], 'wire', 0.45);             // conveyor motor drop
+  for (let t = 0; t < TIERS; t++) {
+    conduit([[3, TB(t) + 10.3, zw], [3, TB(t) + 10.3, Z(c, 4)]], 'wireLed', 0.3);
+    conduit([[B + 3, TB(t) + 6, zM(c)], [HEAD_X, TB(t) + 6, Z(c, 42.6)]], 'wire', 0.28);
+  }
+}
+const PUMPC = [[HOME, CY, -44.2], [B + 86, CY, -44.2], [B + 86, 12, -44.2], [B + 86, 12, -42]];
+conduit(PUMPC, 'wire', 0.45);                                                       // pump circuit
+// 24 VDC screen-actuator circuits: tray → drop at the front → one branch per run onto the screen-rail harness → whip to each actuator
+for (let c = 0; c < 2; c++) {
+  const zw = Z(c, -0.75);
+  conduit([[HOME, CY, zDC(c)], [5, CY, zDC(c)], [5, CY, zw], [5, TB(0) + 7.62, zw]], 'wireDc', 0.4);
+  for (let t = 0; t < TIERS; t++) {
+    const y = TB(t) + 7.62;
+    conduit([[5, y, zw], [5, y, Z(c, 11.4)]], 'wireDc', 0.25);
+    box(E, 'panel', 4, 7, y - 0.9, y + 0.9, zw - 0.6, zw + 0.6);                 // junction box per run
+    for (let k = 0; k < NB; k++) cyl(E, 'wireDc', [k * BAY + BAY / 2, y, Z(c, 11.4)], [k * BAY + BAY / 2, TB(t) + 8.3, Z(c, 14)], 0.12, 'cyl8');
+  }
+}
+const DC_SOL = [[HOME, CY, -31], [B + 77, CY, -31], [B + 77, 56.5, -31]];
+const DC_PRB = [[HOME, CY, -40], [TK1 - 8, CY, -40], [TK1 - 8, 44, -40]];
+const DC_VLV = [[HOME, CY, -36], [FLX - 2, CY, -36], [FLX - 2, 59, -36]];
+conduit(DC_SOL, 'wireDc', 0.35);                                                    // feed solenoid + flow meter
+conduit(DC_PRB, 'wireDc', 0.35);                                                    // sensor bus to probes
+conduit(DC_VLV, 'wireDc', 0.35);                                                    // divert valve actuator + EC sensor
+for (const [x, z] of [[2, -9], [B - 2, 9], [L - 3, 44.5]]) { box(E, 'yellow', x - 1.5, x + 1.5, 46, 52, z - 0.8, z + 0.8); cyl(E, 'red', [x, 50, z], [x, 50, z + (z < 0 ? 1.5 : -1.5)], 0.9); }   // e-stops
+const AUGC = [[B + 46, CY, 44.2], [B + 46, CY, 24], [B + 46, 74, 24], [AUG1[0] + 3, 72, 24]];
+const VIBC = [[PNX + 11, 70, 44.2], [SX0 + 16, 62, 44.2], [SX0 + 16, 58.2, 44.2]];
+const PRSC = [[PNX + 5, 70, 44.2], [PNX + 5, 40, 44.2], [PRX, 40, 44.2], [PRX, 38, 41]];
+conduit(AUGC, 'wire', 0.4);                                                         // auger motor
+conduit(VIBC, 'wire', 0.4);                                                         // screen vibrators
+conduit(PRSC, 'wire', 0.4);                                                         // screw press
+
+/* ---------- build instanced meshes ---------- */
+const ORDER = { water: 1, tankWater: 1, dwR: 2, dwH: 2, poly: 4, tankPoly: 4, roof: 5 };
+for (const b of batches.values()) {
+  const mt = R[b.mt], im = new THREE.InstancedMesh(GEO[b.geo], mt, b.list.length);
+  b.list.forEach((m, i) => im.setMatrixAt(i, m));
+  im.instanceMatrix.needsUpdate = true;
+  im.computeBoundingSphere();
+  im.castShadow = mt.userData.cast !== false;
+  im.receiveShadow = true;
+  im.renderOrder = ORDER[b.mt] || 0;
+  G(b.g).add(im);
+}
+
+/* ---------- harvest flow particles ---------- */
+const NP = 10, particles = new THREE.InstancedMesh(new THREE.SphereGeometry(1, 10, 6), R.particle, 2 * TIERS * NP);
+particles.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+particles.frustumCulled = false;
+scene.add(particles);
+const pdata = [];
+for (let c = 0; c < 2; c++) for (let t = 0; t < TIERS; t++) for (let i = 0; i < NP; i++)
+  pdata.push({ c, t, ph: (i + rnd() * 0.6) / NP, d: 15 + rnd() * 18, s: 0.9 + rnd() * 0.6 });
+const PERIOD = 11;
+const _pm = new THREE.Matrix4(), _pq = new THREE.Quaternion(), _ps = V(1, 1, 1), _pp = V(0, 0, 0);
+function particlePos(p, time) {
+  const tb = TB(p.t), u = ((time / PERIOD + p.ph) % 1) * PERIOD;
+  const lerp = (a, b, k) => a + (b - a) * k;
+  if (u < 3.0) { const k = u / 3.0; return [lerp(CONV_END - 22, CONV_END, k), tb + WATER + 0.2]; }
+  if (u < 7.0) { const k = (u - 3) / 4; return [lerp(CONV_END, HEAD_X - 0.2, k), lerp(tb + 2.2, tb + 7.6, k)]; }
+  if (u < 7.8) { const k = (u - 7) / 0.8; return [lerp(HEAD_X + 1.4, HEAD_X + 7.4, k), lerp(tb + 7.3, tb + 4.6, k)]; }
+  const f = u - 7.8, y = tb + 4.6 - 0.5 * 180 * f * f;
+  if (y > 6.2) return [HEAD_X + 8.8 + f * 3, y];
+  return null;
+}
+let tierN = TIERS;
+function updateParticles(time) {
+  pdata.forEach((p, i) => {
+    const pos = p.t < tierN ? particlePos(p, time) : null;
+    if (!pos) _ps.set(0, 0, 0); else _ps.set(0.9 * p.s, 0.35 * p.s, 0.9 * p.s);
+    _pp.set(pos ? pos[0] : 0, pos ? pos[1] : -999, Z(p.c, p.d));
+    particles.setMatrixAt(i, _pm.compose(_pp, _pq, _ps));
+  });
+  particles.instanceMatrix.needsUpdate = true;
+}
+
+/* ---------- flow overlays (drawn through geometry) ---------- */
+const flows = [];
+function flow(kind, pts, o = {}) {
+  const P3 = pts.map(p => V(...p)), cum = [0];
+  for (let i = 1; i < P3.length; i++) cum.push(cum[i - 1] + P3[i].distanceTo(P3[i - 1]));
+  const len = cum[cum.length - 1];
+  flows.push({ kind, P3, cum, len, tier: o.tier ?? -1, speed: o.speed ?? 14, n: Math.max(2, Math.round(len / (o.gap ?? 18))) });
+}
+const WC = { supply: '#4fc3ff', ret: '#8fe3d0', drain: '#d9a441', feed: '#a77df0', dc24: '#c4e45a', elec: '#ff9a3c', led: '#ff6fa0' };
+// water
+flow('supply', [[TK0 + 15, 14, -36], ...SUPPLY, [FLX, 48.5, -38], [FLX, YM, -38], [FLX, YM, RZ], [RX, YM, RZ], [RX, TB(0) + 6.5, RZ]], { speed: 24 });
+flow('supply', [[RX, 84, RZ], [RX, 84, -RZ], [RX, TB(0) + 6.5, -RZ]], { speed: 24 });
+flow('supply', [[RX, 84, -RZ], [RX, TB(7) + 6.5, -RZ]], { speed: 24 });
+for (let c = 0; c < 2; c++) for (let t = 0; t < TIERS; t++) {
+  const tb = TB(t), zs = c ? RZ : -RZ;
+  flow('supply', [[RX, tb + 6.5, zs], [RX, tb + 6.5, Z(c, 35)], [2, tb + 6.5, Z(c, 35)], [2, tb + 0.75, Z(c, 35)], [2, tb + 0.75, Z(c, 1)]], { tier: t, speed: 24, gap: 8 });
+  // water moves through the run itself (below the floating mat, under the screen), to the overflow weir
+  flow('ret', [[4, tb + 2.2, Z(c, 6)], [RUN_L - 1, tb + 2.2, Z(c, 6)], [B + 7.5, tb + 3, Z(c, 6)], [B + 7.5, 3, Z(c, 6)]], { tier: t, speed: 9, gap: 40 });
+  flow('ret', [[4, tb + 2.2, Z(c, 26)], [CONV_END - 7, tb + 2.2, Z(c, 26)], [CONV_END + 16, tb + 1.0, Z(c, 26)], [RUN_L - 6, tb + 1.0, Z(c, 6)], [RUN_L - 1, tb + 2.6, Z(c, 6)]], { tier: t, speed: 9, gap: 40 });
+}
+flow('ret', [...DRN0, [TK0 + 8, 54, -34], [TK0 + 10, 20, -34]], { speed: 16 });
+flow('ret', [...DRN1, [TK0 + 8, 54, -34], [TK0 + 10, 20, -34]], { speed: 16 });
+flow('feed', FEED, { speed: 14, gap: 8 });
+for (let c = 0; c < 2; c++) {
+  const zw = Z(c, -0.75);
+  flow('dc24', [[HOME, CY, zDC(c)], [5, CY, zDC(c)], [5, CY, zw], [5, TB(0) + 7.62, zw]], { speed: 50, gap: 34 });
+  for (let t = 0; t < TIERS; t++) flow('dc24', [[5, TB(t) + 7.62, zw], [5, TB(t) + 7.62, Z(c, 11.4)], [RUN_L - 6, TB(t) + 7.62, Z(c, 11.4)]], { tier: t, speed: 40, gap: 40 });
+}
+flow('dc24', DC_SOL, { speed: 30, gap: 14 });
+flow('dc24', DC_PRB, { speed: 30, gap: 14 });
+flow('dc24', DC_VLV, { speed: 30, gap: 14 });
+flow('drain', DIS, { speed: 14, gap: 8 });
+flow('ret', [[SX1 - 3, 42, 14], [SX1 - 3, 3, 14], [SX1 - 3, 3, -18], [TK1 - 2, 3, -18], [TK1 - 2, 3, -22], [TK1 - 6, 12, -30]], { speed: 12 });
+// electrical
+flow('elec', [[XF - 4, 40, 40], [2, 40, 40], [2, CY, 40], ...FEEDER], { speed: 60, gap: 30 });
+flow('elec', [[HOME, 96, 44.2], [HOME, CY, 44.2], ...PUMPC], { speed: 40, gap: 24 });
+flow('elec', AUGC, { speed: 30 });
+flow('elec', VIBC, { speed: 20, gap: 10 });
+flow('elec', PRSC, { speed: 20, gap: 12 });
+for (let c = 0; c < 2; c++) {
+  const zw = Z(c, -0.75);
+  flow('led', [[HOME, CY, zLED(c)], [3, CY, zLED(c)], [3, CY, zw], [3, TB(0) + 10.3, zw]], { speed: 60, gap: 34 });
+  flow('elec', [[HOME, CY, zM(c)], [B + 3, CY, zM(c)], [B + 3, TB(0) + 6, zM(c)]], { speed: 30 });
+  for (let t = 0; t < TIERS; t++) flow('led', [[3, TB(t) + 10.3, zw], [3, TB(t) + 10.3, Z(c, 4)]], { tier: t, speed: 8, gap: 6 });
+}
+const overlay = { water: new THREE.Group(), elec: new THREE.Group() };
+scene.add(overlay.water, overlay.elec);
+const kindGroup = k => (k === 'elec' || k === 'led' || k === 'dc24') ? 'elec' : 'water';
+const pMats = {}, pMeshes = {};
+for (const k of Object.keys(WC)) {
+  pMats[k] = new THREE.MeshBasicMaterial({ color: WC[k], depthTest: false, transparent: true, opacity: 0.95 });
+  const lm = new THREE.LineBasicMaterial({ color: WC[k], depthTest: false, transparent: true, opacity: 0.55 });
+  const list = flows.filter(f => f.kind === k);
+  list.forEach(f => { const ln = new THREE.Line(new THREE.BufferGeometry().setFromPoints(f.P3), lm); ln.renderOrder = 28; ln.userData.tier = f.tier; overlay[kindGroup(k)].add(ln); });
+  const n = list.reduce((a, f) => a + f.n, 0);
+  const im = new THREE.InstancedMesh(new THREE.SphereGeometry(1, 8, 6), pMats[k], Math.max(n, 1));
+  im.renderOrder = 29; im.frustumCulled = false; im.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+  overlay[kindGroup(k)].add(im); pMeshes[k] = { im, list };
+}
+const _fp = V(0, 0, 0), _fs = V(1, 1, 1);
+function updateFlows(time) {
+  for (const k in pMeshes) {
+    const { im, list } = pMeshes[k]; let i = 0;
+    if (!im.parent.visible) continue;
+    const r = kindGroup(k) === 'elec' ? 0.6 : 0.75;
+    for (const f of list) {
+      const on = f.tier < 0 || f.tier < tierN;
+      for (let j = 0; j < f.n; j++, i++) {
+        let d = ((time * f.speed) + j * f.len / f.n) % f.len, s = 1;
+        while (s < f.cum.length - 1 && f.cum[s] < d) s++;
+        const a = f.P3[s - 1], b = f.P3[s], seg = f.cum[s] - f.cum[s - 1] || 1;
+        _fp.lerpVectors(a, b, (d - f.cum[s - 1]) / seg);
+        _fs.setScalar(on ? r : 0);
+        im.setMatrixAt(i, _pm.compose(_fp, _pq, _fs));
+      }
+    }
+    im.instanceMatrix.needsUpdate = true;
+  }
+  for (const g of [overlay.water, overlay.elec]) if (g.visible) g.children.forEach(o => { if (o.isLine) o.visible = o.userData.tier < 0 || o.userData.tier < tierN; });
+}
+/* ---------- lighting ---------- */
+scene.add(new THREE.HemisphereLight('#d5dee8', '#2a2724', 0.55));
+const sun = new THREE.DirectionalLight('#fff3e6', 1.85);
+sun.position.set(L / 2 - 470, 1100, -820); sun.target.position.set(L / 2, 0, 0);
+sun.castShadow = true;
+sun.shadow.mapSize.set(4096, 4096);
+Object.assign(sun.shadow.camera, { left: -420, right: 420, top: 420, bottom: -420, near: 100, far: 2600 });
+sun.shadow.bias = -0.0003; sun.shadow.normalBias = 0.4;
+scene.add(sun, sun.target);
+const fill = new THREE.DirectionalLight('#cfe0ff', 0.45); fill.position.set(L + 900, 400, 900); scene.add(fill);
+
+/* ---------- photoreal: sky, area light under every LED plane ---------- */
+const sky = new Sky(); sky.scale.setScalar(10000);
+sky.material.uniforms.turbidity.value = 5; sky.material.uniforms.rayleigh.value = 1.2;
+sky.material.uniforms.mieCoefficient.value = 0.004; sky.material.uniforms.mieDirectionalG.value = 0.8;
+const sunDir = sun.position.clone().sub(sun.target.position).normalize();
+sky.material.uniforms.sunPosition.value.copy(sunDir);
+const skyScene = new THREE.Scene();
+{
+  const dome = new THREE.SphereGeometry(100, 48, 24), cols = [], pos = dome.attributes.position;
+  const zen = new THREE.Color('#4f82c0'), hor = new THREE.Color('#d6e1ea'), gnd = new THREE.Color('#5d5a55'), tmp = new THREE.Color();
+  for (let i = 0; i < pos.count; i++) {
+    const y = pos.getY(i) / 100;
+    if (y >= 0) tmp.copy(hor).lerp(zen, Math.pow(y, 0.6)); else tmp.copy(hor).lerp(gnd, Math.min(1, -y * 6));
+    cols.push(tmp.r, tmp.g, tmp.b);
+  }
+  dome.setAttribute('color', new THREE.Float32BufferAttribute(cols, 3));
+  skyScene.add(new THREE.Mesh(dome, new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.BackSide })));
+  const sunDisc = new THREE.Mesh(new THREE.SphereGeometry(5, 16, 8), new THREE.MeshBasicMaterial({ color: new THREE.Color('#fff2dc').multiplyScalar(40) }));
+  sunDisc.position.copy(sunDir).multiplyScalar(90); skyScene.add(sunDisc);
+}
+const envSky = pmrem.fromScene(skyScene, 0.02).texture;
+sky.visible = false; scene.add(sky);
+RectAreaLightUniformsLib.init();
+const ledLights = [];
+for (let c = 0; c < 2; c++) for (let t = 0; t < TIERS; t++) {
+  const l = new THREE.RectAreaLight('#ffe3f2', 0.55, RUN_L - 4, 30);
+  l.position.set(RUN_L / 2, TB(t) + LED - 0.1, Z(c, 18)); l.rotation.x = -Math.PI / 2; l.userData.tier = t;
+  scene.add(l); ledLights.push(l);
+}
+let photoreal = true;
+
+/* ---------- annotations ---------- */
+const annot = { overall: new THREE.Group(), width: new THREE.Group(), plan: new THREE.Group(), section: new THREE.Group(), callouts: new THREE.Group() };
+Object.values(annot).forEach(g => scene.add(g));
+const dimMat = new THREE.LineBasicMaterial({ color: '#ffc65c', depthTest: false, transparent: true, opacity: 0.95 });
+const leadMat = new THREE.LineBasicMaterial({ color: '#7fd4c1', depthTest: false, transparent: true, opacity: 0.85 });
+const labels = [];
+function cssObj(cls, html, pos) {
+  const el = document.createElement('div'); el.className = cls; el.innerHTML = html;
+  const o = new CSS2DObject(el); o.position.copy(pos); return o;
+}
+function dim(set, a, b, off, text, o = {}) {
+  const A = V(...a), B2_ = V(...b), O = V(...off), A2 = A.clone().add(O), B2 = B2_.clone().add(O);
+  const on = O.clone().normalize(), tick = o.tick ?? 4;
+  const pts = [A2, B2,
+    A.clone().addScaledVector(on, 1.5), A2.clone().addScaledVector(on, 3),
+    B2_.clone().addScaledVector(on, 1.5), B2.clone().addScaledVector(on, 3)];
+  const td = B2.clone().sub(A2).normalize().add(on).normalize().multiplyScalar(tick);
+  for (const p of [A2, B2]) pts.push(p.clone().sub(td), p.clone().add(td));
+  const ls = new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(pts), dimMat);
+  ls.renderOrder = 20; set.add(ls);
+  if (text) set.add(cssObj('dim' + (o.sm ? ' sm' : ''), text, A2.clone().add(B2).multiplyScalar(0.5).add(V(...(o.lo || [0, 0, 0])))));
+}
+function callout(p, off, title, sub, o = {}) {
+  const geo = new THREE.BufferGeometry().setFromPoints([V(0, 0, 0), V(0, 0, 0)]);
+  const line = new THREE.Line(geo, leadMat); line.renderOrder = 21;
+  const dot = cssObj('dot', '', V());
+  const lab = cssObj('co', title + (sub ? `<small>${sub}</small>` : ''), V());
+  annot.callouts.add(line, dot, lab);
+  const c = { p, off, line, dot, lab, views: (o.v || '').split(' '), rel: !!o.rel, anchor: V() };
+  labels.push(c); placeCallout(c); return c;
+}
+function placeCallout(c) {
+  const base = typeof c.p === 'function' ? c.p(TB(tierN - 1)) : c.p;
+  const A = V(...base), Bp = A.clone().add(V(...c.off));
+  c.anchor.copy(A);
+  c.line.geometry.setFromPoints([A, Bp]); c.line.geometry.computeBoundingSphere();
+  c.dot.position.copy(A); c.lab.position.copy(Bp);
+}
+
+// overall dimensions
+const ov = annot.overall, TOPY = YT + 2;
+dim(ov, [0, TOPY, -ZO], [L, TOPY, -ZO], [0, 34, 0], `${FTIN(L)} INTERIOR LENGTH`, { tick: 6 });
+dim(ov, [0, TOPY, -ZO], [RUN_L, TOPY, -ZO], [0, 16, 0], `${FTIN(RUN_L)} CULTIVATION · 16 RUNS`, { tick: 6 });
+dim(ov, [RUN_L, TOPY, -ZO], [L, TOPY, -ZO], [0, 16, 0], `${FTIN(L - RUN_L)} PROCESSING`, { tick: 6 });
+dim(ov, [0, 0, -ZO], [BAY, 0, -ZO], [0, 0, -22], `${FTIN(BAY)} TYP · ${NB + 1} FRAMES`, { tick: 4 });
+for (let k = 1; k < NB; k++) dim(ov, [k * BAY, 0, -ZO], [(k + 1) * BAY, 0, -ZO], [0, 0, -22], '', { tick: 4 });
+dim(ov, [XD + 4, 0, -ZO], [XD + 4, H, -ZO], [0, 0, -26], `${FTIN(H)} INT. HT`, { tick: 5 });
+dim(annot.width, [XD + 2, TOPY, -HW], [XD + 2, TOPY, HW], [0, 16, 0], `${FTIN(2 * HW)} INT. WIDTH`, { tick: 5 });
+
+// plan dimensions
+const pl = annot.plan;
+dim(pl, [0, 0, -ZO], [L, 0, -ZO], [0, 0, -44], `${FTIN(L)} INTERIOR LENGTH`, { tick: 6 });
+dim(pl, [0, 0, -ZO], [RUN_L, 0, -ZO], [0, 0, -22], `${FTIN(RUN_L)} CULTIVATION`, { tick: 6 });
+dim(pl, [RUN_L, 0, -ZO], [L, 0, -ZO], [0, 0, -22], `${FTIN(L - RUN_L)} PROCESSING`, { tick: 6 });
+dim(pl, [-60, 0, -HW], [-60, 0, HW], [-10, 0, 0], FTIN(2 * HW), { tick: 4 });
+dim(pl, [0, 0, ZO], [BAY, 0, ZO], [0, 0, 16], `${FTIN(BAY)} TYP`, { tick: 4 });
+
+// section A–A dimensions (cut through the middle of bay 3, looking toward the front)
+const se = annot.section, sx = SECTION_X - 0.5, t7 = TB(7), t0 = TB(0);
+dim(se, [sx, YT + 1, -HW], [sx, YT + 1, HW], [0, 22, 0], `${FTIN(2 * HW)} INTERIOR WIDTH`, { tick: 3 });
+dim(se, [sx, 0, HW], [sx, H, HW], [0, 0, 22], `${FTIN(H)} INT. HEIGHT`, { tick: 3 });
+dim(se, [sx, t7 + 9.6, Z(0, 0)], [sx, t7 + 9.6, Z(0, 12)], [0, 7, 0], `1'-0" REPOP ⅓`, { tick: 2, sm: 1, lo: [0, 6, 0] });
+dim(se, [sx, t7 + 9.6, Z(0, 12)], [sx, t7 + 9.6, Z(0, 36)], [0, 7, 0], `2'-0" HARVEST ⅔`, { tick: 2, sm: 1 });
+dim(se, [sx, t7 + 9.6, Z(1, 36)], [sx, t7 + 9.6, Z(1, 0)], [0, 7, 0], `3'-0" RUN`, { tick: 2, sm: 1 });
+dim(se, [sx, t0, Z(0, 36)], [sx, t0, Z(1, 36)], [0, -16, 0], `${AISLE}" AISLE`, { tick: 2, sm: 1 });
+dim(se, [sx, t0, Z(0, 0)], [sx, t0, Z(0, 36)], [0, -16, 0], `3'-0"`, { tick: 2, sm: 1 });
+dim(se, [sx, TB(5), Z(1, -1.5)], [sx, TB(6), Z(1, -1.5)], [0, 0, 9], `11¾" PITCH`, { tick: 2, sm: 1 });
+dim(se, [sx, TB(6), Z(1, -1.5)], [sx, TB(7), Z(1, -1.5)], [0, 0, 9], `11¾"`, { tick: 2, sm: 1 });
+dim(se, [sx, TB(2), Z(1, -1.5)], [sx, TB(2) + WALL, Z(1, -1.5)], [0, 0, 9], `5" WALL`, { tick: 1.5, sm: 1, lo: [0, 0, 13] });
+const t4 = TB(4), zr = Z(0, -1.5);
+dim(se, [sx, t4, zr], [sx, t4 + WATER, zr], [0, 0, -6], `3" WATER`, { tick: 1.5, sm: 1, lo: [0, -0.6, -15] });
+dim(se, [sx, t4 + WATER, zr], [sx, t4 + LED, zr], [0, 0, -6], `6" CLEAR`, { tick: 1.5, sm: 1, lo: [0, 0.6, -15] });
+dim(se, [sx, t4, zr], [sx, t4 + LED, zr], [0, 0, -34], `9" FLOOR TO LED`, { tick: 1.5, sm: 1, lo: [0, 0, -18] });
+se.add(cssObj('sect', `Section A–A · ${FTIN(SECTION_X)} from front wall · looking forward`, V(sx, -34, 0)));
+
+// callouts — each one lists the camera views it belongs to
+callout([-26, GROUND + 30, -6], [-40, 60, -60], 'Heat pump', 'outdoor unit · ducted indoor unit', { v: 'iso side front' });
+callout([120, TB(7) + 9.1, Z(0, 19)], [-60, 70, -60], 'LED grow lights', '3 bars per bay · 9" above run floor', { v: 'iso side front' });
+callout([BAY, 60, Z(0, -1.5)], [-50, -95, -70], 'Support frame', `posts + beams @ ${FTIN(BAY)} o.c.`, { v: 'iso front' });
+callout([250, TB(0) + 3.1, Z(0, 30)], [0, -100, -80], 'Duckweed runs', `16 × ${FTIN(RUN_L)} × 3'-0" · 2 across × 8 tiers`, { v: 'iso side front' });
+callout([B + 10, 70, Z(0, 24)], [-30, 80, -90], 'Collection chutes', 'clear PC · one per column', { v: 'iso side' });
+callout([B + 10, 70, Z(0, 24)], [-10, 50, -40], 'Collection chutes', 'clear PC · one per column', { v: 'process' });
+callout([B + 20, 9.6, 0], [10, -60, -90], 'Receiving bin', 'low-profile 9" H · grated step-over', { v: 'iso side' });
+callout([B + 20, 9.6, 0], [6, -30, -40], 'Receiving bin', 'low-profile 9" H · grated step-over', { v: 'process' });
+callout([B + 40, 37, 24], [-4, 60, -30], 'Transfer auger', 'bin → screen', { v: 'process' });
+callout([SX0 + 16, 56, 25], [10, 70, -20], 'Dewatering screen', 'vibratory wedge-wire', { v: 'iso process' });
+callout([PRX, 33, 20], [24, 26, -34], 'Screw press', 'final dewatering', { v: 'process' });
+callout([B + 88, 15, 6], [34, -8, -34], 'Press-cake tote', 'out through the doors', { v: 'process' });
+callout([TK0 + 15, 40, -34], [50, -64, 10], 'Return tank', '≈130 gal', { v: 'iso' });
+callout([TK0 + 15, 40, -34], [20, -70, -50], 'Return tank', '≈130 gal', { v: 'process' });
+callout([B + 84, 8, -38], [34, -26, -24], 'Pump + cartridge filter', null, { v: 'process' });
+callout([B + 20, YM, RZ], [24, 34, -24], 'Supply main', 'runs forward to front risers', { v: 'process' });
+callout([PNX, 83, 39.5], [20, 34, -26], 'Control panel', 'PLC · HMI · VFDs', { v: 'process' });
+callout([150, H - 3, 0], [30, 60, -70], 'Fabric air chute', 'from ducted heat pump', { v: 'front' });
+callout([200, 50, -ZO], [-10, -100, -50], 'Near side wall removed', 'wall and door leaf cut away for clarity', { v: 'iso' });
+callout([90, H + 1, -ZO], [0, 34, -40], 'Near side wall removed', 'shown cut for clarity', { v: 'front' });
+callout([XD + 23, 70, ZO], [40, 40, 30], 'Cargo doors', 'press-cake tote exits here', { v: 'iso side' });
+// callouts — water loop
+const WV = { v: 'water' };
+callout([RX, 60, RZ], [-40, 80, -70], 'Supply drops at the front', 'risers feed an inlet in each run', WV);
+callout([220, YM, RZ], [0, 60, -90], 'Supply main', 'aisle ceiling, runs forward', WV);
+callout([200, TB(7) + 3.3, Z(0, 6)], [-20, -150, -80], 'Flow front → back', 'through the water, under the mat', WV);
+callout([B + 7.5, 40, Z(0, 6)], [30, -90, -60], 'Overflow weirs', 'drain risers, one per column', WV);
+callout([TK0 + 10, 52, -34], [40, 70, -40], 'Organic debris screen', 'wedge-wire; removes coarse matter', WV);
+callout([TK0 + 25, 47, -34], [70, -40, -50], 'Debris tray', 'emptied at the doors', WV);
+callout([TK0 + 15, 20, -34], [30, -80, -40], 'Return tank', '≈130 gal', WV);
+callout([B + 88, 30, -38], [70, 10, -20], 'Pump + cartridge filter', 'back to the supply main', WV);
+callout([FLX, 52, -38], [-10, 95, -90], 'EC / nitrate sensor + 3-way valve', 'diverts nutrient-spent water', WV);
+callout([XD, 2, -38], [-30, -60, -110], 'Spent-water discharge', 'cam-lock outlet at the door sill', WV);
+callout([XD, 4, -28], [40, -40, -70], 'Feed-water inlet', 'waste-water nutrient stream · cam-lock', WV);
+callout([FDX, 17, -28], [60, 30, -40], 'Backflow preventer → strainer', 'flow meter · solenoid', WV);
+callout([TK1 - 8, 34, -44.5], [20, 60, -90], 'Nutrient monitoring', 'nitrate · EC · pH · DO · temp', WV);
+callout([2, TB(7) + 0.75, Z(0, 20)], [-30, -90, -90], 'Front inlet spreaders', 'one per run, under the screen', WV);
+// callouts — electrical
+const EV = { v: 'elec' };
+callout([XF - 6, 46, 36], [-40, 60, -80], 'Shore power + main disconnect', 'front end, exterior', EV);
+callout([200, CY, 44.2], [0, 50, 40], 'Main feeder + cable tray', 'far wall, above the racks', EV);
+callout([200, CY, -44.2], [0, 40, -60], 'Cable tray (near side)', null, EV);
+callout([3, TB(4) + 10.3, Z(0, -0.75)], [-30, -80, -80], 'LED driver drops', '1 per run, front end', EV);
+callout([B + 3, 60, -4.75], [20, 80, -80], 'Conveyor motor drops', '16 gearmotors at the harvest end', EV);
+callout([PNX, 83, 39.5], [40, 50, -30], 'Control panel', 'VFDs · LED drivers · breakers', EV);
+callout([B + 86, 40, -44.2], [60, -60, -40], 'Pump circuit', null, EV);
+callout([5, TB(5) + 7.62, Z(0, 6)], [-40, 90, -90], 'Screen actuator circuits', '24 VDC · drop + junction box per run', EV);
+callout([240, TB(7) + 7.62, Z(0, 11.4)], [20, 60, -40], 'Actuator harness', 'along each screen rail · whip per actuator', EV);
+callout([B + 77, 70, -31], [40, 60, -60], 'Valve + sensor wiring', 'solenoid · divert valve · probes', EV);
+
+// callouts — plan view (labels in two rows outside the container)
+const at = (a, l, title, sub) => callout(a, [l[0] - a[0], l[1] - a[1], l[2] - a[2]], title, sub, { v: 'plan' });
+at([180, TB(7) + 3.1, Z(0, 30)], [180, 110, -112], 'Duckweed runs', '2 across × 8 tiers · near column');
+at([180, TB(7) + 3.1, Z(1, 30)], [180, 110, 96], 'Duckweed runs', 'far column');
+at([60, H - 3, 0], [40, 110, 96], 'Air chute', null);
+at([B + 10, 99, Z(0, 24)], [B - 40, 110, -112], 'Collection chutes', 'one per column');
+at([B + 20, 9.6, 0], [B - 10, 110, 96], 'Receiving bin', 'grated step-over');
+at([SX0 + 16, 62, 25], [B + 70, 110, 96], 'Dewatering screen', null);
+at([B + 88, 19, 25], [B + 150, 110, 96], 'Press + tote', null);
+at([TK0 + 15, 40, -34], [B + 60, 110, -112], 'Return tank', '≈130 gal');
+at([B + 84, 8, -38], [B + 150, 110, -112], 'Pump + filter', null);
+
+// callouts — repopulation screen detail (follow the top visible tier, near column)
+const SV = { v: 'screen', rel: 1 };
+const SCX = 2 * BAY + BAY / 2;
+callout(tb => [SCX + 20, tb + 4.6, Z(0, 13.5)], [-4, 14, 10], 'Moving repop. screen', `SS mesh gate · one per ${FTIN(BAY)} bay`, SV);
+callout(tb => [2 * BAY + 0.6, tb + 6, Z(0, 13.5)], [8, 12, 4], 'Guide channel', 'at each frame', SV);
+callout(tb => [SCX, tb + 8.6, Z(0, 14)], [-6, 12, -6], 'Linear actuator', '24 VDC · 2.4" stroke', SV);
+callout(tb => [SCX - 80, tb + 7.62, Z(0, 11.4)], [-10, 10, -14], 'Actuator harness', '24 VDC from the front junction box', SV);
+callout(tb => [SCX - 10, tb + 3.1, Z(0, 5)], [4, -9, -10], 'Repopulation zone ⅓', 'mat held while the gate is down', SV);
+callout(tb => [SCX + 30, tb + 3.1, Z(0, 26)], [-6, -10, 8], 'Harvest zone ⅔', 'reseeded when the gate lifts', SV);
+callout(tb => [SCX + 50, tb + 7.5, Z(0, 12)], [10, 12, 14], 'Screen rail', 'carries screen + actuators', SV);
+const HV = { v: 'harvest', rel: 1 };
+callout(tb => [RUN_L - 56, tb + 3.1, Z(0, 5)], [-6, 24, -4], 'Repopulation zone', '⅓ width retained', HV);
+callout(tb => [RUN_L - 34, tb + 7.5, Z(0, 12)], [-14, 22, 12], 'Screen rail + screen', 'splits width ⅓ : ⅔', HV);
+callout(tb => [RUN_L - 44, tb + 3.1, Z(0, 28)], [-16, 12, 34], 'Harvest section ⅔', 'conveyor belt under the mat', HV);
+callout(tb => [RUN_L - 12, tb + 4.6, Z(0, 26)], [8, 22, 30], 'Cleated incline', 'lifts the mat clear of the water', HV);
+callout(tb => [HEAD_X + 5.3, tb + 5.2, Z(0, 24)], [24, 16, 10], 'Discharge flap', 'drops harvest to the chute', HV);
+callout(tb => [HEAD_X, tb + 6, Z(0, 41)], [10, 30, 34], 'Belt drive', 'gearmotor on head shaft', HV);
+callout(tb => [RUN_L - 76, tb + 1.4, Z(0, 21)], [-26, -12, -26], 'Submerged SS grid', 'ribs at each frame', HV);
+callout(tb => [B + 10, tb - 6, Z(0, 26)], [26, -10, -8], 'Collection chute', 'to receiving bin', HV);
+callout(tb => [RUN_L - 40, tb + LED, Z(0, 6)], [-34, 14, -18], 'LED bar', '9" above run floor', HV);
+
+/* ---------- views ---------- */
+const VIEWS = {
+  iso: { dir: [0.62, 0.34, -0.71], tgt: [L / 2 + 20, 22, 0], fit: [560, 250], fov: 32, dims: 'overall', tiers: 8, cap: 'Overview: one 40\' high-cube container. Cultivation at the front, harvest and dewatering at the door end.' },
+  side: { dir: [0, 0.05, -1], tgt: [L / 2 + 20, 30, 0], fit: [580, 200], fov: 28, dims: 'overall', tiers: 8, cap: 'Side elevation with the near wall removed: 8 tiers of runs, processing bay at the doors.' },
+  plan: { dir: [0, 1, -0.02], tgt: [L / 2 + 20, 0, -8], fit: [700, 290], fov: 28, dims: 'plan', tiers: 8, cap: 'Plan: two columns of runs with a centre aisle, processing equipment in the last 8\'.' },
+  section: { dir: [1, 0.035, 0], tgt: [SECTION_X, 48, -26], fit: [250, 200], fov: 13, dims: 'section', tiers: 8, section: true, cap: 'Section A–A: run width split, tier pitch, water depth and LED height.' },
+  screen: { pos: [SCX - 50, 54, -78], tgt: [SCX - 2, 36, -34], fov: 42, dims: 'none', tiers: 3, peek: true, cap: 'Repopulation screen: the gate drops to hold a ⅓ mat, then lifts so it spreads back over the run.' },
+  harvest: { pos: [B + 25, 84, -110], tgt: [B - 14, 34, -26], fov: 40, dims: 'none', tiers: 3, cap: 'Harvest end: the submerged belt lifts the mat up a cleated incline and drops it into the chute.' },
+  process: { pos: [B + 70, 170, -230], tgt: [B + 50, 30, 4], fov: 40, dims: 'none', tiers: 8, cap: 'Processing bay: bin, auger, vibratory screen and screw press, with the water return line on the near side.' },
+  water: { dir: [0.62, 0.34, -0.71], tgt: [L / 2 + 20, 22, 0], fit: [560, 250], fov: 32, dims: 'none', tiers: 8, water: true, cap: 'Water loop: supply (blue) to the front of each run, flow through the run, return (teal) to the tank, feed in (violet), spent water out (amber).' },
+  elec: { dir: [0.62, 0.34, -0.71], tgt: [L / 2 + 20, 22, 0], fit: [560, 250], fov: 32, dims: 'none', tiers: 8, elec: true, cap: 'Electrical: shore power to the panel (orange), LED circuits (pink) and 24 VDC actuator and sensor circuits (lime).' },
+  front: { dir: [-0.62, 0.3, -0.72], tgt: [70, 34, 0], fit: [400, 260], fov: 34, dims: 'none', tiers: 8, cap: 'Front end: heat pump, supply risers and LED driver drops.' },
+};
+const TOUR = ['iso', 'side', 'section', 'screen', 'harvest', 'process', 'water', 'elec', 'plan'];
+const clipPlane = new THREE.Plane(V(-1, 0, 0), SECTION_X);
+let current = 'iso', dimsMode = 'overall', sectionOn = false, tween = null;
+function viewPose(v) {
+  const tgt = V(...v.tgt);
+  if (v.pos) return { pos: V(...v.pos), tgt, fov: v.fov };
+  const t = Math.tan(THREE.MathUtils.degToRad(v.fov / 2)), a = camera.aspect || 1.6;
+  const dist = Math.max(v.fit[1] / (2 * t), v.fit[0] / (2 * t * a)) * 1.08;
+  return { pos: tgt.clone().addScaledVector(V(...v.dir).normalize(), dist), tgt, fov: v.fov };
+}
+const $ = id => document.getElementById(id);
+function setView(name, instant = false) {
+  const v = VIEWS[name]; if (!v) return; current = name;
+  document.querySelectorAll('[data-view]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.view === name)));
+  dimsMode = v.dims; sectionOn = !!v.section;
+  renderer.clippingPlanes = sectionOn ? [clipPlane] : [];
+  setTiers(v.tiers);
+  $('tWater').checked = !!v.water; $('tElec').checked = !!v.elec;
+  $('caption').textContent = v.cap;
+  R.mesh.emissive.set(name === 'screen' ? '#2fc4a8' : '#000000'); R.mesh.emissiveIntensity = 0.55;   // highlight the moving gates
+  const to = viewPose(v);
+  if (instant || reduceMotion) { camera.position.copy(to.pos); controls.target.copy(to.tgt); camera.fov = to.fov; camera.updateProjectionMatrix(); tween = null; }
+  else tween = { t0: performance.now(), dur: 1100, fromP: camera.position.clone(), fromT: controls.target.clone(), fromF: camera.fov, to };
+  applyVisibility();
+  try { history.replaceState(null, '', '#' + name); } catch (e) { /* file:// or sandboxed frame */ }
+}
+const tiersInput = $('tiers'), tiersOut = $('tiersOut');
+function setTiers(n) {
+  tierN = n; tiersInput.value = n; tiersOut.textContent = n === 1 ? '1' : `1–${n}`;
+  const peek = VIEWS[current]?.peek;
+  for (let t = 0; t < TIERS; t++) { G('t' + t).visible = t < n; G('l' + t).visible = t < (peek ? n - 1 : n); }
+  labels.forEach(c => c.rel && placeCallout(c));
+  if ($('tLed')) ledLights.forEach(l => { l.visible = $('tLed').checked && photoreal && quality === 'high' && l.userData.tier < tierN; });
+}
+// CSS2D labels ignore parent visibility, so toggle every child
+function showSet(g, on) { g.visible = on; g.children.forEach(o => { if (o.isCSS2DObject) o.visible = on; }); }
+function applyVisibility() {
+  applyMode();
+  G('shell').visible = $('tShell').checked;
+  G('roof').visible = $('tRoof').checked && !sectionOn;
+  const on = $('tLed').checked;
+  R.ledL.emissiveIntensity = on ? 6 : 0; R.ledL.color.set(on ? '#ffffff' : '#cfd3d6');
+  R.dwR.emissiveIntensity = R.dwH.emissiveIntensity = on ? (photoreal ? 0.12 : 0.35) : 0.03;
+  ledLights.forEach(l => { l.visible = on && photoreal && quality === 'high' && l.userData.tier < tierN; });
+  showSet(annot.overall, $('tDims').checked && dimsMode === 'overall');
+  showSet(annot.width, $('tDims').checked && dimsMode === 'overall' && current !== 'side');   // width reads edge-on from the side
+  showSet(annot.section, $('tDims').checked && dimsMode === 'section');
+  showSet(annot.plan, $('tDims').checked && dimsMode === 'plan');
+  annot.callouts.visible = $('tCallouts').checked && !sectionOn;
+  overlay.water.visible = $('tWater').checked;
+  overlay.elec.visible = $('tElec').checked;
+  document.querySelector('.legend-water').hidden = !$('tWater').checked;
+  document.querySelector('.legend-elec').hidden = !$('tElec').checked;
+}
+['tShell', 'tRoof', 'tLed', 'tDims', 'tCallouts', 'tAnim', 'tWater', 'tElec'].forEach(id => $(id).addEventListener('change', applyVisibility));
+tiersInput.addEventListener('input', () => setTiers(+tiersInput.value));
+document.querySelectorAll('[data-view]').forEach(b => b.addEventListener('click', () => { stopTour(); setView(b.dataset.view); }));
+if (reduceMotion) $('tAnim').checked = false;
+if (innerWidth < 720) { $('tCallouts').checked = false; $('tDims').checked = false; }
+
+let quality = 'high';
+function applyMode() {
+  photoreal = $('mode').value === 'photo';
+  scene.background = photoreal ? null : BG;
+  sky.visible = photoreal;
+  scene.environment = photoreal ? envSky : envStudio;
+  scene.fog = photoreal ? new THREE.Fog('#c9d3db', 3000, 9500) : new THREE.Fog(BG, 1500, 3800);
+  gridHelper.visible = !photoreal;
+  renderer.toneMappingExposure = photoreal ? 0.9 : 1.0;
+  sun.intensity = photoreal ? 2.6 : 1.85; fill.intensity = photoreal ? 0.25 : 0.45;
+  const hi = quality === 'high';
+  if (typeof gtao !== 'undefined') { gtao.enabled = photoreal && hi; grade.enabled = photoreal; bloom.enabled = hi; }
+  if (renderer.shadowMap.enabled !== hi) { renderer.shadowMap.enabled = hi; scene.traverse(o => { if (o.material) o.material.needsUpdate = true; }); }
+}
+$('mode').addEventListener('change', () => { if ($('mode').value === 'photo') $('tRoof').checked = false; applyVisibility(); });
+$('quality').addEventListener('change', () => { quality = $('quality').value; renderer.setPixelRatio(quality === 'high' ? Math.min(devicePixelRatio, 2) : 1); resize(); applyVisibility(); });
+
+/* ---------- guided tour ---------- */
+let tourTimer = null, tourIdx = 0;
+function stopTour() { if (tourTimer) { clearInterval(tourTimer); tourTimer = null; } $('tour').textContent = 'Play tour'; $('tour').setAttribute('aria-pressed', 'false'); }
+$('tour').addEventListener('click', () => {
+  if (tourTimer) { stopTour(); return; }
+  tourIdx = 0; setView(TOUR[0]);
+  $('tour').textContent = 'Stop tour'; $('tour').setAttribute('aria-pressed', 'true');
+  tourTimer = setInterval(() => { tourIdx = (tourIdx + 1) % TOUR.length; setView(TOUR[tourIdx]); }, 7000);
+});
+renderer.domElement.addEventListener('pointerdown', stopTour);
+/* ---------- post-processing ---------- */
+const composer = new EffectComposer(renderer, new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, samples: 4 }));
+composer.addPass(new RenderPass(scene, camera));
+const gtao = new GTAOPass(scene, camera, 512, 512);
+gtao.updateGtaoMaterial({ radius: 9, distanceExponent: 1.4, thickness: 8, scale: 1.25, samples: 16 });
+gtao.updatePdMaterial({ lumaPhi: 10, depthPhi: 2, normalPhi: 3, radius: 6, rings: 2, samples: 16 });
+gtao.blendIntensity = 0.9;
+gtao.overrideVisibility = function () {
+  const cache = this._visibilityCache;
+  this.scene.traverse(o => {
+    cache.set(o, o.visible);
+    const m = o.material;
+    if (o.isPoints || o.isLine || o === sky || (m && (m.depthTest === false || (m.transparent && !m.alphaTest)))) o.visible = false;
+  });
+};
+composer.addPass(gtao);
+const bloom = new UnrealBloomPass(new THREE.Vector2(256, 256), 0.28, 0.2, 3.6);
+composer.addPass(bloom);
+composer.addPass(new OutputPass());
+// photographic finish: vignette, faint chromatic fringe, film grain
+const grade = new ShaderPass({
+  uniforms: { tDiffuse: { value: null }, time: { value: 0 } },
+  vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.); }',
+  fragmentShader: `uniform sampler2D tDiffuse; uniform float time; varying vec2 vUv;
+    float h(vec2 p){ return fract(sin(dot(p, vec2(12.9898,78.233)) + time) * 43758.5453); }
+    void main(){
+      vec2 d = vUv - .5; float r2 = dot(d,d);
+      vec3 c = vec3(texture2D(tDiffuse, vUv - d*.0025).r, texture2D(tDiffuse, vUv).g, texture2D(tDiffuse, vUv + d*.0025).b);
+      float l = dot(c, vec3(.2126,.7152,.0722)); c = mix(vec3(l), c, 1.12); c = clamp((c - .5) * 1.07 + .5, 0., 1.);
+      c *= mix(1., .72, smoothstep(.12, .62, r2));
+      c += (h(vUv*1000.) - .5) * .025;
+      gl_FragColor = vec4(c, 1.);
+    }`
+});
+composer.addPass(grade);
+
+function resize() {
+  const w = host.clientWidth, h = host.clientHeight;
+  if (!w || !h) return;                                   // render tab hidden: keep the last size
+  renderer.setSize(w, h); composer.setSize(w, h); labelRenderer.setSize(w, h); gtao.setSize(w, h);
+  camera.aspect = w / h; camera.updateProjectionMatrix();
+}
+addEventListener('resize', resize);
+new ResizeObserver(resize).observe(host);
+resize();
+setView(location.hash.slice(1) in VIEWS ? location.hash.slice(1) : 'iso', true);
+document.getElementById('loading').remove();
+window.DW_RENDER_READY = true;
+
+/* ---------- label declutter: push overlapping callouts apart, keep them inside the viewport, draw 2D leaders ---------- */
+const svg = document.getElementById('leaders'), NS = 'http://www.w3.org/2000/svg', pool = [];
+function declutter() {
+  const vr = host.getBoundingClientRect(), live = labels.filter(c => c.lab.visible);
+  const items = live.map(c => {
+    const r = c.lab.element.getBoundingClientRect(), sh = c.shift || [0, 0];
+    return { c, x0: r.left - sh[0], x1: r.right - sh[0], y0: r.top - sh[1], y1: r.bottom - sh[1] };
+  }).sort((a, b) => a.y0 - b.y0);
+  const done = [], pad = 4, cap = document.getElementById('caption');
+  // keep callouts above the caption bar so it is never covered
+  const cr = cap && !cap.hidden && cap.textContent ? cap.getBoundingClientRect() : null;
+  const bottom = cr && cr.height ? Math.min(vr.bottom, cr.top) : vr.bottom;
+  // dimension tags stay put; callouts move around them
+  document.querySelectorAll('#page-render .dim').forEach(el => {
+    if (el.style.display === 'none') return;
+    const r = el.getBoundingClientRect();
+    if (r.width && r.right > vr.left && r.left < vr.right && r.bottom > vr.top && r.top < vr.bottom) done.push({ x0: r.left, x1: r.right, y0: r.top, y1: r.bottom });
+  });
+  for (const it of items) {
+    let dx = 0, dy = 0;
+    const w = it.x1 - it.x0, h = it.y1 - it.y0;
+    if (it.x0 < vr.left + pad) dx = vr.left + pad - it.x0;
+    if (it.x1 > vr.right - pad) dx = vr.right - pad - it.x1;
+    if (it.y0 < vr.top + pad) dy = vr.top + pad - it.y0;
+    for (let guard = 0; guard < 30; guard++) {
+      const hit = done.find(d => it.x0 + dx < d.x1 + pad && it.x1 + dx > d.x0 - pad && it.y0 + dy < d.y1 + pad && it.y1 + dy > d.y0 - pad);
+      if (!hit) break;
+      dy = hit.y1 + pad - it.y0;
+    }
+    if (it.y1 + dy > bottom - pad) {
+      // clamped at the bottom edge: climb above anything already placed there
+      dy = bottom - pad - it.y1;
+      for (let guard = 0; guard < 30; guard++) {
+        const hit = done.find(d => it.x0 + dx < d.x1 + pad && it.x1 + dx > d.x0 - pad && it.y0 + dy < d.y1 + pad && it.y1 + dy > d.y0 - pad);
+        if (!hit) break;
+        dy = hit.y0 - pad - it.y1;
+      }
+    }
+    it.c.shift = [dx, dy];
+    it.c.lab.element.style.translate = `${dx}px ${dy}px`;
+    done.push({ x0: it.x0 + dx, x1: it.x1 + dx, y0: it.y0 + dy, y1: it.y1 + dy, w, h });
+  }
+  let i = 0;
+  for (const it of items) {
+    const d = it.c.dot.element.getBoundingClientRect(), px = (d.left + d.right) / 2 - vr.left, py = (d.top + d.bottom) / 2 - vr.top;
+    const [dx, dy] = it.c.shift, l = it.x0 + dx - vr.left, r = it.x1 + dx - vr.left, t = it.y0 + dy - vr.top, b = it.y1 + dy - vr.top;
+    const qx = Math.min(Math.max(px, l), r), qy = Math.min(Math.max(py, t), b);
+    let ln = pool[i];
+    if (!ln) { ln = document.createElementNS(NS, 'line'); svg.appendChild(ln); pool.push(ln); }
+    ln.setAttribute('x1', px); ln.setAttribute('y1', py); ln.setAttribute('x2', qx); ln.setAttribute('y2', qy); ln.style.display = '';
+    i++;
+  }
+  for (; i < pool.length; i++) pool[i].style.display = 'none';
+}
+
+
+/* ---------- loop (paused while another dashboard tab is open) ---------- */
+const clock = new THREE.Clock();
+const qParam = new URLSearchParams(location.search).get('quality');
+let simTime = 4, frames = 0, fpsT0 = performance.now(), autoChecked = qParam === 'high' || qParam === 'fast';
+const ease = k => k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2;
+const renderVisible = () => !document.getElementById('page-render').hidden && !document.hidden;
+function frame() {
+  requestAnimationFrame(frame);
+  if (!renderVisible() || host.clientWidth === 0) { clock.getDelta(); return; }
+  const dt = Math.min(clock.getDelta(), 0.05);
+  if ($('tAnim').checked) { simTime += dt; R.belt.map.offset.x -= dt * 2.2 / 2; }
+  updateParticles(simTime);
+  updateFlows(simTime);
+  ripple.offset.x = -simTime * 0.02; ripple.offset.y = simTime * 0.006; grade.uniforms.time.value = (performance.now() % 1000) / 1000;
+  const mode = $('scrMode').value;
+  let target = mode === 'up' ? 1 : 0;
+  if (mode === 'auto') { const u = simTime % 16; target = u < 8 ? 0 : 1; }
+  screenLift += (target - screenLift) * Math.min(1, dt * 2.2);
+  updateScreens();
+  const st = screenLift < 0.05 ? 'down · holding mat' : screenLift > 0.95 ? 'up · releasing mat' : 'moving…';
+  if ($('scrOut').textContent !== st) $('scrOut').textContent = st;
+  if (tween) {
+    const k = Math.min((performance.now() - tween.t0) / tween.dur, 1), e = ease(k);
+    camera.position.lerpVectors(tween.fromP, tween.to.pos, e);
+    controls.target.lerpVectors(tween.fromT, tween.to.tgt, e);
+    camera.fov = tween.fromF + (tween.to.fov - tween.fromF) * e; camera.updateProjectionMatrix();
+    if (k >= 1) tween = null;
+  }
+  controls.update();
+  for (const c of labels) {
+    const hiddenBySection = sectionOn && c.anchor.x > SECTION_X;
+    const vis = annot.callouts.visible && !hiddenBySection && c.views.includes(current);
+    c.line.visible = false; c.dot.visible = c.lab.visible = vis;
+  }
+  composer.render();
+  labelRenderer.render(scene, camera);
+  declutter();
+  // after a few seconds, drop to fast quality once if this machine can't keep up
+  frames++;
+  const el = performance.now() - fpsT0;
+  if (!autoChecked && el > 4000) {
+    autoChecked = true;
+    if (frames / (el / 1000) < 18 && quality === 'high') {
+      $('quality').value = 'fast'; $('quality').dispatchEvent(new Event('change'));
+      const n = $('toast'); n.textContent = 'Switched to Fast quality for smoother motion. Change it under Display.'; n.hidden = false;
+      setTimeout(() => { n.hidden = true; }, 6000);
+    }
+  }
+}
+if (qParam === 'fast') { $('quality').value = 'fast'; $('quality').dispatchEvent(new Event('change')); }
+window.addEventListener('dw:render-shown', () => { resize(); fpsT0 = performance.now(); frames = 0; });
+frame();
+</script>
+</body>
+</html>
