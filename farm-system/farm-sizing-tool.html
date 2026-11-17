@@ -73,6 +73,9 @@ tr.tot td { font-weight: 700; border-bottom: 0 }
 tr.cmp { cursor: pointer }
 tr.cmp:hover td { background: var(--water-soft) }
 .tag { font: 600 10px var(--f-body); text-transform: uppercase; letter-spacing: 0.06em; padding: 2px 6px; border-radius: 4px; background: var(--lemna); color: var(--panel); margin-left: 6px; white-space: nowrap }
+.tag.re { background: var(--water) }
+.src { font-size: 12px; color: var(--muted); margin-top: 2px }
+.src b { color: var(--warn); font-weight: 600 }
 .two { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px }
 .note { color: var(--muted); font-size: 12.5px; max-width: 80ch }
 ul.assume { margin: 0; padding-left: 18px; display: grid; gap: 4px; color: var(--muted); font-size: 13px }
@@ -129,6 +132,13 @@ ul.assume b { color: var(--ink); font-weight: 600 }
         <div class="seg" role="group" aria-labelledby="growth-l" id="growth">
           <button type="button" data-v="design" aria-pressed="true">Design</button>
           <button type="button" data-v="target">Target</button>
+        </div>
+      </div>
+      <div class="field">
+        <span class="lbl" id="materials-l">Materials</span>
+        <div class="seg" role="group" aria-labelledby="materials-l" id="materials">
+          <button type="button" data-v="new" aria-pressed="true">New</button>
+          <button type="button" data-v="reclaimed">Reclaimed where safe</button>
         </div>
       </div>
       <div class="field">
@@ -195,7 +205,7 @@ ul.assume b { color: var(--ink); font-weight: 600 }
 
 <script>
 // MODEL START (kept in step with farm_sizing.py; catalog is generated from it)
-const CAT = {"MODULES":{"LT":{"name":"Low-tunnel lined-lane module, 30' x 96' pad, 4 lanes each under its own 3'-high film tunnel","area_m2":212,"depth_m":0.2,"days":190,"g":[6.5,8.0],"et_mm":2.5,"rain_mm":0.0,"install_pct":0.1,"footprint_m2":347.8293183697359,"bom":[["Grade pad to +/-1/2\", 2\" sand bed (farm equipment)",1,"lot",1200],["Lane walls: PT 2x12 on edge + stakes (8\" water, 3\" freeboard)",560,"lf",2.6],["Geotextile underlay, 8 oz non-woven",3300,"ft2",0.15],["Pond liner, 20 mil reinforced PE, one piece 34'x100'",3400,"ft2",0.44],["Low-tunnel hoops: 1/2\" EMT bent 10' sticks, 5' o.c., bolted to lane walls",80,"ea",7.0],["Tunnel film, 6 mil UV poly 14'x100', one per lane",4,"ea",140],["Ridge rope, tie-downs, film clips, end ties",4,"set",150],["Shade / insect net 30%, swaps for film Jun-Aug",4,"ea",150],["Inlet spreader + outlet weir box with adjustable standpipe (level control)",1,"set",450],["4\" PVC interconnect to next module + fittings",1,"lot",350],["Floating mat barriers across lanes (sealed 1-1/2\" PVC)",1,"lot",250],["Harvest trough at lane ends, rope-drawn floating push boom, hand skimmer",1,"set",500],["Fasteners, sealant, labels",1,"lot",300]]},"H30":{"name":"Hoop-house module, 30' x 96' cold frame, 4 serpentine lined lanes","area_m2":212,"depth_m":0.2,"days":210,"g":[6.5,8.0],"et_mm":3.5,"rain_mm":3.7783018867924527,"install_pct":0.15,"footprint_m2":361.20736907626423,"bom":[["Cold-frame hoop kit 30'x96', 14-ga galv. bows 4' o.c., purlins, hardware",1,"kit",8500],["Greenhouse film, 6 mil 4-yr UV poly, 42'x100'",1,"sheet",650],["Lock channel + wiggle wire",400,"lf",1.1],["End walls: PT 2x4 framing, poly or twin-wall, 1 man door",2,"ea",550],["Roll-up side kits, hand crank",2,"ea",350],["Insect / bird mesh on side openings, 4' x 96'",2,"ea",175],["Shade cloth 30%, summer only",1,"ea",550],["PT 2x6 baseboard + ground posts",1,"lot",500],["Grade pad to +/-1/2\", 2\" sand bed (farm equipment)",1,"lot",1200],["Lane walls: PT 2x12 on edge + stakes (8\" water, 3\" freeboard)",560,"lf",2.6],["Geotextile underlay, 8 oz non-woven",3300,"ft2",0.15],["Pond liner, 20 mil reinforced PE, one piece 34'x100'",3400,"ft2",0.44],["Inlet spreader + outlet weir box with adjustable standpipe (level control)",1,"set",450],["4\" PVC interconnect to next module + fittings",1,"lot",350],["Floating mat barriers across lanes (sealed 1-1/2\" PVC)",1,"lot",250],["Harvest trough at lane ends, hand skimmer, floating push boom",1,"set",500],["Gutters both sides, downspouts into lane inlets (roof rain offsets evaporation)",192,"lf",3.0],["Fasteners, sealant, labels",1,"lot",300]]},"OL":{"name":"Open lined-lane module, same 4 lanes with overhead bird net, no cover","area_m2":212,"depth_m":0.2,"days":150,"g":[7.0,9.0],"et_mm":4.0,"rain_mm":3.0,"install_pct":0.1,"footprint_m2":334.4512676632076,"bom":[["Grade pad to +/-1/2\", 2\" sand bed (farm equipment)",1,"lot",1200],["Lane walls: PT 2x12 on edge + stakes (8\" water, 3\" freeboard)",560,"lf",2.6],["Geotextile underlay, 8 oz non-woven",3300,"ft2",0.15],["Pond liner, 20 mil reinforced PE, one piece 34'x100'",3400,"ft2",0.44],["Inlet spreader + outlet weir box with adjustable standpipe (level control)",1,"set",450],["4\" PVC interconnect to next module + fittings",1,"lot",350],["Floating wind grid, sealed PVC every 10'",1,"lot",400],["Harvest trough at lane ends, hand skimmer, floating push boom",1,"set",500],["Overhead bird net on cable + posts (waterfowl spread duckweed)",1,"lot",900],["Fasteners, sealant, labels",1,"lot",300]]},"P1000":{"name":"Large open basin, ~1,000 m2 (1/4 acre), earthen berms, 4 lanes, lined","area_m2":1000,"depth_m":0.3,"days":150,"g":[6.5,8.5],"et_mm":4.5,"rain_mm":3.0,"install_pct":0.05,"footprint_m2":1600.0,"bom":[["Excavation, berms and lane baffles (contractor)",1300,"m2",2.7],["Pond liner, 30 mil reinforced PE",14000,"ft2",0.4],["Geotextile where subgrade is rocky (allowance)",1,"lot",1500],["Inlet and outlet structures, adjustable weir",1,"set",1200],["Floating wind grid (PVC + rope)",1,"lot",1200],["Overhead bird net on cable + posts",1,"lot",2500],["Harvest trough and skimmer",1,"set",800],["Piping to next basin",1,"lot",800],["Misc",1,"lot",600]]},"C40":{"name":"40' container, LED-lit, 16 stacked runs (existing design, comparison)","area_m2":138,"depth_m":0.076,"days":350,"g":[7.0,8.9],"et_mm":0.0,"rain_mm":0.0,"install_pct":0.0,"footprint_m2":59.45800314012579,"power_kwh_d":192,"bom":[["40' HC container build, itemized BOM incl. install (container-40ft dashboard)",1,"ea",296000]]}},"P":{"N_DW":0.055,"P_DW":0.009,"DM_FRESH":0.06,"DS_DRAINED":0.055,"DS_PRODUCT":0.9,"BIO_N_CREDIT":0.0,"C_MAX":40.0,"HRT_MIN_D":5.0,"HARVEST_EVERY_D":3,"PUMP_HEAD_M":4.0,"PUMP_EFF":0.4,"ENG_FIXED":5000,"ENG_PCT":0.03,"CONTINGENCY":0.2,"LABOR_RATE":20.0,"H_PER_1000M2_HARVEST":0.4,"H_SITE_DAY":0.5,"H_PER_T_FRESH":1.0,"POWER":0.11,"MAINT_PCT":0.03,"LAB":[1500,50],"FIN":0.08,"LIFE":15,"N_PRICE":1.2,"P_PRICE":3.0,"PRODUCT_PRICES":{"bulk soil amendment":0.45,"bagged fertilizer, wholesale":2.5},"DRY_WATER_KG_D":300,"DRY_HOOP_COST":15000,"DRY_H_PER_100KG":1.5,"SALT_BLEED":0.1}};
+const CAT = {"MODULES":{"LT":{"name":"Low-tunnel lined-lane module, 30' x 96' pad, 4 lanes each under its own 3'-high film tunnel","area_m2":212,"depth_m":0.2,"days":190,"g":[6.5,8.0],"et_mm":2.5,"rain_mm":0.0,"install_pct":0.1,"footprint_m2":347.8293183697359,"bom":[["Grade pad to +/-1/2\", 2\" sand bed (farm equipment)",1,"lot",1200],["Lane walls: PT 2x12 on edge + stakes (8\" water, 3\" freeboard)",560,"lf",2.6],["Geotextile underlay, 8 oz non-woven",3300,"ft2",0.15],["Pond liner, 20 mil reinforced PE, one piece 34'x100'",3400,"ft2",0.44],["Low-tunnel hoops: 1/2\" EMT bent 10' sticks, 5' o.c., bolted to lane walls",80,"ea",7.0],["Tunnel film, 6 mil UV poly 14'x100', one per lane",4,"ea",140],["Ridge rope, tie-downs, film clips, end ties",4,"set",150],["Shade / insect net 30%, swaps for film Jun-Aug",4,"ea",150],["Inlet spreader + outlet weir box with adjustable standpipe (level control)",1,"set",450],["4\" PVC interconnect to next module + fittings",1,"lot",350],["Floating mat barriers across lanes (sealed 1-1/2\" PVC)",1,"lot",250],["Harvest trough at lane ends, rope-drawn floating push boom, hand skimmer",1,"set",500],["Fasteners, sealant, labels",1,"lot",300]]},"H30":{"name":"Hoop-house module, 30' x 96' cold frame, 4 serpentine lined lanes","area_m2":212,"depth_m":0.2,"days":210,"g":[6.5,8.0],"et_mm":3.5,"rain_mm":3.7783018867924527,"install_pct":0.15,"footprint_m2":361.20736907626423,"bom":[["Cold-frame hoop kit 30'x96', 14-ga galv. bows 4' o.c., purlins, hardware",1,"kit",8500],["Greenhouse film, 6 mil 4-yr UV poly, 42'x100'",1,"sheet",650],["Lock channel + wiggle wire",400,"lf",1.1],["End walls: PT 2x4 framing, poly or twin-wall, 1 man door",2,"ea",550],["Roll-up side kits, hand crank",2,"ea",350],["Insect / bird mesh on side openings, 4' x 96'",2,"ea",175],["Shade cloth 30%, summer only",1,"ea",550],["PT 2x6 baseboard + ground posts",1,"lot",500],["Grade pad to +/-1/2\", 2\" sand bed (farm equipment)",1,"lot",1200],["Lane walls: PT 2x12 on edge + stakes (8\" water, 3\" freeboard)",560,"lf",2.6],["Geotextile underlay, 8 oz non-woven",3300,"ft2",0.15],["Pond liner, 20 mil reinforced PE, one piece 34'x100'",3400,"ft2",0.44],["Inlet spreader + outlet weir box with adjustable standpipe (level control)",1,"set",450],["4\" PVC interconnect to next module + fittings",1,"lot",350],["Floating mat barriers across lanes (sealed 1-1/2\" PVC)",1,"lot",250],["Harvest trough at lane ends, hand skimmer, floating push boom",1,"set",500],["Gutters both sides, downspouts into lane inlets (roof rain offsets evaporation)",192,"lf",3.0],["Fasteners, sealant, labels",1,"lot",300]]},"OL":{"name":"Open lined-lane module, same 4 lanes with overhead bird net, no cover","area_m2":212,"depth_m":0.2,"days":150,"g":[7.0,9.0],"et_mm":4.0,"rain_mm":3.0,"install_pct":0.1,"footprint_m2":334.4512676632076,"bom":[["Grade pad to +/-1/2\", 2\" sand bed (farm equipment)",1,"lot",1200],["Lane walls: PT 2x12 on edge + stakes (8\" water, 3\" freeboard)",560,"lf",2.6],["Geotextile underlay, 8 oz non-woven",3300,"ft2",0.15],["Pond liner, 20 mil reinforced PE, one piece 34'x100'",3400,"ft2",0.44],["Inlet spreader + outlet weir box with adjustable standpipe (level control)",1,"set",450],["4\" PVC interconnect to next module + fittings",1,"lot",350],["Floating wind grid, sealed PVC every 10'",1,"lot",400],["Harvest trough at lane ends, hand skimmer, floating push boom",1,"set",500],["Overhead bird net on cable + posts (waterfowl spread duckweed)",1,"lot",900],["Fasteners, sealant, labels",1,"lot",300]]},"P1000":{"name":"Large open basin, ~1,000 m2 (1/4 acre), earthen berms, 4 lanes, lined","area_m2":1000,"depth_m":0.3,"days":150,"g":[6.5,8.5],"et_mm":4.5,"rain_mm":3.0,"install_pct":0.05,"footprint_m2":1600.0,"bom":[["Excavation, berms and lane baffles (contractor)",1300,"m2",2.7],["Pond liner, 30 mil reinforced PE",14000,"ft2",0.4],["Geotextile where subgrade is rocky (allowance)",1,"lot",1500],["Inlet and outlet structures, adjustable weir",1,"set",1200],["Floating wind grid (PVC + rope)",1,"lot",1200],["Overhead bird net on cable + posts",1,"lot",2500],["Harvest trough and skimmer",1,"set",800],["Piping to next basin",1,"lot",800],["Misc",1,"lot",600]]},"C40":{"name":"40' container, LED-lit, 16 stacked runs (existing design, comparison)","area_m2":138,"depth_m":0.076,"days":350,"g":[7.0,8.9],"et_mm":0.0,"rain_mm":0.0,"install_pct":0.0,"footprint_m2":59.45800314012579,"power_kwh_d":192,"bom":[["40' HC container build, itemized BOM incl. install (container-40ft dashboard)",1,"ea",296000]]}},"P":{"N_DW":0.055,"P_DW":0.009,"DM_FRESH":0.06,"DS_DRAINED":0.055,"DS_PRODUCT":0.9,"BIO_N_CREDIT":0.0,"C_MAX":40.0,"HRT_MIN_D":5.0,"HARVEST_EVERY_D":3,"PUMP_HEAD_M":4.0,"PUMP_EFF":0.4,"ENG_FIXED":5000,"ENG_PCT":0.03,"CONTINGENCY":0.2,"LABOR_RATE":20.0,"H_PER_1000M2_HARVEST":0.4,"H_SITE_DAY":0.5,"H_PER_T_FRESH":1.0,"POWER":0.11,"MAINT_PCT":0.03,"LAB":[1500,50],"FIN":0.08,"LIFE":15,"N_PRICE":1.2,"P_PRICE":3.0,"PRODUCT_PRICES":{"bulk soil amendment":0.45,"bagged fertilizer, wholesale":2.5},"DRY_WATER_KG_D":300,"DRY_HOOP_COST":15000,"DRY_H_PER_100KG":1.5,"SALT_BLEED":0.1,"RECLAIM":[["Pond liner, 20 mil","Retired billboard vinyl, ~6 sheets 14'x48' per module, 2' overlaps + seam tape",0.15,"Billboard and sign companies; often free or $25-75 per sheet","PVC with printed inks: fine for the fertilizer route, not for feed or food. Check every sheet for holes; 3-5 yr life"],["Pond liner, 30 mil","Compacted on-site clay (if subsoil is >20% clay), patched with billboard vinyl",0.25,"Own subsoil; soil test and a compaction pass","Needs a percolation test and may need DNR sign-off; seepage risk on sandy sites"],["Geotextile","Old carpet, worn hay or silage tarps, or 2\" more sand",0.2,"Carpet installers, the farm's own tarps","Pick out nails and staples; carpet only under the liner, never in contact with water"],["Lane walls","Reclaimed 2x12 / barn planks or doubled pallet deck boards (untreated)",0.4,"Barn tear-downs, pallet yards (heat-treated 'HT' stamp only)","Never old CCA, creosote or methyl-bromide ('MB') pallets; untreated wood lasts 3-6 seasons"],["Low-tunnel hoops","Used chain-link fence top rail (1-3/8\") bent on a hoop bender",0.3,"Fence contractors' tear-outs","Check for rust at joints; cut out crushed sections"],["Tunnel film","Used greenhouse film from greenhouse re-skins",0.1,"Commercial greenhouses replace film every 4 yr","Aged film passes ~10-15% less light; expect 1-2 seasons; wash before use"],["Greenhouse film","Used greenhouse film from greenhouse re-skins",0.1,"Commercial greenhouses replace film every 4 yr","Aged film passes ~10-15% less light; expect 1-2 seasons"],["Ridge rope","Baler twine, reclaimed rope, scrap rebar stakes",0.3,"The farm itself","Polypropylene twine degrades in UV in ~2 seasons; replace yearly"],["Shade / insect net","Used shade cloth or orchard netting",0.3,"Nurseries, orchards","Patch holes so waterfowl and frogs stay out"],["Inlet spreader","Cut-down IBC tote as weir box + reclaimed PVC standpipe",0.4,"IBC resellers ($50-100), food-grade history only","Ask what the tote held: food-grade (syrup, juice, oils) only, never chemicals or pesticides"],["4\" PVC interconnect","Used irrigation pipe or field drain tile",0.4,"Farm auctions, irrigation dealers' trade-ins","Pressure-test joints; gravity flow only"],["Floating mat barriers","Capped reclaimed PVC, or sealed 2-L bottles strung on rope",0.2,"Scrap bins, recycling","Bottles go brittle in UV; check each season"],["Harvest trough","Split 55-gal food-grade drums or half-culvert, PVC + pool-noodle push boom",0.4,"Food plants and car washes sell drums; road-crew culvert offcuts","Food-grade drums only; deburr culvert edges so the liner is not cut"],["Cold-frame hoop kit","Used greenhouse frame bought at a dismantle, picked up and re-erected",0.4,"Greenhouse closures, farm auctions, classifieds","Missing parts and labor to dismantle; check bows for kinks; may not meet local snow load"],["Lock channel","Reused lock channel and wire from the dismantled frame",0.5,"Same dismantle","Replace bent sections"],["End walls","Reclaimed lumber with old storm doors and windows",0.4,"Habitat ReStore, demolition","Seal gaps; glass needs safety film"],["Insect / bird mesh","Used orchard or fishing net",0.3,"Orchards, net lofts","Mesh small enough to stop birds"],["Shade cloth","Used shade cloth",0.3,"Nurseries",""],["PT 2x6 baseboard","Reclaimed lumber baseboard on salvaged fence posts",0.4,"Barn tear-downs","Avoid CCA and creosote"],["Gutters","Salvaged gutters or PVC pipe split lengthwise",0.3,"Roofing contractors, scrap",""],["Floating wind grid","Reclaimed PVC and rope",0.3,"Scrap bins",""],["Overhead bird net","Used orchard or fishing net on reclaimed fence posts and wire",0.3,"Orchards, fence tear-outs","Re-tension each spring"],["Geotextile where subgrade","Old carpet or worn tarps",0.2,"Carpet installers","Under liner only"],["Inlet and outlet structures","Culvert offcuts and IBC totes",0.4,"Road crews, IBC resellers","Food-grade totes only"],["Harvest trough and skimmer","Split drums / culvert, pool-noodle boom",0.4,"As above",""],["Piping to next basin","Used irrigation pipe or drain tile",0.4,"Farm auctions",""],["40' HC container build","Retired (non-working) reefer container or reefer trailer shell, already insulated; rest as itemized",0.95,"Container depots sell dead reefers for $3-6k","Saves the $5.5k box and most of the $12k insulation; check floor and door seals"],["Intake: submersible","Reclaimed or rebuilt effluent pump from a farm dispersal",0.5,"Farm auctions, pump shops' trade-ins","Keep a spare: the intake is the single point of failure"],["Screen:","Food-plant surplus stainless wedge-wire, or stainless window screen on a sloped pallet frame",0.4,"Food-equipment surplus dealers","Window screen clogs faster; brush daily"],["Settling tank","Ganged used IBC totes (275 gal each) or a retired bulk milk tank",0.35,"IBC resellers, dairy dispersals","Food-grade history only; a bulk tank is ideal (stainless, has a drain)"],["Header + blend box","IBC tote on a pallet stand",0.3,"IBC resellers","Food-grade history only"],["Main supply line","Used irrigation pipe / lay-flat hose",0.5,"Farm auctions","Bury or insulate where it must not freeze"],["Dewatering:","Pallet-frame drain table with stainless window screen, or surplus vibrating screen from a dairy plant",0.3,"Pallet yards, food-equipment surplus","Food-contact screen if the product may go to feed"],["Harvest cart","The farm's existing scale, old garden cart, reused feed tubs",0.4,"The farm itself","Clean tubs that held medicated feed before use"],["Winter inoculum bank","IBC half-totes and used LED shop lights",0.5,"As above",""],["Recirculation pump","Reclaimed pump (pool or sump pump class)",0.5,"Pool companies' trade-ins","Oversize slightly; low head"],["Solar drying hoop","Used greenhouse frame with pallet-and-window-screen drying racks",0.35,"Greenhouse closures","Food-contact screen if the product may go to feed"]],"RECLAIM_LABOR":0.15,"RECLAIM_GROWTH":{"LT":0.95,"H30":0.95},"RECLAIM_MAINT_PCT":0.05}};
 const GAL_M3 = 0.0037854, M2_FT2 = 10.7639, M2_ACRE = 4046.86;
 function siteBom(P, qSeason, qPump, freshKgD, nMod, recirc) {
   const gpd = qSeason / GAL_M3;
@@ -218,14 +228,21 @@ function siteBom(P, qSeason, qPump, freshKgD, nMod, recirc) {
   if (recirc > 0) items.push(["Recirculation pump to blend strong feed (low head)", 1, "set", 900 + 15 * pumpGpm]);
   return items;
 }
+function applyMaterials(items, materials) {
+  return items.map(([it, qty, unit, u]) => {
+    const alt = materials === "reclaimed" ? CAT.P.RECLAIM.find(r => it.startsWith(r[0])) : null;
+    return alt ? [alt[1], qty, unit, u * alt[2], true, alt[3], alt[4]] : [it, qty, unit, u, false, "", ""];
+  });
+}
 function size(o) {
   const P = CAT.P;
   const tnIn = o.tn ?? 120, tpIn = o.tp ?? 25, tnOut = o.tnOut ?? 10;
   const modKey = o.module ?? "LT", mode = o.mode ?? "store", growth = o.growth ?? "design", dry = !!o.dry;
+  const materials = o.materials ?? "new", reclaimed = materials === "reclaimed";
   const LABOR_RATE = o.labor ?? P.LABOR_RATE, POWER = o.power ?? P.POWER;
   const PRICE = o.price ?? P.PRODUCT_PRICES["bagged fertilizer, wholesale"], CONT = o.cont ?? P.CONTINGENCY;
   const m = CAT.MODULES[modKey];
-  const g = m.g[growth === "design" ? 0 : 1], days = m.days;
+  const g = m.g[growth === "design" ? 0 : 1] * (reclaimed ? (P.RECLAIM_GROWTH[modKey] ?? 1) : 1), days = m.days;
   const q = o.gpd * GAL_M3, yearRound = days >= 350;
   const qSeason = (mode === "store" && !yearRound) ? q * 365 / days : q;
   const treatedFrac = (mode === "store" || yearRound) ? 1 : days / 365;
@@ -253,12 +270,15 @@ function size(o) {
   const dwYr = Math.min(dwD, nLoad / (P.N_DW * (1 + P.BIO_N_CREDIT)) / 1000) * days;
   const pRemoved = dwYr * P.P_DW, pLoad = qSeason * tpIn * days / 1000;
   const freshKgD = dwYr / days / P.DM_FRESH, productKgYr = dwYr / P.DS_PRODUCT;
-  const moduleBom = m.bom.reduce((s, b) => s + b[1] * b[3], 0);
-  const sbom = siteBom(P, qSeason, qPump, freshKgD, nMod, recirc);
+  const mbom = applyMaterials(m.bom, materials);
+  const moduleBom = mbom.reduce((s, b) => s + b[1] * b[3], 0);
+  const moduleBomNew = m.bom.reduce((s, b) => s + b[1] * b[3], 0);
+  let sbom = siteBom(P, qSeason, qPump, freshKgD, nMod, recirc);
   const waterKgD = dwYr / days * (1 / P.DS_DRAINED - 1 / P.DS_PRODUCT);
   if (dry) sbom.push(["Solar drying hoop 30'x96' with mesh tables", Math.ceil(waterKgD / P.DRY_WATER_KG_D), "ea", P.DRY_HOOP_COST]);
+  sbom = applyMaterials(sbom, materials);
   const siteCost = sbom.reduce((s, b) => s + b[1] * b[3], 0);
-  const modulesCost = nMod * moduleBom * (1 + m.install_pct);
+  const modulesCost = nMod * (moduleBom + moduleBomNew * (m.install_pct + (reclaimed ? P.RECLAIM_LABOR : 0)));
   const equip = modulesCost + siteCost;
   const eng = P.ENG_FIXED + P.ENG_PCT * equip;
   const capex = (equip + eng) * (1 + CONT);
@@ -266,7 +286,7 @@ function size(o) {
   const kwhYr = pumpKwhD * days + 1.0 * 365 + (m.power_kwh_d || 0) * nMod * days;
   const laborH = P.H_PER_1000M2_HARVEST * areaB / 1000 * (days / P.HARVEST_EVERY_D) + P.H_SITE_DAY * days
                + P.H_PER_T_FRESH * freshKgD * days / 1000 + (dry ? P.DRY_H_PER_100KG * productKgYr / 100 : 0);
-  const opex = { labor: laborH * LABOR_RATE, electricity: kwhYr * POWER, maintenance: equip * P.MAINT_PCT,
+  const opex = { labor: laborH * LABOR_RATE, electricity: kwhYr * POWER, maintenance: equip * (reclaimed ? P.RECLAIM_MAINT_PCT : P.MAINT_PCT),
                  "lab tests": P.LAB[0] + P.LAB[1] * nMod };
   const opexT = Object.values(opex).reduce((a, b) => a + b, 0);
   const crf = P.FIN / (1 - Math.pow(1 + P.FIN, -P.LIFE));
@@ -279,7 +299,7 @@ function size(o) {
     et_gpd: etNet * areaB / GAL_M3, storage_gal: (mode === "store" && !yearRound) ? q * (365 - days) / GAL_M3 : 0,
     recirc, pump_gpm: qPump / GAL_M3 / 1440, n_removed_kg: nRemoved, p_removed_kg: pRemoved,
     p_removed_pct: 100 * Math.min(1, pRemoved / Math.max(pLoad, 1e-9)), fresh_kg_d: freshKgD, product_kg_yr: productKgYr,
-    module_bom: moduleBom, modules_cost: modulesCost, site_cost: siteCost, site_bom: sbom, eng, equip, capex, opex, opex_t: opexT,
+    module_bom: moduleBom, module_bom_new: moduleBomNew, mbom, materials, modules_cost: modulesCost, site_cost: siteCost, site_bom: sbom, eng, equip, capex, opex, opex_t: opexT,
     kwh_yr: kwhYr, labor_h: laborH, capital_charge: capex * crf, annual, revenue, net: revenue - annual,
     per_kg_n: annual / Math.max(nRemoved, 1e-9), per_kgal: annual / (treatedM3Yr / GAL_M3 / 1000),
     per_kg_product: annual / Math.max(productKgYr, 1e-9), capex_per_gpd: capex / o.gpd, cont: CONT };
@@ -295,7 +315,7 @@ const fmt = (x, d = 0) => Number(x).toLocaleString("en-US", { maximumFractionDig
 const usd = x => (x < 0 ? "−$" : "$") + fmt(Math.abs(x));
 const usdK = x => Math.abs(x) >= 1e6 ? "$" + fmt(x / 1e6, 2) + "M" : Math.abs(x) >= 1e4 ? "$" + fmt(x / 1e3, 0) + "k" : usd(x);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
-const state = { mode: "store", growth: "design", route: "wet" };
+const state = { mode: "store", growth: "design", route: "wet", materials: "new" };
 
 const sel = $("module");
 for (const [k, m] of Object.entries(CAT.MODULES)) {
@@ -308,7 +328,7 @@ $("gpdr").value = toSlider(+$("gpd").value);
 $("gpdr").addEventListener("input", e => { $("gpd").value = fromSlider(+e.target.value); render(); });
 $("gpd").addEventListener("input", () => { const v = +$("gpd").value; if (v > 0) $("gpdr").value = toSlider(v); render(); });
 document.querySelectorAll("#flowchips .chip").forEach(b => b.addEventListener("click", () => { $("gpd").value = b.dataset.v; $("gpdr").value = toSlider(+b.dataset.v); render(); }));
-for (const id of ["mode", "growth", "route"]) {
+for (const id of ["mode", "growth", "route", "materials"]) {
   $(id).querySelectorAll("button").forEach(b => b.addEventListener("click", () => {
     state[id] = b.dataset.v; $(id).querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", x === b)); render();
   }));
@@ -320,7 +340,7 @@ $("f").addEventListener("submit", e => e.preventDefault());
 
 function inputs(module) {
   return { gpd: Math.max(100, +$("gpd").value || 100), tn: +$("tn").value, tp: +$("tp").value, tnOut: +$("tnout").value,
-    module: module || sel.value, mode: state.mode, growth: state.growth, dry: state.route === "dry",
+    module: module || sel.value, mode: state.mode, growth: state.growth, dry: state.route === "dry", materials: state.materials,
     labor: +$("labor").value, power: +$("power").value, price: +$("price").value, cont: (+$("cont").value) / 100 };
 }
 
@@ -350,6 +370,9 @@ function planSvg(r) {
   return s + "</svg>";
 }
 
+const bomRow = withUnit => b => `<tr><td>${esc(b[0])}${b[4] ? '<span class="tag re">Reclaimed</span>' : ""}` +
+  (b[4] ? `<div class="src">${esc(b[5])}${b[6] ? ". <b>Watch:</b> " + esc(b[6]) : ""}</div>` : "") +
+  `</td><td class="n">${fmt(b[1])}${withUnit ? " " + b[2] : ""}</td><td class="n">${usd(b[1] * b[3])}</td></tr>`;
 function render() {
   const o = inputs(), r = size(o), m = CAT.MODULES[r.module];
   const acres = r.area_m2 * M2_FT2 / 43560;
@@ -388,13 +411,13 @@ function render() {
     tr.addEventListener("click", go); tr.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); go(); } });
   });
 
-  $("mbom-h").textContent = `One ${NOUN[r.module]}, bill of materials`;
+  $("mbom-h").textContent = `One ${NOUN[r.module]}, bill of materials${r.materials === "reclaimed" ? " (reclaimed)" : ""}`;
   $("mbom").innerHTML = `<thead><tr><th>Item</th><th class="n">Qty</th><th class="n">Cost</th></tr></thead><tbody>` +
-    m.bom.map(b => `<tr><td>${esc(b[0])}</td><td class="n">${fmt(b[1])} ${b[2]}</td><td class="n">${usd(b[1] * b[3])}</td></tr>`).join("") +
+    r.mbom.map(bomRow(true)).join("") +
     `<tr class="tot"><td>Materials per module</td><td class="n"></td><td class="n">${usd(r.module_bom)}</td></tr>` +
-    `<tr><td colspan="3" class="note">${fmt(m.area_m2 * M2_FT2)} ft² of water per module, ${usd(r.module_bom / (m.area_m2 * M2_FT2))}/ft² before install labor (${fmt(m.install_pct * 100)}%).</td></tr></tbody>`;
+    `<tr><td colspan="3" class="note">${fmt(m.area_m2 * M2_FT2)} ft² of water per module, ${usd(r.module_bom / (m.area_m2 * M2_FT2))}/ft² before install labor (${fmt(m.install_pct * 100)}%${r.materials === "reclaimed" ? ` + ${fmt(CAT.P.RECLAIM_LABOR * 100)}% for collecting, cleaning and seaming; new materials would be ${usd(r.module_bom_new)}` : ""}).</td></tr></tbody>`;
   $("sbom").innerHTML = `<thead><tr><th>Item</th><th class="n">Qty</th><th class="n">Cost</th></tr></thead><tbody>` +
-    r.site_bom.map(b => `<tr><td>${esc(b[0])}</td><td class="n">${fmt(b[1])}</td><td class="n">${usd(b[1] * b[3])}</td></tr>`).join("") +
+    r.site_bom.map(bomRow(false)).join("") +
     `<tr class="tot"><td>Site equipment</td><td></td><td class="n">${usd(r.site_cost)}</td></tr>` +
     `<tr><td>${fmt(r.n_mod)} modules incl. install labor</td><td></td><td class="n">${usd(r.modules_cost)}</td></tr>` +
     `<tr><td>Engineering, permits, water tests</td><td></td><td class="n">${usd(r.eng)}</td></tr>` +
@@ -413,6 +436,7 @@ function render() {
     `<b>Prices</b> are 2026 retail or farm-supply planning figures with roughly ±30% uncertainty; the large basin depends on site soils and contractor rates (±40%). Farm labor and equipment do site grading; a contractor adds cost.`,
     `<b>Harvest</b> every ${P.HARVEST_EVERY_D} days with a rope-drawn floating boom to a trough at the lane end, then a gravity screen to about ${fmt(P.DS_DRAINED * 100, 1)}% solids. No press: press juice carries nitrogen back into the water.`,
     `<b>Winter</b> the modules are drained or frozen. A small indoor inoculum bank keeps the strain over winter, so spring start-up does not depend on a supplier.`,
+    `<b>Reclaimed materials</b> swap each line for a salvaged alternative at its typical cost (billboard vinyl liner, used greenhouse film, fence top-rail hoops, food-grade IBC totes and drums, barn lumber, used irrigation pipe). They add ${fmt(P.RECLAIM_LABOR * 100)}% install labor, raise upkeep to ${fmt(P.RECLAIM_MAINT_PCT * 100)}% a year and, under aged film, cut growth about 5%. Meters and electrical stay new. Recycled plastics suit the fertilizer route; use new food-grade liner if biomass may go to feed.`,
     `<b>Container</b> row uses the itemized 40' LED container build from the earlier dashboard (~$296k) for comparison. It runs year-round but costs far more per kg N.`,
   ].map(t => `<li>${t}</li>`).join("");
 }

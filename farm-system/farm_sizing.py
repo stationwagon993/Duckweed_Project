@@ -140,6 +140,76 @@ def site_bom(q_season_m3d, q_pump_m3d, fresh_kg_d, n_mod, recirc):
 
 ENG_FIXED, ENG_PCT, CONTINGENCY = 5000, 0.03, 0.20
 
+# ---------------- RECLAIMED / RECYCLED MATERIALS (materials="reclaimed") ----------------
+# Each entry swaps a BOM line that STARTS WITH the prefix for a reclaimed alternative.
+# factor = reclaimed cost / new cost for that line (collection, cleaning and haul included, labor is extra below).
+# Items left out (grading, fasteners, meters, electrical) stay new: no saving, or safety/accuracy matters.
+RECLAIM = [  # (prefix, reclaimed alternative, factor, where to get it, risk / limit)
+    ("Pond liner, 20 mil", "Retired billboard vinyl, ~6 sheets 14'x48' per module, 2' overlaps + seam tape", 0.15,
+     "Billboard and sign companies; often free or $25-75 per sheet", "PVC with printed inks: fine for the fertilizer route, not for feed or food. Check every sheet for holes; 3-5 yr life"),
+    ("Pond liner, 30 mil", "Compacted on-site clay (if subsoil is >20% clay), patched with billboard vinyl", 0.25,
+     "Own subsoil; soil test and a compaction pass", "Needs a percolation test and may need DNR sign-off; seepage risk on sandy sites"),
+    ("Geotextile", "Old carpet, worn hay or silage tarps, or 2\" more sand", 0.20,
+     "Carpet installers, the farm's own tarps", "Pick out nails and staples; carpet only under the liner, never in contact with water"),
+    ("Lane walls", "Reclaimed 2x12 / barn planks or doubled pallet deck boards (untreated)", 0.40,
+     "Barn tear-downs, pallet yards (heat-treated 'HT' stamp only)", "Never old CCA, creosote or methyl-bromide ('MB') pallets; untreated wood lasts 3-6 seasons"),
+    ("Low-tunnel hoops", "Used chain-link fence top rail (1-3/8\") bent on a hoop bender", 0.30,
+     "Fence contractors' tear-outs", "Check for rust at joints; cut out crushed sections"),
+    ("Tunnel film", "Used greenhouse film from greenhouse re-skins", 0.10,
+     "Commercial greenhouses replace film every 4 yr", "Aged film passes ~10-15% less light; expect 1-2 seasons; wash before use"),
+    ("Greenhouse film", "Used greenhouse film from greenhouse re-skins", 0.10,
+     "Commercial greenhouses replace film every 4 yr", "Aged film passes ~10-15% less light; expect 1-2 seasons"),
+    ("Ridge rope", "Baler twine, reclaimed rope, scrap rebar stakes", 0.30, "The farm itself", "Polypropylene twine degrades in UV in ~2 seasons; replace yearly"),
+    ("Shade / insect net", "Used shade cloth or orchard netting", 0.30, "Nurseries, orchards", "Patch holes so waterfowl and frogs stay out"),
+    ("Inlet spreader", "Cut-down IBC tote as weir box + reclaimed PVC standpipe", 0.40,
+     "IBC resellers ($50-100), food-grade history only", "Ask what the tote held: food-grade (syrup, juice, oils) only, never chemicals or pesticides"),
+    ("4\" PVC interconnect", "Used irrigation pipe or field drain tile", 0.40, "Farm auctions, irrigation dealers' trade-ins", "Pressure-test joints; gravity flow only"),
+    ("Floating mat barriers", "Capped reclaimed PVC, or sealed 2-L bottles strung on rope", 0.20, "Scrap bins, recycling", "Bottles go brittle in UV; check each season"),
+    ("Harvest trough", "Split 55-gal food-grade drums or half-culvert, PVC + pool-noodle push boom", 0.40,
+     "Food plants and car washes sell drums; road-crew culvert offcuts", "Food-grade drums only; deburr culvert edges so the liner is not cut"),
+    ("Cold-frame hoop kit", "Used greenhouse frame bought at a dismantle, picked up and re-erected", 0.40,
+     "Greenhouse closures, farm auctions, classifieds", "Missing parts and labor to dismantle; check bows for kinks; may not meet local snow load"),
+    ("Lock channel", "Reused lock channel and wire from the dismantled frame", 0.50, "Same dismantle", "Replace bent sections"),
+    ("End walls", "Reclaimed lumber with old storm doors and windows", 0.40, "Habitat ReStore, demolition", "Seal gaps; glass needs safety film"),
+    ("Insect / bird mesh", "Used orchard or fishing net", 0.30, "Orchards, net lofts", "Mesh small enough to stop birds"),
+    ("Shade cloth", "Used shade cloth", 0.30, "Nurseries", ""),
+    ("PT 2x6 baseboard", "Reclaimed lumber baseboard on salvaged fence posts", 0.40, "Barn tear-downs", "Avoid CCA and creosote"),
+    ("Gutters", "Salvaged gutters or PVC pipe split lengthwise", 0.30, "Roofing contractors, scrap", ""),
+    ("Floating wind grid", "Reclaimed PVC and rope", 0.30, "Scrap bins", ""),
+    ("Overhead bird net", "Used orchard or fishing net on reclaimed fence posts and wire", 0.30, "Orchards, fence tear-outs", "Re-tension each spring"),
+    ("Geotextile where subgrade", "Old carpet or worn tarps", 0.20, "Carpet installers", "Under liner only"),
+    ("Inlet and outlet structures", "Culvert offcuts and IBC totes", 0.40, "Road crews, IBC resellers", "Food-grade totes only"),
+    ("Harvest trough and skimmer", "Split drums / culvert, pool-noodle boom", 0.40, "As above", ""),
+    ("Piping to next basin", "Used irrigation pipe or drain tile", 0.40, "Farm auctions", ""),
+    ("40' HC container build", "Retired (non-working) reefer container or reefer trailer shell, already insulated; rest as itemized", 0.95,
+     "Container depots sell dead reefers for $3-6k", "Saves the $5.5k box and most of the $12k insulation; check floor and door seals"),
+    ("Intake: submersible", "Reclaimed or rebuilt effluent pump from a farm dispersal", 0.50, "Farm auctions, pump shops' trade-ins", "Keep a spare: the intake is the single point of failure"),
+    ("Screen:", "Food-plant surplus stainless wedge-wire, or stainless window screen on a sloped pallet frame", 0.40,
+     "Food-equipment surplus dealers", "Window screen clogs faster; brush daily"),
+    ("Settling tank", "Ganged used IBC totes (275 gal each) or a retired bulk milk tank", 0.35,
+     "IBC resellers, dairy dispersals", "Food-grade history only; a bulk tank is ideal (stainless, has a drain)"),
+    ("Header + blend box", "IBC tote on a pallet stand", 0.30, "IBC resellers", "Food-grade history only"),
+    ("Main supply line", "Used irrigation pipe / lay-flat hose", 0.50, "Farm auctions", "Bury or insulate where it must not freeze"),
+    ("Dewatering:", "Pallet-frame drain table with stainless window screen, or surplus vibrating screen from a dairy plant", 0.30,
+     "Pallet yards, food-equipment surplus", "Food-contact screen if the product may go to feed"),
+    ("Harvest cart", "The farm's existing scale, old garden cart, reused feed tubs", 0.40, "The farm itself", "Clean tubs that held medicated feed before use"),
+    ("Winter inoculum bank", "IBC half-totes and used LED shop lights", 0.50, "As above", ""),
+    ("Recirculation pump", "Reclaimed pump (pool or sump pump class)", 0.50, "Pool companies' trade-ins", "Oversize slightly; low head"),
+    ("Solar drying hoop", "Used greenhouse frame with pallet-and-window-screen drying racks", 0.35, "Greenhouse closures", "Food-contact screen if the product may go to feed"),
+]
+RECLAIM_LABOR = 0.15             # extra install labor (collect, clean, seam, sort) as a fraction of NEW module material cost
+RECLAIM_GROWTH = {"LT": 0.95, "H30": 0.95}   # aged film passes 10-15% less light; growth is only partly light-limited
+RECLAIM_MAINT_PCT = 0.05         # shorter life of reclaimed liner, film and wood: maintenance as % of equipment per year
+
+
+def apply_materials(items, materials="new"):
+    """Return BOM lines as (item, qty, unit, unit $, reclaimed?, where, risk)."""
+    out = []
+    for it, qty, unit, u in items:
+        alt = next((r for r in RECLAIM if it.startswith(r[0])), None) if materials == "reclaimed" else None
+        out.append((alt[1], qty, unit, u * alt[2], True, alt[3], alt[4]) if alt else (it, qty, unit, u, False, "", ""))
+    return out
+
 # ---------------- OPERATIONS ----------------
 LABOR_RATE = 20.0                # $/h farm labor
 H_PER_1000M2_HARVEST = 0.4       # per harvest pass
@@ -156,11 +226,11 @@ DRY_WATER_KG_D, DRY_HOOP_COST, DRY_H_PER_100KG = 300, 15000, 1.5
 SALT_BLEED = 0.10                # keep at least this fraction of inflow leaving as effluent, or salts build up
 
 
-def size(gpd, tn_in=120.0, tp_in=25.0, tn_out=10.0, module="LT", mode="store", growth="design", dry=False):
+def size(gpd, tn_in=120.0, tp_in=25.0, tn_out=10.0, module="LT", mode="store", growth="design", dry=False, materials="new"):
     """mode 'store': the whole year's flow is held in existing farm storage and treated in the growing season.
        mode 'season': only in-season flow is treated; off-season flow goes where it goes today."""
     m = MODULES[module]
-    g = m["g"][0 if growth == "design" else 1]
+    g = m["g"][0 if growth == "design" else 1] * (RECLAIM_GROWTH.get(module, 1.0) if materials == "reclaimed" else 1.0)
     days = m["days"]
     q = gpd * GAL_M3                                         # m3/d, average
     year_round = days >= 350
@@ -194,13 +264,17 @@ def size(gpd, tn_in=120.0, tp_in=25.0, tn_out=10.0, module="LT", mode="store", g
     fresh_kg_d = dw_yr / days / DM_FRESH
     product_kg_yr = dw_yr / DS_PRODUCT
 
-    module_bom = sum(qty * u for _, qty, _, u in m["bom"])
+    mbom = apply_materials(m["bom"], materials)
+    module_bom = sum(b[1] * b[3] for b in mbom)
+    module_bom_new = sum(qty * u for _, qty, _, u in m["bom"])
     sbom = site_bom(q_season, q_pump, fresh_kg_d, n_mod, recirc)
     water_kg_d = dw_yr / days * (1 / DS_DRAINED - 1 / DS_PRODUCT)
     if dry:
         sbom.append(("Solar drying hoop 30'x96' with mesh tables", math.ceil(water_kg_d / DRY_WATER_KG_D), "ea", DRY_HOOP_COST))
-    site_cost = sum(qty * u for _, qty, _, u in sbom)
-    modules_cost = n_mod * module_bom * (1 + m["install_pct"])
+    sbom = apply_materials(sbom, materials)
+    site_cost = sum(b[1] * b[3] for b in sbom)
+    reclaimed = materials == "reclaimed"
+    modules_cost = n_mod * (module_bom + module_bom_new * (m["install_pct"] + (RECLAIM_LABOR if reclaimed else 0)))
     equip = modules_cost + site_cost
     eng = ENG_FIXED + ENG_PCT * equip
     capex = (equip + eng) * (1 + CONTINGENCY)
@@ -211,7 +285,7 @@ def size(gpd, tn_in=120.0, tp_in=25.0, tn_out=10.0, module="LT", mode="store", g
     labor_h = (H_PER_1000M2_HARVEST * area_b / 1000 * harvests + H_SITE_DAY * days
                + H_PER_T_FRESH * fresh_kg_d * days / 1000
                + (DRY_H_PER_100KG * product_kg_yr / 100 if dry else 0))
-    opex = {"labor": labor_h * LABOR_RATE, "electricity": kwh_yr * POWER, "maintenance": equip * MAINT_PCT,
+    opex = {"labor": labor_h * LABOR_RATE, "electricity": kwh_yr * POWER, "maintenance": equip * (RECLAIM_MAINT_PCT if reclaimed else MAINT_PCT),
             "lab tests": LAB[0] + LAB[1] * n_mod}
     opex_t = sum(opex.values())
     crf = FIN / (1 - (1 + FIN) ** -LIFE)
@@ -228,7 +302,7 @@ def size(gpd, tn_in=120.0, tp_in=25.0, tn_out=10.0, module="LT", mode="store", g
                 recirc=recirc, pump_gpm=q_pump / GAL_M3 / 1440,
                 n_removed_kg=n_removed_yr, p_removed_kg=p_removed_yr, p_removed_pct=100 * min(1, p_removed_yr / max(p_load_yr, 1e-9)),
                 fresh_kg_d=fresh_kg_d, product_kg_yr=product_kg_yr,
-                module_bom=module_bom, modules_cost=modules_cost, site_cost=site_cost, site_bom=sbom, eng=eng,
+                module_bom=module_bom, module_bom_new=module_bom_new, mbom=mbom, materials=materials, modules_cost=modules_cost, site_cost=site_cost, site_bom=sbom, eng=eng,
                 capex=capex, opex=opex, opex_t=opex_t, kwh_yr=kwh_yr, labor_h=labor_h, capital_charge=capex * crf,
                 annual=annual, per_kg_n=annual / max(n_removed_yr, 1e-9),
                 per_kgal=annual / (treated_m3_yr / GAL_M3 / 1000), per_kg_product=annual / max(product_kg_yr, 1e-9),
@@ -256,7 +330,7 @@ def detail(r):
     print(f"area needed {r['area_need_m2']:,.0f} m² -> {r['n_mod']} modules = {r['area_m2']:,.0f} m², HRT {r['hrt_d']:.1f} d"
           f"{' (hydraulic floor governs)' if r['hydraulic_limited'] else ''}; effluent {r['eff_gpd']:,.0f} gal/d, evaporation {r['et_gpd']:,.0f} gal/d")
     print(f"module BOM {money(r['module_bom'])} each; modules incl. install {money(r['modules_cost'])}")
-    for it, qty, unit, u in r["site_bom"]:
+    for it, qty, unit, u, *_ in r["site_bom"]:
         print(f"   site: {it}: {qty:g} {unit} x {money(u)} = {money(qty*u)}")
     print(f"site {money(r['site_cost'])}  eng/permit {money(r['eng'])}  contingency {CONTINGENCY:.0%}  CAPEX {money(r['capex'])} ({money(r['capex_per_gpd'])} per gal/d)")
     print("opex " + ", ".join(f"{k} {money(v)}" for k, v in r["opex"].items()) + f" = {money(r['opex_t'])}  ({r['labor_h']:,.0f} h, {r['kwh_yr']:,.0f} kWh)")
@@ -272,9 +346,10 @@ if __name__ == "__main__":
     a.add_argument("--gpd", type=float); a.add_argument("--tn", type=float, default=120); a.add_argument("--tp", type=float, default=25)
     a.add_argument("--tn-out", type=float, default=10); a.add_argument("--module", default="LT", choices=MODULES)
     a.add_argument("--mode", default="store", choices=["store", "season"]); a.add_argument("--growth", default="design", choices=["design", "target"])
+    a.add_argument("--materials", default="new", choices=["new", "reclaimed"])
     a.add_argument("--dry", action="store_true", help="solar-dry and sell product instead of field-applying drained biomass")
     o = a.parse_args()
-    kw = dict(tn_in=o.tn, tp_in=o.tp, tn_out=o.tn_out, mode=o.mode, growth=o.growth, dry=o.dry)
+    kw = dict(tn_in=o.tn, tp_in=o.tp, tn_out=o.tn_out, mode=o.mode, growth=o.growth, dry=o.dry, materials=o.materials)
     if o.gpd:
         r = size(o.gpd, module=o.module, **kw)
         table([r]); detail(r)

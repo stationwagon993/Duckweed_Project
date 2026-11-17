@@ -73,6 +73,9 @@ tr.tot td { font-weight: 700; border-bottom: 0 }
 tr.cmp { cursor: pointer }
 tr.cmp:hover td { background: var(--water-soft) }
 .tag { font: 600 10px var(--f-body); text-transform: uppercase; letter-spacing: 0.06em; padding: 2px 6px; border-radius: 4px; background: var(--lemna); color: var(--panel); margin-left: 6px; white-space: nowrap }
+.tag.re { background: var(--water) }
+.src { font-size: 12px; color: var(--muted); margin-top: 2px }
+.src b { color: var(--warn); font-weight: 600 }
 .two { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px }
 .note { color: var(--muted); font-size: 12.5px; max-width: 80ch }
 ul.assume { margin: 0; padding-left: 18px; display: grid; gap: 4px; color: var(--muted); font-size: 13px }
@@ -129,6 +132,13 @@ ul.assume b { color: var(--ink); font-weight: 600 }
         <div class="seg" role="group" aria-labelledby="growth-l" id="growth">
           <button type="button" data-v="design" aria-pressed="true">Design</button>
           <button type="button" data-v="target">Target</button>
+        </div>
+      </div>
+      <div class="field">
+        <span class="lbl" id="materials-l">Materials</span>
+        <div class="seg" role="group" aria-labelledby="materials-l" id="materials">
+          <button type="button" data-v="new" aria-pressed="true">New</button>
+          <button type="button" data-v="reclaimed">Reclaimed where safe</button>
         </div>
       </div>
       <div class="field">
@@ -218,14 +228,21 @@ function siteBom(P, qSeason, qPump, freshKgD, nMod, recirc) {
   if (recirc > 0) items.push(["Recirculation pump to blend strong feed (low head)", 1, "set", 900 + 15 * pumpGpm]);
   return items;
 }
+function applyMaterials(items, materials) {
+  return items.map(([it, qty, unit, u]) => {
+    const alt = materials === "reclaimed" ? CAT.P.RECLAIM.find(r => it.startsWith(r[0])) : null;
+    return alt ? [alt[1], qty, unit, u * alt[2], true, alt[3], alt[4]] : [it, qty, unit, u, false, "", ""];
+  });
+}
 function size(o) {
   const P = CAT.P;
   const tnIn = o.tn ?? 120, tpIn = o.tp ?? 25, tnOut = o.tnOut ?? 10;
   const modKey = o.module ?? "LT", mode = o.mode ?? "store", growth = o.growth ?? "design", dry = !!o.dry;
+  const materials = o.materials ?? "new", reclaimed = materials === "reclaimed";
   const LABOR_RATE = o.labor ?? P.LABOR_RATE, POWER = o.power ?? P.POWER;
   const PRICE = o.price ?? P.PRODUCT_PRICES["bagged fertilizer, wholesale"], CONT = o.cont ?? P.CONTINGENCY;
   const m = CAT.MODULES[modKey];
-  const g = m.g[growth === "design" ? 0 : 1], days = m.days;
+  const g = m.g[growth === "design" ? 0 : 1] * (reclaimed ? (P.RECLAIM_GROWTH[modKey] ?? 1) : 1), days = m.days;
   const q = o.gpd * GAL_M3, yearRound = days >= 350;
   const qSeason = (mode === "store" && !yearRound) ? q * 365 / days : q;
   const treatedFrac = (mode === "store" || yearRound) ? 1 : days / 365;
@@ -253,12 +270,15 @@ function size(o) {
   const dwYr = Math.min(dwD, nLoad / (P.N_DW * (1 + P.BIO_N_CREDIT)) / 1000) * days;
   const pRemoved = dwYr * P.P_DW, pLoad = qSeason * tpIn * days / 1000;
   const freshKgD = dwYr / days / P.DM_FRESH, productKgYr = dwYr / P.DS_PRODUCT;
-  const moduleBom = m.bom.reduce((s, b) => s + b[1] * b[3], 0);
-  const sbom = siteBom(P, qSeason, qPump, freshKgD, nMod, recirc);
+  const mbom = applyMaterials(m.bom, materials);
+  const moduleBom = mbom.reduce((s, b) => s + b[1] * b[3], 0);
+  const moduleBomNew = m.bom.reduce((s, b) => s + b[1] * b[3], 0);
+  let sbom = siteBom(P, qSeason, qPump, freshKgD, nMod, recirc);
   const waterKgD = dwYr / days * (1 / P.DS_DRAINED - 1 / P.DS_PRODUCT);
   if (dry) sbom.push(["Solar drying hoop 30'x96' with mesh tables", Math.ceil(waterKgD / P.DRY_WATER_KG_D), "ea", P.DRY_HOOP_COST]);
+  sbom = applyMaterials(sbom, materials);
   const siteCost = sbom.reduce((s, b) => s + b[1] * b[3], 0);
-  const modulesCost = nMod * moduleBom * (1 + m.install_pct);
+  const modulesCost = nMod * (moduleBom + moduleBomNew * (m.install_pct + (reclaimed ? P.RECLAIM_LABOR : 0)));
   const equip = modulesCost + siteCost;
   const eng = P.ENG_FIXED + P.ENG_PCT * equip;
   const capex = (equip + eng) * (1 + CONT);
@@ -266,7 +286,7 @@ function size(o) {
   const kwhYr = pumpKwhD * days + 1.0 * 365 + (m.power_kwh_d || 0) * nMod * days;
   const laborH = P.H_PER_1000M2_HARVEST * areaB / 1000 * (days / P.HARVEST_EVERY_D) + P.H_SITE_DAY * days
                + P.H_PER_T_FRESH * freshKgD * days / 1000 + (dry ? P.DRY_H_PER_100KG * productKgYr / 100 : 0);
-  const opex = { labor: laborH * LABOR_RATE, electricity: kwhYr * POWER, maintenance: equip * P.MAINT_PCT,
+  const opex = { labor: laborH * LABOR_RATE, electricity: kwhYr * POWER, maintenance: equip * (reclaimed ? P.RECLAIM_MAINT_PCT : P.MAINT_PCT),
                  "lab tests": P.LAB[0] + P.LAB[1] * nMod };
   const opexT = Object.values(opex).reduce((a, b) => a + b, 0);
   const crf = P.FIN / (1 - Math.pow(1 + P.FIN, -P.LIFE));
@@ -279,7 +299,7 @@ function size(o) {
     et_gpd: etNet * areaB / GAL_M3, storage_gal: (mode === "store" && !yearRound) ? q * (365 - days) / GAL_M3 : 0,
     recirc, pump_gpm: qPump / GAL_M3 / 1440, n_removed_kg: nRemoved, p_removed_kg: pRemoved,
     p_removed_pct: 100 * Math.min(1, pRemoved / Math.max(pLoad, 1e-9)), fresh_kg_d: freshKgD, product_kg_yr: productKgYr,
-    module_bom: moduleBom, modules_cost: modulesCost, site_cost: siteCost, site_bom: sbom, eng, equip, capex, opex, opex_t: opexT,
+    module_bom: moduleBom, module_bom_new: moduleBomNew, mbom, materials, modules_cost: modulesCost, site_cost: siteCost, site_bom: sbom, eng, equip, capex, opex, opex_t: opexT,
     kwh_yr: kwhYr, labor_h: laborH, capital_charge: capex * crf, annual, revenue, net: revenue - annual,
     per_kg_n: annual / Math.max(nRemoved, 1e-9), per_kgal: annual / (treatedM3Yr / GAL_M3 / 1000),
     per_kg_product: annual / Math.max(productKgYr, 1e-9), capex_per_gpd: capex / o.gpd, cont: CONT };
@@ -295,7 +315,7 @@ const fmt = (x, d = 0) => Number(x).toLocaleString("en-US", { maximumFractionDig
 const usd = x => (x < 0 ? "−$" : "$") + fmt(Math.abs(x));
 const usdK = x => Math.abs(x) >= 1e6 ? "$" + fmt(x / 1e6, 2) + "M" : Math.abs(x) >= 1e4 ? "$" + fmt(x / 1e3, 0) + "k" : usd(x);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
-const state = { mode: "store", growth: "design", route: "wet" };
+const state = { mode: "store", growth: "design", route: "wet", materials: "new" };
 
 const sel = $("module");
 for (const [k, m] of Object.entries(CAT.MODULES)) {
@@ -308,7 +328,7 @@ $("gpdr").value = toSlider(+$("gpd").value);
 $("gpdr").addEventListener("input", e => { $("gpd").value = fromSlider(+e.target.value); render(); });
 $("gpd").addEventListener("input", () => { const v = +$("gpd").value; if (v > 0) $("gpdr").value = toSlider(v); render(); });
 document.querySelectorAll("#flowchips .chip").forEach(b => b.addEventListener("click", () => { $("gpd").value = b.dataset.v; $("gpdr").value = toSlider(+b.dataset.v); render(); }));
-for (const id of ["mode", "growth", "route"]) {
+for (const id of ["mode", "growth", "route", "materials"]) {
   $(id).querySelectorAll("button").forEach(b => b.addEventListener("click", () => {
     state[id] = b.dataset.v; $(id).querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", x === b)); render();
   }));
@@ -320,7 +340,7 @@ $("f").addEventListener("submit", e => e.preventDefault());
 
 function inputs(module) {
   return { gpd: Math.max(100, +$("gpd").value || 100), tn: +$("tn").value, tp: +$("tp").value, tnOut: +$("tnout").value,
-    module: module || sel.value, mode: state.mode, growth: state.growth, dry: state.route === "dry",
+    module: module || sel.value, mode: state.mode, growth: state.growth, dry: state.route === "dry", materials: state.materials,
     labor: +$("labor").value, power: +$("power").value, price: +$("price").value, cont: (+$("cont").value) / 100 };
 }
 
@@ -350,6 +370,9 @@ function planSvg(r) {
   return s + "</svg>";
 }
 
+const bomRow = withUnit => b => `<tr><td>${esc(b[0])}${b[4] ? '<span class="tag re">Reclaimed</span>' : ""}` +
+  (b[4] ? `<div class="src">${esc(b[5])}${b[6] ? ". <b>Watch:</b> " + esc(b[6]) : ""}</div>` : "") +
+  `</td><td class="n">${fmt(b[1])}${withUnit ? " " + b[2] : ""}</td><td class="n">${usd(b[1] * b[3])}</td></tr>`;
 function render() {
   const o = inputs(), r = size(o), m = CAT.MODULES[r.module];
   const acres = r.area_m2 * M2_FT2 / 43560;
@@ -388,13 +411,13 @@ function render() {
     tr.addEventListener("click", go); tr.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); go(); } });
   });
 
-  $("mbom-h").textContent = `One ${NOUN[r.module]}, bill of materials`;
+  $("mbom-h").textContent = `One ${NOUN[r.module]}, bill of materials${r.materials === "reclaimed" ? " (reclaimed)" : ""}`;
   $("mbom").innerHTML = `<thead><tr><th>Item</th><th class="n">Qty</th><th class="n">Cost</th></tr></thead><tbody>` +
-    m.bom.map(b => `<tr><td>${esc(b[0])}</td><td class="n">${fmt(b[1])} ${b[2]}</td><td class="n">${usd(b[1] * b[3])}</td></tr>`).join("") +
+    r.mbom.map(bomRow(true)).join("") +
     `<tr class="tot"><td>Materials per module</td><td class="n"></td><td class="n">${usd(r.module_bom)}</td></tr>` +
-    `<tr><td colspan="3" class="note">${fmt(m.area_m2 * M2_FT2)} ft² of water per module, ${usd(r.module_bom / (m.area_m2 * M2_FT2))}/ft² before install labor (${fmt(m.install_pct * 100)}%).</td></tr></tbody>`;
+    `<tr><td colspan="3" class="note">${fmt(m.area_m2 * M2_FT2)} ft² of water per module, ${usd(r.module_bom / (m.area_m2 * M2_FT2))}/ft² before install labor (${fmt(m.install_pct * 100)}%${r.materials === "reclaimed" ? ` + ${fmt(CAT.P.RECLAIM_LABOR * 100)}% for collecting, cleaning and seaming; new materials would be ${usd(r.module_bom_new)}` : ""}).</td></tr></tbody>`;
   $("sbom").innerHTML = `<thead><tr><th>Item</th><th class="n">Qty</th><th class="n">Cost</th></tr></thead><tbody>` +
-    r.site_bom.map(b => `<tr><td>${esc(b[0])}</td><td class="n">${fmt(b[1])}</td><td class="n">${usd(b[1] * b[3])}</td></tr>`).join("") +
+    r.site_bom.map(bomRow(false)).join("") +
     `<tr class="tot"><td>Site equipment</td><td></td><td class="n">${usd(r.site_cost)}</td></tr>` +
     `<tr><td>${fmt(r.n_mod)} modules incl. install labor</td><td></td><td class="n">${usd(r.modules_cost)}</td></tr>` +
     `<tr><td>Engineering, permits, water tests</td><td></td><td class="n">${usd(r.eng)}</td></tr>` +
@@ -413,6 +436,7 @@ function render() {
     `<b>Prices</b> are 2026 retail or farm-supply planning figures with roughly ±30% uncertainty; the large basin depends on site soils and contractor rates (±40%). Farm labor and equipment do site grading; a contractor adds cost.`,
     `<b>Harvest</b> every ${P.HARVEST_EVERY_D} days with a rope-drawn floating boom to a trough at the lane end, then a gravity screen to about ${fmt(P.DS_DRAINED * 100, 1)}% solids. No press: press juice carries nitrogen back into the water.`,
     `<b>Winter</b> the modules are drained or frozen. A small indoor inoculum bank keeps the strain over winter, so spring start-up does not depend on a supplier.`,
+    `<b>Reclaimed materials</b> swap each line for a salvaged alternative at its typical cost (billboard vinyl liner, used greenhouse film, fence top-rail hoops, food-grade IBC totes and drums, barn lumber, used irrigation pipe). They add ${fmt(P.RECLAIM_LABOR * 100)}% install labor, raise upkeep to ${fmt(P.RECLAIM_MAINT_PCT * 100)}% a year and, under aged film, cut growth about 5%. Meters and electrical stay new. Recycled plastics suit the fertilizer route; use new food-grade liner if biomass may go to feed.`,
     `<b>Container</b> row uses the itemized 40' LED container build from the earlier dashboard (~$296k) for comparison. It runs year-round but costs far more per kg N.`,
   ].map(t => `<li>${t}</li>`).join("");
 }
