@@ -1,5 +1,7 @@
 # Duckweed Treatment Pod (DW-200) and Cultivation Trailer
 
+**New: farm-scale, low-cost design ([`farm-system/`](farm-system/FARM_SYSTEM_DESIGN.md)).** A standalone system built from repeatable low-tunnel lined-lane modules, sized from a farm's wastewater flow and strength, with a Python calculator and an interactive sizing tool (`farm-system/farm-sizing-tool.html`).
+
 **Rev C, full system design:** a transportable, year-round wastewater treatment pod (two LED grow trailers in series, lead → polish, plus a 40' process module) that removes N, P and some organic matter, harvests and dries the duckweed without losing nutrients, and sells it as a ≈ 5-2-3 fertilizer.
 
 - [`SYSTEM_DESIGN.md`](SYSTEM_DESIGN.md): the design for all five goals (treatment, enclosed year-round growing, harvest and concentration, product, modular commercial deployment), with materials, logistics, controls, permitting, economics and risks

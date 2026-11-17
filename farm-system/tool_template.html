@@ -1,0 +1,420 @@
+<title>Farm Duckweed Sizer</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: input rail on the left (stacks on phone), results column on the right: answer, figures, site plan, comparison, BOM. */
+:root {
+  --bg: #f3f6f2; --panel: #ffffff; --ink: #18231b; --muted: #5b6b5e; --line: #d6dfd5;
+  --lemna: #3f8f2f; --lemna-soft: #e3f0dc; --water: #2f6f8f; --water-soft: #dcebf2;
+  --warn: #a35c00; --warn-soft: #fbecd6; --bad: #b3261e;
+  --f-display: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --f-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0f1612; --panel: #16201a; --ink: #e4ece3; --muted: #9aab9d; --line: #2a372e;
+  --lemna: #7cc65f; --lemna-soft: #1f3320; --water: #6fb3d4; --water-soft: #15303c;
+  --warn: #f0a64a; --warn-soft: #3a2a12; --bad: #ff8a80; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #0f1612; --panel: #16201a; --ink: #e4ece3; --muted: #9aab9d; --line: #2a372e;
+  --lemna: #7cc65f; --lemna-soft: #1f3320; --water: #6fb3d4; --water-soft: #15303c;
+  --warn: #f0a64a; --warn-soft: #3a2a12; --bad: #ff8a80; color-scheme: dark }
+* { box-sizing: border-box }
+body { background: var(--bg); color: var(--ink); font: 14px/1.5 var(--f-body);
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 20px 40px }
+.wrap { max-width: 1240px; margin: 0 auto; display: grid; gap: 20px }
+header h1 { font: 800 28px/1.15 var(--f-display); margin: 0; letter-spacing: -0.01em; text-wrap: balance }
+header p { margin: 6px 0 0; color: var(--muted); max-width: 70ch }
+.grid { display: grid; grid-template-columns: 300px minmax(0, 1fr); gap: 20px; align-items: start }
+@media (max-width: 860px) { .grid { grid-template-columns: minmax(0, 1fr) } }
+.rail { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 16px; display: grid; gap: 14px; position: sticky; top: calc(env(safe-area-inset-top, 0px) + 12px) }
+@media (max-width: 860px) { .rail { position: static } }
+.field { display: grid; gap: 5px }
+.field > label, .lbl { font: 600 11px/1.2 var(--f-body); text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted) }
+input[type=number], select { width: 100%; font: 500 14px var(--f-mono); color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 7px 9px }
+input[type=range] { width: 100%; accent-color: var(--lemna) }
+input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px solid var(--water); outline-offset: 2px }
+.row3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px }
+.chips { display: flex; flex-wrap: wrap; gap: 6px }
+.chip { font: 600 12px var(--f-mono); padding: 5px 9px; border-radius: 999px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); cursor: pointer }
+.chip[aria-pressed="true"] { background: var(--lemna); border-color: var(--lemna); color: var(--panel) }
+.seg { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; border: 1px solid var(--line); border-radius: 6px; overflow: hidden }
+.seg button { font: 500 12px var(--f-body); padding: 7px 4px; border: 0; background: var(--bg); color: var(--ink); cursor: pointer }
+.seg button + button { border-left: 1px solid var(--line) }
+.seg button[aria-pressed="true"] { background: var(--water-soft); color: var(--water); font-weight: 600 }
+details summary { cursor: pointer; font-weight: 600; color: var(--muted) }
+details .inner { display: grid; gap: 12px; margin-top: 10px }
+.main { display: grid; gap: 20px; min-width: 0 }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 18px; min-width: 0 }
+.card h2 { font: 700 16px/1.2 var(--f-display); margin: 0 0 12px }
+.answer { display: grid; gap: 14px }
+.answer .big { font: 800 34px/1.05 var(--f-display); letter-spacing: -0.015em; text-wrap: balance }
+.answer .big em { font-style: normal; color: var(--lemna) }
+.answer .sub { color: var(--muted); max-width: 75ch }
+.figs { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 8px; overflow: hidden }
+.fig { background: var(--panel); padding: 12px 14px; display: grid; gap: 2px }
+.fig .v { font: 600 20px var(--f-mono); font-variant-numeric: tabular-nums }
+.fig .k { font-size: 12px; color: var(--muted) }
+.flags { display: grid; gap: 8px }
+.flag { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 10px; align-items: start; padding: 9px 12px; border-radius: 8px; background: var(--water-soft); font-size: 13px }
+.flag b { font: 700 10px/1.9 var(--f-body); text-transform: uppercase; letter-spacing: 0.08em; color: var(--water) }
+.flag.warn { background: var(--warn-soft) } .flag.warn b { color: var(--warn) }
+.plan svg { width: 100%; height: auto; display: block }
+.plan .legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 12px; color: var(--muted); margin-top: 8px }
+.sw { display: inline-block; width: 11px; height: 11px; border-radius: 2px; vertical-align: -1px; margin-right: 5px }
+.tbl { overflow-x: auto }
+table { border-collapse: collapse; width: 100%; font-size: 13px }
+th, td { text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--line); vertical-align: top }
+th { font: 600 11px var(--f-body); text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted) }
+td.n, th.n { text-align: right; font-family: var(--f-mono); font-variant-numeric: tabular-nums; white-space: nowrap }
+tr.pick td { background: var(--lemna-soft) }
+tr.tot td { font-weight: 700; border-bottom: 0 }
+tr.cmp { cursor: pointer }
+tr.cmp:hover td { background: var(--water-soft) }
+.tag { font: 600 10px var(--f-body); text-transform: uppercase; letter-spacing: 0.06em; padding: 2px 6px; border-radius: 4px; background: var(--lemna); color: var(--panel); margin-left: 6px; white-space: nowrap }
+.two { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px }
+.note { color: var(--muted); font-size: 12.5px; max-width: 80ch }
+ul.assume { margin: 0; padding-left: 18px; display: grid; gap: 4px; color: var(--muted); font-size: 13px }
+ul.assume b { color: var(--ink); font-weight: 600 }
+@media (prefers-reduced-motion: no-preference) { .fig .v, .answer .big { transition: color .2s } }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Farm duckweed system sizer</h1>
+    <p>Enter what the farm produces. The tool sizes a standalone, sunlight-first duckweed system from repeatable low-cost modules: how many, how much area, what it costs to build and run, and what it removes. All prices are 2026 planning estimates, not quotes.</p>
+  </header>
+  <div class="grid">
+    <form class="rail" id="f" autocomplete="off">
+      <div class="field">
+        <label for="gpd">Wastewater flow, gal/day (yearly average)</label>
+        <input type="number" id="gpd" min="100" max="500000" step="100" value="5000">
+        <input type="range" id="gpdr" min="0" max="1000" step="1" aria-label="Flow slider">
+        <div class="chips" id="flowchips">
+          <button type="button" class="chip" data-v="1000">1k</button>
+          <button type="button" class="chip" data-v="5000">5k</button>
+          <button type="button" class="chip" data-v="20000">20k</button>
+          <button type="button" class="chip" data-v="100000">100k</button>
+        </div>
+      </div>
+      <div class="field">
+        <label for="stream">Stream type</label>
+        <select id="stream">
+          <option value="dairy">Dairy parlor wash water, screened</option>
+          <option value="ras">Aquaculture (RAS) effluent</option>
+          <option value="lagoon">Lagoon supernatant (strong)</option>
+          <option value="custom">Custom</option>
+        </select>
+        <div class="row3">
+          <div class="field"><label for="tn">TN in</label><input type="number" id="tn" min="1" step="1" value="120"></div>
+          <div class="field"><label for="tp">TP in</label><input type="number" id="tp" min="0" step="1" value="25"></div>
+          <div class="field"><label for="tnout">TN out</label><input type="number" id="tnout" min="0" step="1" value="10"></div>
+        </div>
+        <span class="note">mg/L. TN out is the treatment target leaving the last module.</span>
+      </div>
+      <div class="field">
+        <label for="module">Module</label>
+        <select id="module"></select>
+      </div>
+      <div class="field">
+        <span class="lbl" id="mode-l">Off-season flow</span>
+        <div class="seg" role="group" aria-labelledby="mode-l" id="mode">
+          <button type="button" data-v="store" aria-pressed="true">Store, treat in season</button>
+          <button type="button" data-v="season">Treat in season only</button>
+        </div>
+      </div>
+      <div class="field">
+        <span class="lbl" id="growth-l">Growth rate</span>
+        <div class="seg" role="group" aria-labelledby="growth-l" id="growth">
+          <button type="button" data-v="design" aria-pressed="true">Design</button>
+          <button type="button" data-v="target">Target</button>
+        </div>
+      </div>
+      <div class="field">
+        <span class="lbl" id="route-l">Biomass goes to</span>
+        <div class="seg" role="group" aria-labelledby="route-l" id="route">
+          <button type="button" data-v="wet" aria-pressed="true">Farm fields, wet</button>
+          <button type="button" data-v="dry">Solar-dry and sell</button>
+        </div>
+      </div>
+      <details>
+        <summary>Prices and rates</summary>
+        <div class="inner">
+          <div class="field"><label for="labor">Farm labor, $/h</label><input type="number" id="labor" min="0" step="1" value="20"></div>
+          <div class="field"><label for="power">Electricity, $/kWh</label><input type="number" id="power" min="0" step="0.01" value="0.11"></div>
+          <div class="field"><label for="price">Dried product price, $/kg</label><input type="number" id="price" min="0" step="0.05" value="2.50"></div>
+          <div class="field"><label for="cont">Contingency, %</label><input type="number" id="cont" min="0" max="100" step="1" value="20"></div>
+        </div>
+      </details>
+    </form>
+
+    <div class="main">
+      <section class="card answer" aria-live="polite">
+        <div class="big" id="big"></div>
+        <div class="sub" id="sub"></div>
+        <div class="figs" id="figs"></div>
+        <div class="flags" id="flags"></div>
+      </section>
+
+      <section class="card plan">
+        <h2>Site plan at scale</h2>
+        <div id="plan"></div>
+        <div class="legend">
+          <span><i class="sw" style="background:var(--water)"></i>Intake, screen, settling, blend box</span>
+          <span><i class="sw" style="background:var(--lemna)"></i>Growing module</span>
+          <span><i class="sw" style="background:var(--warn)"></i>Dewatering and harvest</span>
+          <span id="plan-scale"></span>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Compare module types for this farm</h2>
+        <div class="tbl"><table id="cmp"></table></div>
+        <p class="note">Click a row to switch. All-in cost includes operating cost plus capital repaid over 15 years at 8%.</p>
+      </section>
+
+      <div class="two">
+        <section class="card">
+          <h2 id="mbom-h">One module, bill of materials</h2>
+          <div class="tbl"><table id="mbom"></table></div>
+        </section>
+        <section class="card">
+          <h2>Site equipment and build-up</h2>
+          <div class="tbl"><table id="sbom"></table></div>
+        </section>
+      </div>
+
+      <section class="card">
+        <h2>How it is sized, and what is uncertain</h2>
+        <ul class="assume" id="assume"></ul>
+      </section>
+    </div>
+  </div>
+</div>
+
+<script>
+// MODEL START (kept in step with farm_sizing.py; catalog is generated from it)
+const CAT = /*CATALOG*/null;
+const GAL_M3 = 0.0037854, M2_FT2 = 10.7639, M2_ACRE = 4046.86;
+function siteBom(P, qSeason, qPump, freshKgD, nMod, recirc) {
+  const gpd = qSeason / GAL_M3;
+  const settleGal = Math.max(500, gpd * 0.5);
+  const settle = settleGal <= 10000 ? settleGal * 0.90 : 9000 + (settleGal - 10000) * 0.20;
+  const pumpGpm = qPump / GAL_M3 / 1440;
+  const small = gpd < 15000;
+  const items = [
+    ["Intake: submersible effluent pump + float switch + check valve", 1, "set", small ? 700 : 2500 + 25 * pumpGpm],
+    ["Screen: inclined wedge-wire / bag screen, 0.5-1 mm", 1, "ea", small ? 1500 : 6000],
+    [`Settling tank / basin, ${Math.round(settleGal).toLocaleString()} gal (half day)`, 1, "lot", settle],
+    ["Header + blend box with float valve (gravity feed to modules)", 1, "ea", small ? 800 : 2500],
+    ["Main supply line, 2-6\" PVC, buried below frost where year-round", 1, "lot", 1000 + 150 * nMod],
+    ["Dewatering: inclined screen + drain table, per 500 kg fresh/d", Math.max(1, Math.ceil(freshKgD / 500)), "ea", 2500],
+    ["Harvest cart, lidded bins, platform scale", 1, "set", 800 + 100 * nMod],
+    ["Field meters: pH/EC/DO/temp + NH4/NO3/PO4 photometer + level alarms", 1, "set", 3000],
+    ["Winter inoculum bank: 2 IBC half-totes, LED shop lights, aquarium heater", 1, "set", 1500],
+    ["Electrical: one 240 V circuit + GFCI to pumps and inoculum bank", 1, "lot", small ? 2500 : 6000],
+  ];
+  if (recirc > 0) items.push(["Recirculation pump to blend strong feed (low head)", 1, "set", 900 + 15 * pumpGpm]);
+  return items;
+}
+function size(o) {
+  const P = CAT.P;
+  const tnIn = o.tn ?? 120, tpIn = o.tp ?? 25, tnOut = o.tnOut ?? 10;
+  const modKey = o.module ?? "LT", mode = o.mode ?? "store", growth = o.growth ?? "design", dry = !!o.dry;
+  const LABOR_RATE = o.labor ?? P.LABOR_RATE, POWER = o.power ?? P.POWER;
+  const PRICE = o.price ?? P.PRODUCT_PRICES["bagged fertilizer, wholesale"], CONT = o.cont ?? P.CONTINGENCY;
+  const m = CAT.MODULES[modKey];
+  const g = m.g[growth === "design" ? 0 : 1], days = m.days;
+  const q = o.gpd * GAL_M3, yearRound = days >= 350;
+  const qSeason = (mode === "store" && !yearRound) ? q * 365 / days : q;
+  const treatedFrac = (mode === "store" || yearRound) ? 1 : days / 365;
+  const uptake = g * P.N_DW * (1 + P.BIO_N_CREDIT);
+  const etNet = (m.et_mm - m.rain_mm) / 1000;
+  const hydFloor = qSeason * P.HRT_MIN_D / m.depth_m;
+  let area = qSeason * (tnIn - tnOut) / uptake;
+  for (let i = 0; i < 50; i++) {
+    const qEff = Math.max(0, qSeason - etNet * area);
+    const need = qSeason * tnIn - qEff * tnOut;
+    const nw = Math.max(need / uptake, hydFloor);
+    if (Math.abs(nw - area) < 1e-6) break;
+    area = nw;
+  }
+  const qEff = Math.max(0, qSeason - etNet * area);
+  const hydraulicLimited = area <= hydFloor + 1e-6;
+  const nMod = Math.max(1, Math.ceil(area / m.area_m2));
+  const areaB = nMod * m.area_m2, vol = areaB * m.depth_m;
+  const recirc = tnIn > P.C_MAX ? Math.max(0, (tnIn - P.C_MAX) / (P.C_MAX - tnOut)) : 0;
+  const qPump = qSeason * (1 + recirc);
+  const dwD = areaB * g / 1000;
+  const nCap = dwD * P.N_DW * (1 + P.BIO_N_CREDIT) * 1000;
+  const nLoad = qSeason * tnIn;
+  const nRemoved = Math.min(nCap, nLoad) * days / 1000;
+  const dwYr = Math.min(dwD, nLoad / (P.N_DW * (1 + P.BIO_N_CREDIT)) / 1000) * days;
+  const pRemoved = dwYr * P.P_DW, pLoad = qSeason * tpIn * days / 1000;
+  const freshKgD = dwYr / days / P.DM_FRESH, productKgYr = dwYr / P.DS_PRODUCT;
+  const moduleBom = m.bom.reduce((s, b) => s + b[1] * b[3], 0);
+  const sbom = siteBom(P, qSeason, qPump, freshKgD, nMod, recirc);
+  const waterKgD = dwYr / days * (1 / P.DS_DRAINED - 1 / P.DS_PRODUCT);
+  if (dry) sbom.push(["Solar drying hoop 30'x96' with mesh tables", Math.ceil(waterKgD / P.DRY_WATER_KG_D), "ea", P.DRY_HOOP_COST]);
+  const siteCost = sbom.reduce((s, b) => s + b[1] * b[3], 0);
+  const modulesCost = nMod * moduleBom * (1 + m.install_pct);
+  const equip = modulesCost + siteCost;
+  const eng = P.ENG_FIXED + P.ENG_PCT * equip;
+  const capex = (equip + eng) * (1 + CONT);
+  const pumpKwhD = qPump * 1000 * 9.81 * P.PUMP_HEAD_M / P.PUMP_EFF / 3.6e6;
+  const kwhYr = pumpKwhD * days + 1.0 * 365 + (m.power_kwh_d || 0) * nMod * days;
+  const laborH = P.H_PER_1000M2_HARVEST * areaB / 1000 * (days / P.HARVEST_EVERY_D) + P.H_SITE_DAY * days
+               + P.H_PER_T_FRESH * freshKgD * days / 1000 + (dry ? P.DRY_H_PER_100KG * productKgYr / 100 : 0);
+  const opex = { labor: laborH * LABOR_RATE, electricity: kwhYr * POWER, maintenance: equip * P.MAINT_PCT,
+                 "lab tests": P.LAB[0] + P.LAB[1] * nMod };
+  const opexT = Object.values(opex).reduce((a, b) => a + b, 0);
+  const crf = P.FIN / (1 - Math.pow(1 + P.FIN, -P.LIFE));
+  const annual = opexT + capex * crf;
+  const treatedM3Yr = q * 365 * treatedFrac;
+  const revenue = dry ? productKgYr * PRICE : nRemoved * P.N_PRICE + pRemoved * P.P_PRICE;
+  return { gpd: o.gpd, module: modKey, mode, growth, g, days, q_season_gpd: qSeason / GAL_M3, area_need_m2: area,
+    n_mod: nMod, area_m2: areaB, footprint_acre: nMod * m.footprint_m2 / M2_ACRE, vol_m3: vol, hrt_d: vol / qSeason,
+    hydraulic_limited: hydraulicLimited, eff_gpd: qEff / GAL_M3, makeup_gpd: Math.max(0, P.SALT_BLEED * qSeason - qEff) / GAL_M3,
+    et_gpd: etNet * areaB / GAL_M3, storage_gal: (mode === "store" && !yearRound) ? q * (365 - days) / GAL_M3 : 0,
+    recirc, pump_gpm: qPump / GAL_M3 / 1440, n_removed_kg: nRemoved, p_removed_kg: pRemoved,
+    p_removed_pct: 100 * Math.min(1, pRemoved / Math.max(pLoad, 1e-9)), fresh_kg_d: freshKgD, product_kg_yr: productKgYr,
+    module_bom: moduleBom, modules_cost: modulesCost, site_cost: siteCost, site_bom: sbom, eng, equip, capex, opex, opex_t: opexT,
+    kwh_yr: kwhYr, labor_h: laborH, capital_charge: capex * crf, annual, revenue, net: revenue - annual,
+    per_kg_n: annual / Math.max(nRemoved, 1e-9), per_kgal: annual / (treatedM3Yr / GAL_M3 / 1000),
+    per_kg_product: annual / Math.max(productKgYr, 1e-9), capex_per_gpd: capex / o.gpd, cont: CONT };
+}
+// MODEL END
+</script>
+<script>
+const SHORT = { LT: "Low-tunnel lanes", H30: "Walk-in hoop house", OL: "Open lined lanes", P1000: "Large lined basin", C40: "LED container" };
+const NOUN = { LT: "low-tunnel module", H30: "hoop-house module", OL: "open-lane module", P1000: "lined basin", C40: "LED container" };
+const STREAMS = { dairy: [120, 25, 10], ras: [30, 6, 5], lagoon: [600, 90, 10] };
+const $ = id => document.getElementById(id);
+const fmt = (x, d = 0) => Number(x).toLocaleString("en-US", { maximumFractionDigits: d, minimumFractionDigits: d });
+const usd = x => (x < 0 ? "−$" : "$") + fmt(Math.abs(x));
+const usdK = x => Math.abs(x) >= 1e6 ? "$" + fmt(x / 1e6, 2) + "M" : Math.abs(x) >= 1e4 ? "$" + fmt(x / 1e3, 0) + "k" : usd(x);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+const state = { mode: "store", growth: "design", route: "wet" };
+
+const sel = $("module");
+for (const [k, m] of Object.entries(CAT.MODULES)) {
+  const o = document.createElement("option"); o.value = k; o.textContent = `${SHORT[k]} (${k})`; sel.appendChild(o);
+}
+// log slider 100 .. 200,000 gal/d
+const toSlider = v => Math.round(1000 * Math.log(v / 100) / Math.log(2000));
+const fromSlider = s => { const v = 100 * Math.pow(2000, s / 1000); const mag = Math.pow(10, Math.floor(Math.log10(v)) - 1); return Math.round(v / mag) * mag; };
+$("gpdr").value = toSlider(+$("gpd").value);
+$("gpdr").addEventListener("input", e => { $("gpd").value = fromSlider(+e.target.value); render(); });
+$("gpd").addEventListener("input", () => { const v = +$("gpd").value; if (v > 0) $("gpdr").value = toSlider(v); render(); });
+document.querySelectorAll("#flowchips .chip").forEach(b => b.addEventListener("click", () => { $("gpd").value = b.dataset.v; $("gpdr").value = toSlider(+b.dataset.v); render(); }));
+for (const id of ["mode", "growth", "route"]) {
+  $(id).querySelectorAll("button").forEach(b => b.addEventListener("click", () => {
+    state[id] = b.dataset.v; $(id).querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", x === b)); render();
+  }));
+}
+$("stream").addEventListener("change", e => { const s = STREAMS[e.target.value]; if (s) { [$("tn").value, $("tp").value, $("tnout").value] = s; } render(); });
+for (const id of ["tn", "tp", "tnout"]) $(id).addEventListener("input", () => { $("stream").value = "custom"; render(); });
+for (const id of ["module", "labor", "power", "price", "cont"]) $(id).addEventListener("input", render);
+$("f").addEventListener("submit", e => e.preventDefault());
+
+function inputs(module) {
+  return { gpd: Math.max(100, +$("gpd").value || 100), tn: +$("tn").value, tp: +$("tp").value, tnOut: +$("tnout").value,
+    module: module || sel.value, mode: state.mode, growth: state.growth, dry: state.route === "dry",
+    labor: +$("labor").value, power: +$("power").value, price: +$("price").value, cont: (+$("cont").value) / 100 };
+}
+
+function planSvg(r) {
+  const m = CAT.MODULES[r.module];
+  const per = Math.max(1, Math.ceil(r.n_mod / 240));            // modules per drawn cell
+  const cells = Math.ceil(r.n_mod / per);
+  const ft = Math.sqrt(m.footprint_m2 * M2_FT2);                 // module cell, ft, square-ish
+  const w = r.module === "P1000" ? 140 : r.module === "C40" ? 40 : 96, h = r.module === "P1000" ? 77 : r.module === "C40" ? 8 : 30;
+  const gapX = r.module === "C40" ? 12 : 12, gapY = r.module === "C40" ? 10 : 14;
+  const cols = Math.max(1, Math.min(cells, Math.round(Math.sqrt(cells * (h + gapY) / (w + gapX) * 1.6))));
+  const rows = Math.ceil(cells / cols);
+  const head = 70, W = cols * (w + gapX) + gapX + head, H = Math.max(rows * (h + gapY) + gapY, 90);
+  let s = `<svg viewBox="0 0 ${W} ${H + 22}" role="img" aria-label="Site plan with ${r.n_mod} modules">`;
+  s += `<rect x="6" y="${gapY}" width="${head - 22}" height="34" rx="2" fill="var(--water)"/>`;
+  s += `<rect x="6" y="${gapY + 44}" width="${head - 22}" height="22" rx="2" fill="var(--warn)"/>`;
+  s += `<line x1="${head - 16}" y1="${gapY + 17}" x2="${head}" y2="${gapY + 17}" stroke="var(--water)" stroke-width="2"/>`;
+  for (let i = 0; i < cells; i++) {
+    const c = i % cols, rr = Math.floor(i / cols);
+    const x = head + gapX + c * (w + gapX), y = gapY + rr * (h + gapY);
+    s += `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="1.5" fill="var(--lemna)" opacity="${i === cells - 1 && r.n_mod % per ? 0.5 : 0.85}"/>`;
+    if (r.module !== "C40" && r.module !== "P1000" && w > 30) for (let k = 1; k < 4; k++) s += `<line x1="${x + 3}" x2="${x + w - 3}" y1="${y + k * h / 4}" y2="${y + k * h / 4}" stroke="var(--panel)" stroke-width="0.8" opacity="0.7"/>`;
+  }
+  const bar = 100, bx = head + gapX;
+  s += `<line x1="${bx}" x2="${bx + bar}" y1="${H + 10}" y2="${H + 10}" stroke="var(--muted)" stroke-width="2"/>`;
+  s += `<text x="${bx + bar + 6}" y="${H + 14}" font-size="11" fill="var(--muted)" font-family="JetBrains Mono, monospace">100 ft${per > 1 ? `  ·  each block = ${per} modules` : ""}</text>`;
+  return s + "</svg>";
+}
+
+function render() {
+  const o = inputs(), r = size(o), m = CAT.MODULES[r.module];
+  const acres = r.area_m2 * M2_FT2 / 43560;
+  $("big").innerHTML = `<em>${fmt(r.n_mod)}</em> ${esc(NOUN[r.module])}${r.n_mod > 1 ? "s" : ""}, ${fmt(r.area_m2 * M2_FT2)} ft² of water`;
+  $("sub").textContent = `For ${fmt(o.gpd)} gal/day at ${fmt(o.tn)} mg/L TN, treated to ${fmt(o.tnOut)} mg/L. ${m.name}. ` +
+    `${r.days} growing days a year at ${r.g} g dry weight per m² per day. About ${fmt(r.footprint_acre, 2)} acres of ground including spacing.`;
+  const figs = [
+    [usdK(r.capex), "Build cost (capex)"], [usdK(r.opex_t) + "/yr", "Operating cost"],
+    ["$" + fmt(r.per_kgal, 1), "All-in per 1,000 gal"], ["$" + fmt(r.per_kg_n), "All-in per kg N removed"],
+    [fmt(r.n_removed_kg) + " kg", "N removed per year"], [fmt(r.p_removed_kg) + " kg", `P removed (${fmt(r.p_removed_pct)}% of load)`],
+    [fmt(r.fresh_kg_d) + " kg/d", "Fresh harvest in season"], [fmt(r.product_kg_yr / 1000, 1) + " t", "Dry-matter product per year"],
+    [fmt(r.labor_h) + " h", "Labor per year"], [usdK(r.revenue) + "/yr", state.route === "dry" ? "Product sales" : "Fertilizer value on farm"],
+  ];
+  $("figs").innerHTML = figs.map(([v, k]) => `<div class="fig"><span class="v">${v}</span><span class="k">${k}</span></div>`).join("");
+
+  const flags = [];
+  if (r.storage_gal > 0) flags.push(["", "Storage", `Holds ${fmt(r.storage_gal)} gal of off-season flow (${365 - r.days} days) in the farm's existing manure or wash-water storage, then treats ${fmt(r.q_season_gpd)} gal/day in season. If that storage is not there, switch to "Treat in season only".`]);
+  if (state.mode === "season" && r.days < 350) flags.push(["warn", "Partial", `Only ${fmt(100 * r.days / 365)}% of the year's flow passes through the system. The rest goes where it goes today.`]);
+  if (r.recirc > 0) flags.push(["", "Blending", `Feed at ${fmt(o.tn)} mg/L TN is too strong for duckweed (free ammonia). The blend box mixes ${fmt(r.recirc, 1)} parts treated water to 1 part feed so module inlets stay under ${CAT.P.C_MAX} mg/L. Pump ${fmt(r.pump_gpm, 1)} gpm at about 13 ft head.`]);
+  if (r.makeup_gpd > 0) flags.push(["warn", "Water", `Evaporation (${fmt(r.et_gpd)} gal/day) takes nearly all the inflow, so salts would build up. Add about ${fmt(r.makeup_gpd)} gal/day of make-up water (roof rain, well) or accept a periodic drain-down.`]);
+  else if (r.et_gpd > 0) flags.push(["", "Water", `About ${fmt(r.et_gpd)} gal/day evaporates in season, so ${fmt(r.eff_gpd)} gal/day leaves as treated effluent for irrigation or land application.`]);
+  else flags.push(["", "Water", `Roof rain into the lanes roughly matches evaporation. About ${fmt(r.eff_gpd)} gal/day leaves as treated effluent.`]);
+  if (r.hydraulic_limited) flags.push(["", "Hydraulics", `The stream is dilute, so area is set by a ${CAT.P.HRT_MIN_D}-day minimum contact time, not by nitrogen.`]);
+  if (r.net < 0) flags.push(["warn", "Economics", `All-in cost ${usdK(r.annual)}/yr against ${usdK(r.revenue)}/yr of ${state.route === "dry" ? "product sales" : "fertilizer value"}. The gap of ${usdK(-r.net)}/yr (${"$" + fmt(-r.net / (o.gpd * 365 / 1000), 1)} per 1,000 gal) has to come from avoided hauling, nutrient credits or a treatment fee.`]);
+  $("flags").innerHTML = flags.map(([c, b, t]) => `<div class="flag ${c}"><b>${b}</b><span>${esc(t)}</span></div>`).join("");
+
+  $("plan").innerHTML = planSvg(r);
+  $("plan-scale").textContent = `${fmt(r.footprint_acre, 2)} acres incl. spacing`;
+
+  const rows = Object.keys(CAT.MODULES).map(k => size(inputs(k)));
+  const best = rows.filter(x => x.module !== "C40").reduce((a, b) => (a.per_kg_n < b.per_kg_n ? a : b));
+  $("cmp").innerHTML = `<thead><tr><th>Module</th><th class="n">Modules</th><th class="n">Water area, ft²</th><th class="n">Season</th><th class="n">Build cost</th><th class="n">Opex/yr</th><th class="n">$/kg N</th><th class="n">$/1,000 gal</th></tr></thead><tbody>` +
+    rows.map(x => `<tr class="cmp${x.module === r.module ? " pick" : ""}" data-k="${x.module}" tabindex="0"><td>${SHORT[x.module]}${x === best ? '<span class="tag">Lowest $/kg N</span>' : ""}</td><td class="n">${fmt(x.n_mod)}</td><td class="n">${fmt(x.area_m2 * M2_FT2)}</td><td class="n">${x.days} d</td><td class="n">${usdK(x.capex)}</td><td class="n">${usdK(x.opex_t)}</td><td class="n">$${fmt(x.per_kg_n)}</td><td class="n">$${fmt(x.per_kgal, 1)}</td></tr>`).join("") + "</tbody>";
+  $("cmp").querySelectorAll("tr.cmp").forEach(tr => {
+    const go = () => { sel.value = tr.dataset.k; render(); };
+    tr.addEventListener("click", go); tr.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); go(); } });
+  });
+
+  $("mbom-h").textContent = `One ${NOUN[r.module]}, bill of materials`;
+  $("mbom").innerHTML = `<thead><tr><th>Item</th><th class="n">Qty</th><th class="n">Cost</th></tr></thead><tbody>` +
+    m.bom.map(b => `<tr><td>${esc(b[0])}</td><td class="n">${fmt(b[1])} ${b[2]}</td><td class="n">${usd(b[1] * b[3])}</td></tr>`).join("") +
+    `<tr class="tot"><td>Materials per module</td><td class="n"></td><td class="n">${usd(r.module_bom)}</td></tr>` +
+    `<tr><td colspan="3" class="note">${fmt(m.area_m2 * M2_FT2)} ft² of water per module, ${usd(r.module_bom / (m.area_m2 * M2_FT2))}/ft² before install labor (${fmt(m.install_pct * 100)}%).</td></tr></tbody>`;
+  $("sbom").innerHTML = `<thead><tr><th>Item</th><th class="n">Qty</th><th class="n">Cost</th></tr></thead><tbody>` +
+    r.site_bom.map(b => `<tr><td>${esc(b[0])}</td><td class="n">${fmt(b[1])}</td><td class="n">${usd(b[1] * b[3])}</td></tr>`).join("") +
+    `<tr class="tot"><td>Site equipment</td><td></td><td class="n">${usd(r.site_cost)}</td></tr>` +
+    `<tr><td>${fmt(r.n_mod)} modules incl. install labor</td><td></td><td class="n">${usd(r.modules_cost)}</td></tr>` +
+    `<tr><td>Engineering, permits, water tests</td><td></td><td class="n">${usd(r.eng)}</td></tr>` +
+    `<tr><td>Contingency ${fmt(r.cont * 100)}%</td><td></td><td class="n">${usd(r.capex - r.equip - r.eng)}</td></tr>` +
+    `<tr class="tot"><td>Build cost</td><td></td><td class="n">${usd(r.capex)}</td></tr>` +
+    Object.entries(r.opex).map(([k, v]) => `<tr><td>Operating: ${k}</td><td></td><td class="n">${usd(v)}/yr</td></tr>`).join("") +
+    `<tr><td>Capital repaid (15 yr, 8%)</td><td></td><td class="n">${usd(r.capital_charge)}/yr</td></tr>` +
+    `<tr class="tot"><td>All-in annual cost</td><td></td><td class="n">${usd(r.annual)}/yr</td></tr></tbody>`;
+
+  const P = CAT.P;
+  $("assume").innerHTML = [
+    `<b>Sizing rule.</b> Water area = nitrogen to remove ÷ (growth × ${fmt(P.N_DW * 100, 1)}% tissue N × growing days), with at least ${P.HRT_MIN_D} days of contact time. Modules = area ÷ ${fmt(m.area_m2 * M2_FT2)} ft², rounded up. Flow only sets pipe and pump sizes; the nitrogen load sets the area.`,
+    `<b>Growth</b> ${m.g[0]} (design) to ${m.g[1]} (target) g dry weight per m² per day over ${m.days} days for this module. Outdoor and covered numbers are literature-based estimates for a Wisconsin-type climate; a phase 0 trial on the farm's own water should replace them.`,
+    `<b>Tissue</b> ${fmt(P.N_DW * 100, 1)}% N and ${fmt(P.P_DW * 100, 1)}% P of dry weight. No credit is taken for nitrification or denitrification on liner and biofilm, which usually adds 20 to 40% more N removal.`,
+    `<b>Evaporation</b> ${m.et_mm} mm/day and in-season rain reaching the water ${fmt(m.rain_mm, 1)} mm/day. On strong streams evaporation can take most of the inflow.`,
+    `<b>Prices</b> are 2026 retail or farm-supply planning figures with roughly ±30% uncertainty; the large basin depends on site soils and contractor rates (±40%). Farm labor and equipment do site grading; a contractor adds cost.`,
+    `<b>Harvest</b> every ${P.HARVEST_EVERY_D} days with a rope-drawn floating boom to a trough at the lane end, then a gravity screen to about ${fmt(P.DS_DRAINED * 100, 1)}% solids. No press: press juice carries nitrogen back into the water.`,
+    `<b>Winter</b> the modules are drained or frozen. A small indoor inoculum bank keeps the strain over winter, so spring start-up does not depend on a supplier.`,
+    `<b>Container</b> row uses the itemized 40' LED container build from the earlier dashboard (~$296k) for comparison. It runs year-round but costs far more per kg N.`,
+  ].map(t => `<li>${t}</li>`).join("");
+}
+render();
+</script>
